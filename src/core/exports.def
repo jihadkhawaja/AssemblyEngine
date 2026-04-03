@@ -1,0 +1,49 @@
+LIBRARY assemblycore
+EXPORTS
+    ; Platform
+    ae_init
+    ae_shutdown
+    ae_poll_events
+    ae_present
+
+    ; Renderer
+    ae_clear
+    ae_draw_pixel
+    ae_draw_rect
+    ae_draw_filled_rect
+    ae_draw_line
+    ae_draw_circle
+
+    ; Sprites
+    ae_load_sprite
+    ae_draw_sprite
+
+    ; Input
+    ae_is_key_down
+    ae_is_key_pressed
+    ae_get_mouse_x
+    ae_get_mouse_y
+    ae_is_mouse_down
+
+    ; Audio
+    ae_load_sound
+    ae_play_sound
+    ae_stop_sound
+
+    ; Timer
+    ae_get_delta_time
+    ae_get_fps
+    ae_get_ticks
+
+    ; Memory
+    ae_alloc
+    ae_free
+
+    ; Math
+    ae_math_clamp
+    ae_math_lerp
+    ae_math_min
+    ae_math_max
+    ae_math_abs
+    ae_math_sqrt_int
+    ae_math_dist_sq

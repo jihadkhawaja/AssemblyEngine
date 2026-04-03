@@ -1,0 +1,34 @@
+using AssemblyEngine.Engine;
+using AssemblyEngine.Core;
+
+namespace SampleGame;
+
+public static class Program
+{
+    public static void Main()
+    {
+        var engine = new GameEngine(800, 600, "AssemblyEngine - Dash Harvest")
+        {
+            ClearColor = new Color(5, 10, 18)
+        };
+
+        // Register scenes
+        engine.Scenes.Register("main", new MainScene());
+
+        // Register game scripts
+        engine.Scripts.RegisterScript(new GameLoopScript());
+        engine.Scripts.RegisterScript(new PlayerScript());
+        engine.Scripts.RegisterScript(new HudScript());
+
+        // Load UI overlay
+        var uiDir = Path.Combine(AppContext.BaseDirectory, "ui");
+        var htmlPath = Path.Combine(uiDir, "hud.html");
+        var cssPath = Path.Combine(uiDir, "hud.css");
+        if (File.Exists(htmlPath))
+            engine.LoadUI(htmlPath, File.Exists(cssPath) ? cssPath : null);
+
+        // Load the main scene and run
+        engine.Scenes.LoadScene("main");
+        engine.Run();
+    }
+}

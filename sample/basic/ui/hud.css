@@ -1,0 +1,116 @@
+body {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#top-bar {
+    position: absolute;
+    left: 16px;
+    top: 12px;
+    width: 768px;
+    height: 34px;
+    background-color: rgba(4, 10, 18, 0.78);
+    display: flex;
+    flex-direction: row;
+    padding: 6px 10px;
+    gap: 18px;
+    border-width: 1;
+    border-color: #3ACFE0;
+}
+
+#fps-counter {
+    color: #A6FF9C;
+    font-size: 14;
+    width: 70px;
+    height: 24px;
+}
+
+#score {
+    color: #FFD86C;
+    font-size: 14;
+    width: 92px;
+    height: 24px;
+}
+
+#wave {
+    color: #75D8FF;
+    font-size: 14;
+    width: 72px;
+    height: 24px;
+}
+
+#lives {
+    color: #FF7F7F;
+    font-size: 14;
+    width: 72px;
+    height: 24px;
+}
+
+#dash {
+    color: #BDFE69;
+    font-size: 14;
+    width: 108px;
+    height: 24px;
+}
+
+#best {
+    color: #E4F2FF;
+    font-size: 14;
+    width: 78px;
+    height: 24px;
+}
+
+#center-message {
+    position: absolute;
+    left: 176px;
+    top: 194px;
+    width: 448px;
+    height: 120px;
+    background-color: rgba(6, 14, 24, 0.88);
+    border-width: 2;
+    border-color: #7AFFF0;
+    padding: 14px 18px;
+}
+
+#message-title {
+    color: #F6FF8D;
+    font-size: 26;
+    width: 400px;
+    height: 38px;
+}
+
+#message-subtitle {
+    color: #E8F5FF;
+    font-size: 16;
+    width: 412px;
+    height: 52px;
+}
+
+#objective-panel {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    width: 768px;
+    height: 50px;
+    background-color: rgba(4, 10, 18, 0.74);
+    padding: 8px 12px;
+    border-width: 1;
+    border-color: #2C6B77;
+}
+
+#objective {
+    color: #FFFFFF;
+    font-size: 15;
+    width: 720px;
+    height: 22px;
+}
+
+#hint {
+    color: #93A9C4;
+    font-size: 13;
+    width: 720px;
+    height: 18px;
+}

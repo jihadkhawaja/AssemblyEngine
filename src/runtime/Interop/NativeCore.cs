@@ -1,0 +1,101 @@
+using System.Runtime.InteropServices;
+
+namespace AssemblyEngine.Interop;
+
+/// <summary>
+/// P/Invoke bindings to the native assembly engine core (assemblycore.dll).
+/// All functions use the C calling convention (Win64 ABI).
+/// </summary>
+internal static partial class NativeCore
+{
+    private const string DllName = "assemblycore";
+
+    // --- Platform ---
+    [LibraryImport(DllName, EntryPoint = "ae_init", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial int Init(int width, int height, string? title);
+
+    [LibraryImport(DllName, EntryPoint = "ae_shutdown")]
+    internal static partial void Shutdown();
+
+    [LibraryImport(DllName, EntryPoint = "ae_poll_events")]
+    internal static partial int PollEvents();
+
+    [LibraryImport(DllName, EntryPoint = "ae_present")]
+    internal static partial void Present();
+
+    // --- Renderer ---
+    [LibraryImport(DllName, EntryPoint = "ae_clear")]
+    internal static partial void Clear(int r, int g, int b, int a);
+
+    [LibraryImport(DllName, EntryPoint = "ae_draw_pixel")]
+    internal static partial void DrawPixel(int x, int y, int r, int g, int b, int a);
+
+    [LibraryImport(DllName, EntryPoint = "ae_draw_rect")]
+    internal static partial void DrawRect(int x, int y, int w, int h, int r, int g, int b, int a);
+
+    [LibraryImport(DllName, EntryPoint = "ae_draw_filled_rect")]
+    internal static partial void DrawFilledRect(int x, int y, int w, int h, int r, int g, int b, int a);
+
+    [LibraryImport(DllName, EntryPoint = "ae_draw_line")]
+    internal static partial void DrawLine(int x1, int y1, int x2, int y2, int r, int g, int b, int a);
+
+    [LibraryImport(DllName, EntryPoint = "ae_draw_circle")]
+    internal static partial void DrawCircle(int cx, int cy, int radius, int r, int g, int b, int a);
+
+    // --- Sprites ---
+    [LibraryImport(DllName, EntryPoint = "ae_load_sprite", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial int LoadSprite(string path);
+
+    [LibraryImport(DllName, EntryPoint = "ae_draw_sprite")]
+    internal static partial void DrawSprite(int id, int x, int y, int flags);
+
+    // --- Input ---
+    [LibraryImport(DllName, EntryPoint = "ae_is_key_down")]
+    internal static partial int IsKeyDown(int keycode);
+
+    [LibraryImport(DllName, EntryPoint = "ae_is_key_pressed")]
+    internal static partial int IsKeyPressed(int keycode);
+
+    [LibraryImport(DllName, EntryPoint = "ae_get_mouse_x")]
+    internal static partial int GetMouseX();
+
+    [LibraryImport(DllName, EntryPoint = "ae_get_mouse_y")]
+    internal static partial int GetMouseY();
+
+    [LibraryImport(DllName, EntryPoint = "ae_is_mouse_down")]
+    internal static partial int IsMouseDown(int button);
+
+    // --- Audio ---
+    [LibraryImport(DllName, EntryPoint = "ae_load_sound", StringMarshalling = StringMarshalling.Utf8)]
+    internal static partial int LoadSound(string path);
+
+    [LibraryImport(DllName, EntryPoint = "ae_play_sound")]
+    internal static partial int PlaySound(int id);
+
+    [LibraryImport(DllName, EntryPoint = "ae_stop_sound")]
+    internal static partial void StopSound();
+
+    // --- Timer ---
+    [LibraryImport(DllName, EntryPoint = "ae_get_delta_time")]
+    internal static partial int GetDeltaTimeBits();
+
+    [LibraryImport(DllName, EntryPoint = "ae_get_fps")]
+    internal static partial int GetFps();
+
+    [LibraryImport(DllName, EntryPoint = "ae_get_ticks")]
+    internal static partial long GetTicks();
+
+    // --- Memory ---
+    [LibraryImport(DllName, EntryPoint = "ae_alloc")]
+    internal static partial nint Alloc(int size);
+
+    [LibraryImport(DllName, EntryPoint = "ae_free")]
+    internal static partial void Free();
+
+    // --- Math ---
+    [LibraryImport(DllName, EntryPoint = "ae_math_clamp")]
+    internal static partial int MathClamp(int value, int min, int max);
+
+    [LibraryImport(DllName, EntryPoint = "ae_math_dist_sq")]
+    internal static partial int MathDistSq(int x1, int y1, int x2, int y2);
+}

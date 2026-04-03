@@ -1,0 +1,28 @@
+# AssemblyEngine
+Core engine in assembly, scripting in C#, UI in HTML and CSS.
+
+## Platforms
+Platforms that the engine can run on.
+
+### Currently supported
+- Windows x64
+
+### To Be Supported
+- Windows ARM64
+- Linux
+- MacOS
+- iOS
+- Android
+- Web Assembly
+
+## Documentation
+- Getting started and setup
+- Project goal and overview
+- Architecture diagrams using mermaid diagrams
+
+## Setup
+shell folder should contain scripts to easily build, run and setup the project.
+
+### Prerequisites
+- .NET 10 SDK and runtime
+- NASM

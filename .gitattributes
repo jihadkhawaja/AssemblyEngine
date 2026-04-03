@@ -1,0 +1,33 @@
+# Auto-detect text files and normalise line endings
+* text=auto
+
+# Source code
+*.asm text eol=crlf
+*.inc text eol=crlf
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.slnx text eol=crlf
+*.def text eol=crlf
+*.html text eol=crlf
+*.css text eol=crlf
+*.json text eol=crlf
+*.md text eol=crlf
+
+# Scripts
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.sh text eol=lf
+
+# Binary assets
+*.bmp binary
+*.png binary
+*.jpg binary
+*.wav binary
+*.mp3 binary
+*.ogg binary
+*.ttf binary
+*.otf binary
+
+# Git
+*.gitignore text eol=crlf
+*.gitattributes text eol=crlf
