@@ -45,7 +45,7 @@ The game project uses the managed runtime, the runtime bridges to the native cor
 1. Install the prerequisites:
    - .NET 10 SDK and runtime
    - NASM
-   - Visual Studio 2022 or Build Tools with the Desktop development with C++ workload
+   - Visual Studio 2026 or Build Tools with the Desktop development with C++ workload
 2. Validate your local toolchain:
 
 ```powershell

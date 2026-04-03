@@ -8,7 +8,7 @@ This guide walks through the current Windows x64 setup for AssemblyEngine and ge
 - PowerShell 5.1 or later
 - .NET 10 SDK and runtime
 - NASM
-- Visual Studio 2022 or Build Tools with the Desktop development with C++ workload
+- Visual Studio 2026 or Build Tools with the Desktop development with C++ workload
 
 AssemblyEngine currently links the native core with `link.exe`, so the MSVC toolchain is required even if you primarily work from VS Code.
 
@@ -117,7 +117,7 @@ Install NASM and either add it to `PATH` or place it in one of the locations alr
 
 ### `link.exe` or the MSVC toolchain is not found
 
-Install Visual Studio 2022 or Visual Studio Build Tools with the Desktop development with C++ workload. The build scripts use `vswhere.exe` to locate the x64 linker.
+Install Visual Studio 2026 or Visual Studio Build Tools with the Desktop development with C++ workload. The build scripts use `vswhere.exe` to locate the x64 linker.
 
 ### `assemblycore.dll` is missing at runtime
 
