@@ -1,8 +1,8 @@
+using AssemblyEngine.Diagnostics;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Text.Json;
-using AssemblyEngine.Diagnostics;
 
 namespace AssemblyEngine.RuntimeMcpServer;
 

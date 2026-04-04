@@ -1,5 +1,5 @@
-using AssemblyEngine.Engine;
 using AssemblyEngine.Core;
+using AssemblyEngine.Engine;
 
 namespace SampleGame;
 
@@ -9,6 +9,8 @@ public static class Program
     {
         var settingsPath = Path.Combine(AppContext.BaseDirectory, "sample-settings.json");
         var settings = SampleSettingsStore.Load(settingsPath);
+        var audioDir = Path.Combine(AppContext.BaseDirectory, "generated-audio", "basic");
+        SampleAudioAssets.EnsureAssets(audioDir);
 
         var engine = new GameEngine(settings.Width, settings.Height, "AssemblyEngine - Dash Harvest")
         {
@@ -22,6 +24,7 @@ public static class Program
         engine.Scenes.Register("main", new MainScene());
 
         // Register game scripts
+        engine.Scripts.RegisterScript(new SampleAudioScript(audioDir));
         engine.Scripts.RegisterScript(new SettingsMenuScript(settings, settingsPath));
         engine.Scripts.RegisterScript(new GameLoopScript());
         engine.Scripts.RegisterScript(new PlayerScript());

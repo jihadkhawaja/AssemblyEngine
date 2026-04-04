@@ -51,6 +51,7 @@ internal static partial class Win32
 
     public const uint SND_ASYNC = 0x0001;
     public const uint SND_NODEFAULT = 0x0002;
+    public const uint SND_MEMORY = 0x0004;
     public const uint SND_FILENAME = 0x00020000;
 
     [StructLayout(LayoutKind.Sequential)]
@@ -229,6 +230,9 @@ internal static partial class Win32
 
     [LibraryImport("winmm", EntryPoint = "PlaySoundW", StringMarshalling = StringMarshalling.Utf16)]
     internal static partial int PlaySound(string? soundName, IntPtr module, uint flags);
+
+    [LibraryImport("winmm", EntryPoint = "PlaySoundA")]
+    internal static partial int PlaySoundMemory(IntPtr soundData, IntPtr module, uint flags);
 
     [LibraryImport("dwmapi", EntryPoint = "DwmFlush")]
     internal static partial int DwmFlush();

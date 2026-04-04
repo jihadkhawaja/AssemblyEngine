@@ -1,9 +1,9 @@
+using AssemblyEngine.Core;
+using AssemblyEngine.Engine;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Threading.Channels;
-using AssemblyEngine.Core;
-using AssemblyEngine.Engine;
 
 namespace AssemblyEngine.Diagnostics;
 

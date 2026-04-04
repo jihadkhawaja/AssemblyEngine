@@ -20,6 +20,7 @@ public sealed class PlayerScript : GameScript
     private const int BottomMargin = 72;
 
     private Entity? _player;
+    private SampleAudioScript? _audio;
     private GameLoopScript? _loop;
     private float _dashTimer;
     private float _dashCooldown;
@@ -45,6 +46,7 @@ public sealed class PlayerScript : GameScript
 
     public override void OnLoad()
     {
+        _audio = Engine.Scripts.GetScript<SampleAudioScript>();
         _loop = Engine.Scripts.GetScript<GameLoopScript>();
         ResolvePlayer(resetMotion: true);
         CenterPlayer();
@@ -80,6 +82,7 @@ public sealed class PlayerScript : GameScript
             _dashTimer = DashDuration;
             _dashCooldown = DashCooldown;
             _dashDir = velocity;
+            _audio?.PlayDash();
         }
 
         var activeVelocity = velocity;

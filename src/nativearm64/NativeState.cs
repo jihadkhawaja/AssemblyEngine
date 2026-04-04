@@ -86,6 +86,10 @@ internal unsafe sealed class EngineState
     public void ClearAssets()
     {
         Sprites.Clear();
+
+        foreach (var sound in Sounds)
+            sound.Dispose();
+
         Sounds.Clear();
     }
 }
@@ -101,5 +105,14 @@ internal sealed class SpriteAsset
 
 internal sealed class SoundAsset
 {
-    public required string Path { get; init; }
+    public required byte[] Data { get; init; }
+    public required GCHandle DataHandle { get; init; }
+
+    public IntPtr Pointer => DataHandle.AddrOfPinnedObject();
+
+    public void Dispose()
+    {
+        if (DataHandle.IsAllocated)
+            DataHandle.Free();
+    }
 }

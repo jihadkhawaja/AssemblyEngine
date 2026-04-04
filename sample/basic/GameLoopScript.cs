@@ -22,6 +22,7 @@ public sealed class GameLoopScript : GameScript
     private readonly Dictionary<int, PickupMotion> _pickups = [];
     private readonly Dictionary<int, HunterMotion> _hunters = [];
 
+    private SampleAudioScript _audio = null!;
     private MainScene _mainScene = null!;
     private PlayerScript _player = null!;
     private float _elapsed;
@@ -56,6 +57,8 @@ public sealed class GameLoopScript : GameScript
 
     public override void OnLoad()
     {
+        _audio = Engine.Scripts.GetScript<SampleAudioScript>()
+            ?? throw new InvalidOperationException("SampleAudioScript must be registered before GameLoopScript loads.");
         _mainScene = (MainScene)Scene;
         _player = Engine.Scripts.GetScript<PlayerScript>()
             ?? throw new InvalidOperationException("PlayerScript must be registered before GameLoopScript loads.");
@@ -142,6 +145,7 @@ public sealed class GameLoopScript : GameScript
                 ? "Collect sparks. Dash through hunters to score big."
                 : "Fresh sparks online. Hunters are getting faster.",
             BannerDuration);
+        _audio.PlayWaveStart();
     }
 
     private void CompleteWave()
@@ -164,6 +168,7 @@ public sealed class GameLoopScript : GameScript
                 ? "Hull topped off. Next wave lands hotter."
                 : "Hull restored by 1. Next wave lands hotter.",
             WaveClearDelay);
+        _audio.PlayWaveClear();
     }
 
     private void EndRun()
@@ -173,6 +178,7 @@ public sealed class GameLoopScript : GameScript
         _bannerTitle = "System Breach";
         _bannerSubtitle = $"Score {_player.Score} | Best {BestScore} | Press R or Enter to jump back in.";
         _bannerTimer = 0f;
+        _audio.PlayGameOver();
     }
 
     private void UpdatePickups(float deltaTime)
@@ -194,6 +200,7 @@ public sealed class GameLoopScript : GameScript
             if (collider is not null && collider.Bounds.Intersects(playerBounds))
             {
                 _player.AddScore(18 + (Wave * 4));
+                _audio.PlayPickup();
                 _pickups.Remove(pickup.Id);
                 Scene.RemoveEntity(pickup);
             }
@@ -229,6 +236,7 @@ public sealed class GameLoopScript : GameScript
             if (_player.IsDashing)
             {
                 _player.RegisterDashBreak(30 + (Wave * 6));
+                _audio.PlayDashBreak();
                 RemoveHunter(hunter);
                 continue;
             }
@@ -236,6 +244,7 @@ public sealed class GameLoopScript : GameScript
             if (_player.TryTakeHit())
             {
                 Lives--;
+                _audio.PlayHit();
                 RemoveHunter(hunter);
 
                 if (Lives <= 0)

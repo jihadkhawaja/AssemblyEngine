@@ -63,8 +63,18 @@ internal static unsafe partial class NativeExports
         if (string.IsNullOrWhiteSpace(value) || !File.Exists(value))
             return -1;
 
+        var data = File.ReadAllBytes(value);
+        if (data.Length == 0)
+            return -1;
+
+        var dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+
         var state = NativeContext.Engine;
-        state.Sounds.Add(new SoundAsset { Path = value });
+        state.Sounds.Add(new SoundAsset
+        {
+            Data = data,
+            DataHandle = dataHandle
+        });
         return state.Sounds.Count - 1;
     }
 
@@ -75,7 +85,10 @@ internal static unsafe partial class NativeExports
         if ((uint)id >= (uint)state.Sounds.Count)
             return 0;
 
-        return Win32.PlaySound(state.Sounds[id].Path, IntPtr.Zero, Win32.SND_FILENAME | Win32.SND_ASYNC | Win32.SND_NODEFAULT) != 0 ? 1 : 0;
+        return Win32.PlaySoundMemory(
+            state.Sounds[id].Pointer,
+            IntPtr.Zero,
+            Win32.SND_MEMORY | Win32.SND_ASYNC | Win32.SND_NODEFAULT) != 0 ? 1 : 0;
     }
 
     [UnmanagedCallersOnly(EntryPoint = "ae_stop_sound")]

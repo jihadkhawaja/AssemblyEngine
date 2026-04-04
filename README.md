@@ -15,7 +15,7 @@ AssemblyEngine is a 2D game engine with a native core and a C# runtime for gamep
 - Supported platforms: Windows x64, Windows ARM64
 - Native core: NASM x64 backend, NativeAOT ARM64 backend, shared Win32/software-renderer contract
 - Managed runtime: .NET 10
-- Sample game: Dash Harvest in `sample/basic`
+- Sample games: Dash Harvest in `sample/basic`, Lantern Letters in `sample/visual-novel`, both with generated 8-bit SFX
 - UI system: runtime HTML/CSS parsing with a built-in text renderer
 
 ## Project Overview
@@ -66,10 +66,22 @@ On Windows ARM64, `build.ps1` defaults to the native `arm64` backend. To build t
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -TargetArchitecture x64
 ```
 
+To publish the visual novel sample instead of Dash Harvest, pass the sample selector:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -Sample visual-novel
+```
+
 4. Run the sample:
 
 ```powershell
 .\build\output\SampleGame.exe
+```
+
+Or, after using `-Sample visual-novel`:
+
+```powershell
+.\build\output\VisualNovelSample.exe
 ```
 
 Dash Harvest controls:
@@ -78,6 +90,18 @@ Dash Harvest controls:
 - `Space` dashes
 - `R` or `Enter` restarts after game over
 - `F1` opens the display settings panel
+
+Dash Harvest now also plays generated 8-bit SFX for dashes, pickups, hits, wave transitions, and game over.
+
+Lantern Letters controls:
+
+- `Space`, `Enter`, or `Right Arrow` advance dialogue
+- `Tab` toggles skip mode
+- Hold `Shift` or `Control` to fast reveal the current line
+- `F5` saves and `F9` loads the current dialogue state
+- `Home` restarts the scene
+
+Lantern Letters also plays generated 8-bit UI and dialogue SFX for advancing text, skip toggles, save/load, restart, and chapter end.
 
 The sample persists display preferences in `sample-settings.json`. `Window mode`, `Resolution`, `VSync`, and `UI scale` all apply from the in-game settings panel, and maximize or restore events now resize the engine surface dynamically.
 
@@ -90,7 +114,7 @@ Typical runtime MCP workflow:
 - Use `get_session_status` and `wait_for_logs` to inspect runtime state and tail logs.
 - Use `capture_screenshot` to grab the current game window view and `send_key` or mouse tools to drive the game.
 
-If you prefer to iterate from an IDE, building `sample/basic/SampleGame.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build. Choose the `ARM64` solution platform to build the native ARM64 backend.
+If you prefer to iterate from an IDE, building either `sample/basic/SampleGame.csproj` or `sample/visual-novel/VisualNovelSample.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build. Choose the `ARM64` solution platform to build the native ARM64 backend.
 
 ## Minimal Example
 
@@ -158,6 +182,7 @@ public static class Program
 | `src/nativearm64` | Native ARM64 backend built as a NativeAOT shared library |
 | `src/runtime` | Managed runtime, interop layer, scene system, and UI stack |
 | `sample/basic` | Playable sample game built on top of the runtime |
+| `sample/visual-novel` | Visual novel sample with dialogue, save/load, sprites, and parallax |
 | `shell` | Build and setup scripts |
 | `docs` | Project documentation and diagrams |
 | `build/output` | Generated binaries and copied UI assets |

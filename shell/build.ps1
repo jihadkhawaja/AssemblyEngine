@@ -6,7 +6,9 @@
 # ============================================================================
 
 param(
-    [string] $TargetArchitecture
+    [string] $TargetArchitecture,
+    [ValidateSet('basic', 'visual-novel')]
+    [string] $Sample = 'basic'
 )
 
 Set-StrictMode -Version Latest
@@ -105,7 +107,6 @@ Write-Host ""
 $CoreDir    = Join-Path $PSScriptRoot "..\src\core"
 $RuntimeDir = Join-Path $PSScriptRoot "..\src\runtime"
 $McpServerDir = Join-Path $PSScriptRoot "..\src\tools\AssemblyEngine.RuntimeMcpServer"
-$SampleDir  = Join-Path $PSScriptRoot "..\sample\basic"
 $BuildDir   = Join-Path $PSScriptRoot "..\build"
 $OutDir     = Join-Path $PSScriptRoot "..\build\output"
 $McpOutDir  = Join-Path $OutDir "mcp"
@@ -117,6 +118,28 @@ $DotnetExe = Resolve-ExecutablePath -Name 'dotnet' -FallbackPaths @(
     'C:\Program Files\dotnet\dotnet.exe',
     'C:\Program Files\dotnet\x64\dotnet.exe'
 ) -HelpText '.NET 10 SDK is required to build the runtime and sample projects.'
+
+$SampleProjects = @{
+    'basic' = @{
+        Directory = Join-Path $PSScriptRoot '..\sample\basic'
+        ProjectFile = 'SampleGame.csproj'
+        AssemblyName = 'SampleGame'
+    }
+    'visual-novel' = @{
+        Directory = Join-Path $PSScriptRoot '..\sample\visual-novel'
+        ProjectFile = 'VisualNovelSample.csproj'
+        AssemblyName = 'VisualNovelSample'
+    }
+}
+
+$SelectedSample = $SampleProjects[$Sample]
+if ($null -eq $SelectedSample) {
+    throw "Unknown sample '$Sample'."
+}
+
+$SampleDir = $SelectedSample.Directory
+$SampleProject = Join-Path $SampleDir $SelectedSample.ProjectFile
+$SampleAssemblyName = $SelectedSample.AssemblyName
 
 # --- Create build directories ---
 New-Item -ItemType Directory -Path $BuildDir, $OutDir -Force | Out-Null
@@ -150,16 +173,19 @@ Write-Host "  Runtime MCP server built successfully."
 Write-Host ""
 
 # --- Step 4: Publish Sample Game ---
-Write-Host "[4/4] Publishing sample game..."
+Write-Host ("[4/4] Publishing sample '{0}'..." -f $Sample)
 $samplePlatform = if ($ResolvedTargetArchitecture -eq 'arm64') { 'ARM64' } else { 'x64' }
 $sampleRid = if ($ResolvedTargetArchitecture -eq 'arm64') { 'win-arm64' } else { 'win-x64' }
-$samplePublishArtifacts = @(
-    'SampleGame.exe',
-    'SampleGame.dll',
-    'SampleGame.pdb',
-    'SampleGame.deps.json',
-    'SampleGame.runtimeconfig.json'
-)
+$samplePublishArtifacts = @()
+foreach ($assemblyName in @('SampleGame', 'VisualNovelSample')) {
+    $samplePublishArtifacts += @(
+        ("{0}.exe" -f $assemblyName),
+        ("{0}.dll" -f $assemblyName),
+        ("{0}.pdb" -f $assemblyName),
+        ("{0}.deps.json" -f $assemblyName),
+        ("{0}.runtimeconfig.json" -f $assemblyName)
+    )
+}
 
 foreach ($artifact in $samplePublishArtifacts) {
     $artifactPath = Join-Path $OutDir $artifact
@@ -168,7 +194,7 @@ foreach ($artifact in $samplePublishArtifacts) {
     }
 }
 
-& $DotnetExe publish (Join-Path $SampleDir "SampleGame.csproj") -c Release -o $OutDir -p:Platform=$samplePlatform -p:RuntimeIdentifier=$sampleRid -p:SkipNativeCoreBuild=true
+& $DotnetExe publish $SampleProject -c Release -o $OutDir -p:Platform=$samplePlatform -p:RuntimeIdentifier=$sampleRid -p:SkipNativeCoreBuild=true
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to publish sample game."
 }
@@ -177,16 +203,20 @@ if ($LASTEXITCODE -ne 0) {
 $uiSource = Join-Path $SampleDir "ui"
 if (Test-Path $uiSource) {
     $uiDest = Join-Path $OutDir "ui"
+    if (Test-Path $uiDest) {
+        Remove-Item $uiDest -Recurse -Force
+    }
     New-Item -ItemType Directory -Path $uiDest -Force | Out-Null
     Copy-Item -Path "$uiSource\*" -Destination $uiDest -Force
 }
 
-Write-Host "  Sample game published successfully."
+Write-Host ("  Sample '{0}' published successfully." -f $Sample)
 Write-Host ""
 
 Write-Host "==================================="
 Write-Host " Build Complete!"
 Write-Host " Output: $OutDir"
-Write-Host " Run:    $OutDir\SampleGame.exe"
+Write-Host (" Sample: $Sample")
+Write-Host (" Run:    {0}\{1}.exe" -f $OutDir, $SampleAssemblyName)
 Write-Host " MCP:    $McpOutDir\AssemblyEngine.RuntimeMcpServer.exe"
 Write-Host "==================================="

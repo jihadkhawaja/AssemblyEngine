@@ -1,9 +1,9 @@
-using System.ComponentModel;
 using AssemblyEngine.Core;
 using AssemblyEngine.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using System.ComponentModel;
 
 namespace AssemblyEngine.RuntimeMcpServer.Tools;
 
