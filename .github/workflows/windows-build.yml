@@ -1,29 +1,79 @@
-name: Windows Build
+name: Windows Release
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: assemblyengine-release
+  cancel-in-progress: false
+
 jobs:
+  prepare_release:
+    name: Prepare release metadata
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      release_name: ${{ steps.tag.outputs.release_name }}
+
+    steps:
+      - name: Calculate release tag
+        id: tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const now = new Date();
+            const year = now.getUTCFullYear();
+            const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(now.getUTCDate()).padStart(2, '0');
+            const prefix = `v${year}.${month}.${day}.`;
+            const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+            const refs = await github.paginate(github.rest.git.listMatchingRefs, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `tags/${prefix}`
+            });
+
+            const sequenceNumbers = refs
+              .map(({ ref }) => ref.replace('refs/tags/', ''))
+              .map((tag) => {
+                const match = tag.match(new RegExp(`^${escapedPrefix}(\\d+)$`));
+                return match ? Number.parseInt(match[1], 10) : 0;
+              })
+              .filter((value) => Number.isInteger(value) && value > 0);
+
+            const nextSequence = sequenceNumbers.length === 0
+              ? 1
+              : Math.max(...sequenceNumbers) + 1;
+
+            const tag = `${prefix}${nextSequence}`;
+
+            core.info(`Next release tag: ${tag}`);
+            core.setOutput('tag', tag);
+            core.setOutput('release_name', `AssemblyEngine ${tag}`);
+
   build:
     name: ${{ matrix.name }}
+    needs: prepare_release
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Build x64
+          - name: Build Windows x64
             runner: windows-latest
             target: x64
-            artifact: windows-x64-build
+            artifact: windows-x64-release
+            asset_suffix: windows-x64
             installNasm: true
-          - name: Build ARM64
+          - name: Build Windows ARM64
             runner: windows-11-arm
             target: arm64
-            artifact: windows-arm64-build
+            artifact: windows-arm64-release
+            asset_suffix: windows-arm64
             installNasm: false
 
     steps:
@@ -48,8 +98,52 @@ jobs:
         shell: pwsh
         run: .\shell\build.ps1 -TargetArchitecture ${{ matrix.target }}
 
-      - name: Upload build output
+      - name: Package binaries
+        id: package
+        shell: pwsh
+        run: |
+          $assetName = "AssemblyEngine-${{ needs.prepare_release.outputs.tag }}-${{ matrix.asset_suffix }}.zip"
+          $assetPath = Join-Path $env:GITHUB_WORKSPACE $assetName
+          $sourcePath = Join-Path $env:GITHUB_WORKSPACE 'build\output\*'
+
+          if (Test-Path $assetPath) {
+            Remove-Item $assetPath -Force
+          }
+
+          Compress-Archive -Path $sourcePath -DestinationPath $assetPath
+
+          "asset_path=$assetPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Upload packaged binaries
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: build/output/
+          path: ${{ steps.package.outputs.asset_path }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub release
+    needs:
+      - prepare_release
+      - build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Create release and upload assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NAME: ${{ needs.prepare_release.outputs.release_name }}
+          RELEASE_TAG: ${{ needs.prepare_release.outputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            release-assets/windows-x64-release/*.zip \
+            release-assets/windows-arm64-release/*.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "$RELEASE_NAME" \
+            --generate-notes

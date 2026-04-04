@@ -19,6 +19,7 @@ Platforms that the engine can run on.
 - Getting started and setup
 - Project goal and overview
 - Architecture diagrams using mermaid diagrams
+- Documentations and samples should be always updated with current implementations
 
 ## Setup
 shell folder should contain scripts to easily build, run and setup the project.

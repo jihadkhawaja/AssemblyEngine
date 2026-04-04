@@ -4,7 +4,7 @@ AssemblyEngine is a 2D game engine with a native core and a C# runtime for gamep
 
 ## Why AssemblyEngine
 
-- **Assembly is the language of AI**: Let the AI handle the gritty, low-level details of CPU registers, memory management, and platform APIs. It thrives in the exactness of the depths, freeing you to speak the expressive, high-level language of creative game design!
+- **Assembly is the language of AI**, Let the AI handle the gritty, low-level details of CPU registers, memory management, and platform APIs. It thrives in the exactness of the depths, freeing you to speak the expressive, high-level language of creative game design!
 - Explore a readable low-level engine architecture without hiding the core behind a large native framework.
 - Keep gameplay code approachable in C# while the renderer, platform layer, input, timing, audio, and memory live in NASM.
 - Use simple HTML/CSS for in-game overlays instead of a separate browser process or a custom widget toolkit.
