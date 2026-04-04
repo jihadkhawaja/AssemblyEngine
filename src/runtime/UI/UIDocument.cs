@@ -8,6 +8,7 @@ public sealed class UIDocument
 {
     public UIElement Root { get; }
     public Dictionary<string, UIStyle> Styles { get; }
+    public float RenderScale { get; set; } = 1f;
 
     private UIDocument(UIElement root, Dictionary<string, UIStyle> styles)
     {
@@ -46,7 +47,7 @@ public sealed class UIDocument
     public void Render(int viewportWidth, int viewportHeight)
     {
         UILayoutEngine.Layout(Root, 0, 0, viewportWidth, viewportHeight);
-        UIRenderer.Render(Root);
+        UIRenderer.Render(Root, RenderScale);
     }
 
     private void ApplyStyles(UIElement element)

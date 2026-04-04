@@ -4,7 +4,7 @@ AssemblyEngine is intentionally small and readable. Contributions should preserv
 
 ## Before You Start
 
-- Work on Windows x64 for now. That is the only supported runtime target today.
+- The native runtime targets are Windows x64 and Windows ARM64 today. The x64 path is still NASM-based, and the ARM64 path is built from the NativeAOT backend.
 - Run the setup check before your first build:
 
 ```powershell
@@ -44,6 +44,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1
 ## Pull Request Checklist
 
 - The project still builds on Windows x64.
+- The project still builds on Windows ARM64.
 - The sample game still runs.
 - Documentation has been updated for any user-facing or contributor-facing change.
 - New features include at least one usage example in code or documentation.
@@ -60,7 +61,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1
 ## Questions to Ask Before Adding a Feature
 
 - Does the feature belong in the native core or the managed runtime?
-- Does it fit the current Windows x64-first milestone?
+- Does it fit the current Windows x64-first milestone while preserving parity with the Windows ARM64 backend?
 - Does it make the engine easier to understand and extend?
 - Does it need a sample or documentation update to stay discoverable?
 

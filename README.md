@@ -1,9 +1,10 @@
 # AssemblyEngine
 
-AssemblyEngine is a 2D game engine that keeps its native hot path in x86-64 assembly while exposing a C# runtime for gameplay code, scenes, components, and UI workflows. The current implementation targets Windows x64 and uses HTML/CSS files for HUD and overlay rendering.
+AssemblyEngine is a 2D game engine with a native core and a C# runtime for gameplay code, scenes, components, and UI workflows. The current implementation targets Windows x64 and Windows ARM64, and uses HTML/CSS files for HUD and overlay rendering.
 
 ## Why AssemblyEngine
 
+- **Assembly is the language of AI**: Let the AI handle the gritty, low-level details of CPU registers, memory management, and platform APIs. It thrives in the exactness of the depths, freeing you to speak the expressive, high-level language of creative game design!
 - Explore a readable low-level engine architecture without hiding the core behind a large native framework.
 - Keep gameplay code approachable in C# while the renderer, platform layer, input, timing, audio, and memory live in NASM.
 - Use simple HTML/CSS for in-game overlays instead of a separate browser process or a custom widget toolkit.
@@ -11,8 +12,8 @@ AssemblyEngine is a 2D game engine that keeps its native hot path in x86-64 asse
 
 ## Current Status
 
-- Supported platform: Windows x64
-- Native core: NASM + Win32 + software framebuffer renderer
+- Supported platforms: Windows x64, Windows ARM64
+- Native core: NASM x64 backend, NativeAOT ARM64 backend, shared Win32/software-renderer contract
 - Managed runtime: .NET 10
 - Sample game: Dash Harvest in `sample/basic`
 - UI system: runtime HTML/CSS parsing with a built-in text renderer
@@ -33,7 +34,7 @@ The game project uses the managed runtime, the runtime bridges to the native cor
 
 ## What You Can Build Today
 
-- Windowed 2D applications on Windows x64
+- Resizable 2D applications on Windows x64 and Windows ARM64 with windowed, maximized, and borderless fullscreen presentation modes
 - Immediate-mode style drawing via pixel, line, rectangle, and circle primitives
 - BMP sprite loading and drawing
 - WAV audio playback
@@ -44,8 +45,9 @@ The game project uses the managed runtime, the runtime bridges to the native cor
 
 1. Install the prerequisites:
    - .NET 10 SDK and runtime
-   - NASM
    - Visual Studio 2026 or Build Tools with the Desktop development with C++ workload
+	- NASM if you want to build the x64 assembly backend
+	- On Windows ARM64, install the x64 .NET runtime or SDK as well if you also want to run the win-x64 compatibility build
 2. Validate your local toolchain:
 
 ```powershell
@@ -56,6 +58,12 @@ The game project uses the managed runtime, the runtime bridges to the native cor
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1
+```
+
+On Windows ARM64, `build.ps1` defaults to the native `arm64` backend. To build the compatibility x64 backend explicitly, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -TargetArchitecture x64
 ```
 
 4. Run the sample:
@@ -69,8 +77,11 @@ Dash Harvest controls:
 - `WASD` or arrow keys move
 - `Space` dashes
 - `R` or `Enter` restarts after game over
+- `F1` opens the display settings panel
 
-If you prefer to iterate from an IDE, building `sample/basic/SampleGame.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build.
+The sample persists display preferences in `sample-settings.json`. `Window mode`, `Resolution`, `VSync`, and `UI scale` all apply from the in-game settings panel, and maximize or restore events now resize the engine surface dynamically.
+
+If you prefer to iterate from an IDE, building `sample/basic/SampleGame.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build. Choose the `ARM64` solution platform to build the native ARM64 backend.
 
 ## Minimal Example
 
@@ -135,6 +146,7 @@ public static class Program
 | Path | Purpose |
 | --- | --- |
 | `src/core` | Native engine core written in NASM |
+| `src/nativearm64` | Native ARM64 backend built as a NativeAOT shared library |
 | `src/runtime` | Managed runtime, interop layer, scene system, and UI stack |
 | `sample/basic` | Playable sample game built on top of the runtime |
 | `shell` | Build and setup scripts |
@@ -154,13 +166,13 @@ public static class Program
 Near-term priorities:
 
 - Stabilize the Windows x64 runtime and native API surface
+- Keep the Windows ARM64 backend aligned with the x64 native contract
 - Expand the managed wrappers around the native exports
 - Improve the asset and tooling story around sprites, audio, and UI
 - Keep the architecture readable and easy to extend
 
 Longer-term platform targets:
 
-- Windows ARM64
 - Linux
 - macOS
 - iOS

@@ -12,6 +12,8 @@ public sealed class HudScript : GameScript
     {
         var loop = Engine.Scripts.GetScript<GameLoopScript>();
         var player = Engine.Scripts.GetScript<PlayerScript>();
+        var settings = Engine.Scripts.GetScript<SettingsMenuScript>();
+        var settingsOpen = settings?.IsOpen == true;
 
         if (Engine.UI is not null)
         {
@@ -28,12 +30,14 @@ public sealed class HudScript : GameScript
             Engine.UI.UpdateText("objective", loop?.ObjectiveText ?? "Collect sparks.");
             Engine.UI.UpdateText(
                 "hint",
-                loop?.GameOver == true
+                settingsOpen
+                    ? "Settings: Up/Down select | Left/Right change | Esc or F1 close."
+                    : loop?.GameOver == true
                     ? "Press R or Enter to restart the run."
-                    : $"Combo x{player?.Combo ?? 0} | Space smashes hunters while dashing.");
+                    : $"Combo x{player?.Combo ?? 0} | Space smashes hunters while dashing. | F1 settings.");
             Engine.UI.UpdateText("message-title", loop?.BannerTitle ?? string.Empty);
             Engine.UI.UpdateText("message-subtitle", loop?.BannerSubtitle ?? string.Empty);
-            Engine.UI.SetVisible("center-message", loop?.ShowBanner == true);
+            Engine.UI.SetVisible("center-message", loop?.ShowBanner == true && !settingsOpen);
             return;
         }
 

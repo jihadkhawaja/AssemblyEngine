@@ -5,9 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyName>AssemblyEngine.Runtime</AssemblyName>
-    <RootNamespace>AssemblyEngine</RootNamespace>
-    <Platforms>AnyCPU;x64;ARM64</Platforms>
+    <PublishAot>true</PublishAot>
+    <NativeLib>Shared</NativeLib>
+    <AssemblyName>assemblycore</AssemblyName>
+    <RootNamespace>AssemblyEngine.NativeArm64</RootNamespace>
+    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
 </Project>

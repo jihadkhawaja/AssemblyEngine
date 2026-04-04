@@ -60,15 +60,15 @@ public static class UIRenderer
         ['|'] = new byte[] { 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04 },
     };
 
-    public static void Render(UIElement element)
+    public static void Render(UIElement element, float scale = 1f)
     {
         var style = element.ComputedStyle;
         if (!style.Visible || style.Display == "none") return;
 
-        int x = element.LayoutX;
-        int y = element.LayoutY;
-        int w = element.LayoutWidth;
-        int h = element.LayoutHeight;
+        int x = ScaleValue(element.LayoutX, scale);
+        int y = ScaleValue(element.LayoutY, scale);
+        int w = ScaleValue(element.LayoutWidth, scale);
+        int h = ScaleValue(element.LayoutHeight, scale);
 
         // Background
         if (style.BackgroundColor.A > 0 && w > 0 && h > 0)
@@ -78,7 +78,7 @@ public static class UIRenderer
         if (style.BorderWidth > 0 && style.BorderColor.A > 0 && w > 0 && h > 0)
         {
             var bc = style.BorderColor;
-            int bw = style.BorderWidth;
+            int bw = Math.Max(1, ScaleValue(style.BorderWidth, scale));
             // Top
             Graphics.DrawFilledRect(x, y, w, bw, bc);
             // Bottom
@@ -94,12 +94,17 @@ public static class UIRenderer
         {
             DrawText(element.Text, x, y,
                 element.Parent?.ComputedStyle.TextColor ?? Color.White,
-                element.Parent?.ComputedStyle.FontSize ?? 16);
+                ScaleValue(element.Parent?.ComputedStyle.FontSize ?? 16, scale));
         }
 
         // Children
         foreach (var child in element.Children)
-            Render(child);
+            Render(child, scale);
+    }
+
+    private static int ScaleValue(int value, float scale)
+    {
+        return scale == 1f ? value : (int)MathF.Round(value * scale);
     }
 
     private static void DrawText(string text, int x, int y, Color color, int fontSize)

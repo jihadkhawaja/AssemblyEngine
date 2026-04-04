@@ -65,6 +65,9 @@ public sealed class GameLoopScript : GameScript
 
     public override void OnUpdate(float deltaTime)
     {
+        if (Engine.Scripts.GetScript<SettingsMenuScript>()?.IsOpen == true)
+            return;
+
         if (_bannerTimer > 0f && !GameOver)
             _bannerTimer = Math.Max(0f, _bannerTimer - deltaTime);
 

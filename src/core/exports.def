@@ -5,6 +5,12 @@ EXPORTS
     ae_shutdown
     ae_poll_events
     ae_present
+    ae_set_vsync_enabled
+    ae_resize_window
+    ae_set_window_mode
+    ae_get_window_mode
+    ae_get_window_width
+    ae_get_window_height
 
     ; Renderer
     ae_clear

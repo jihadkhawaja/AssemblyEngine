@@ -7,15 +7,22 @@ public static class Program
 {
     public static void Main()
     {
-        var engine = new GameEngine(800, 600, "AssemblyEngine - Dash Harvest")
+        var settingsPath = Path.Combine(AppContext.BaseDirectory, "sample-settings.json");
+        var settings = SampleSettingsStore.Load(settingsPath);
+
+        var engine = new GameEngine(settings.Width, settings.Height, "AssemblyEngine - Dash Harvest")
         {
-            ClearColor = new Color(5, 10, 18)
+            ClearColor = new Color(5, 10, 18),
+            UiScale = settings.UiScale,
+            VSyncEnabled = settings.VSyncEnabled
         };
+        engine.SetWindowMode(settings.WindowMode);
 
         // Register scenes
         engine.Scenes.Register("main", new MainScene());
 
         // Register game scripts
+        engine.Scripts.RegisterScript(new SettingsMenuScript(settings, settingsPath));
         engine.Scripts.RegisterScript(new GameLoopScript());
         engine.Scripts.RegisterScript(new PlayerScript());
         engine.Scripts.RegisterScript(new HudScript());

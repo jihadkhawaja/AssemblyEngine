@@ -1,14 +1,20 @@
 using System.Runtime.InteropServices;
+using AssemblyEngine.Platform;
 
 namespace AssemblyEngine.Interop;
 
 /// <summary>
-/// P/Invoke bindings to the native assembly engine core (assemblycore.dll).
-/// All functions use the C calling convention (Win64 ABI).
+/// P/Invoke bindings to the native engine core entry points exported by assemblycore.
+/// The managed platform layer is responsible for any OS-specific translation above this boundary.
 /// </summary>
 internal static partial class NativeCore
 {
     private const string DllName = "assemblycore";
+
+    static NativeCore()
+    {
+        NativeLibraryBootstrap.EnsureInitialized(typeof(NativeCore).Assembly);
+    }
 
     // --- Platform ---
     [LibraryImport(DllName, EntryPoint = "ae_init", StringMarshalling = StringMarshalling.Utf8)]
@@ -22,6 +28,24 @@ internal static partial class NativeCore
 
     [LibraryImport(DllName, EntryPoint = "ae_present")]
     internal static partial void Present();
+
+    [LibraryImport(DllName, EntryPoint = "ae_set_vsync_enabled")]
+    internal static partial void SetVSyncEnabled(int enabled);
+
+    [LibraryImport(DllName, EntryPoint = "ae_resize_window")]
+    internal static partial int ResizeWindow(int width, int height);
+
+    [LibraryImport(DllName, EntryPoint = "ae_set_window_mode")]
+    internal static partial int SetWindowMode(int windowMode);
+
+    [LibraryImport(DllName, EntryPoint = "ae_get_window_mode")]
+    internal static partial int GetWindowMode();
+
+    [LibraryImport(DllName, EntryPoint = "ae_get_window_width")]
+    internal static partial int GetWindowWidth();
+
+    [LibraryImport(DllName, EntryPoint = "ae_get_window_height")]
+    internal static partial int GetWindowHeight();
 
     // --- Renderer ---
     [LibraryImport(DllName, EntryPoint = "ae_clear")]

@@ -6,9 +6,9 @@ Platforms that the engine can run on.
 
 ### Currently supported
 - Windows x64
+- Windows ARM64
 
 ### To Be Supported
-- Windows ARM64
 - Linux
 - MacOS
 - iOS

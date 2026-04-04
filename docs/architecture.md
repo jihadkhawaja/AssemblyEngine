@@ -1,6 +1,6 @@
 # Architecture
 
-AssemblyEngine is split into three layers: a native assembly core, a managed runtime, and one or more game projects built on top of the runtime.
+AssemblyEngine is split into three layers: a native core, a managed runtime, and one or more game projects built on top of the runtime.
 
 ## Layered Overview
 
@@ -14,13 +14,14 @@ flowchart TB
 
 ## Native Core
 
-The native core lives in `src/core` and is built into `assemblycore.dll`. It owns the window, the software framebuffer, input state, timing, audio buffers, and the arena allocator.
+The native core is built into `assemblycore.dll`. It owns the window, the software framebuffer, input state, timing, audio buffers, and the arena allocator.
 
 ### Native Modules
 
 | File | Responsibility |
 | --- | --- |
 | `platform_win64.asm` | Window creation, message pump, framebuffer present, engine lifetime |
+| `src/nativearm64/Platform/Windows/*` | ARM64-native window, backbuffer, and display management on Windows |
 | `renderer.asm` | Clear, pixel, line, rectangle, and circle drawing |
 | `sprite.asm` | BMP sprite loading and drawing |
 | `input.asm` | Keyboard and mouse queries |
@@ -28,9 +29,9 @@ The native core lives in `src/core` and is built into `assemblycore.dll`. It own
 | `timer.asm` | `QueryPerformanceCounter` timing and FPS |
 | `memory.asm` | Arena allocation and reset |
 | `math.asm` | Utility math exports |
-| `include/engine_state.inc` | Shared global engine state layout |
+| `src/nativearm64/*` | Native ARM64 backend that preserves the same export surface with a NativeAOT implementation |
 
-The assembly side uses a shared `g_engine` state structure so the platform, renderer, input, timing, and memory modules can cooperate without an extra abstraction layer.
+The x64 assembly side uses a shared `g_engine` state structure so the platform, renderer, input, timing, and memory modules can cooperate without an extra abstraction layer. The ARM64 backend keeps the same exported API but implements it in a NativeAOT shared library so the managed runtime can stay architecture-neutral.
 
 ## Managed Runtime
 
@@ -41,12 +42,13 @@ The managed runtime lives in `src/runtime` and acts as the developer-facing API.
 | Folder | Responsibility |
 | --- | --- |
 | `Interop` | P/Invoke bindings into `assemblycore.dll` |
+| `Platform` | Runtime platform boundary for OS-specific input translation, native library resolution, and native-core diagnostics |
 | `Core` | High-level drawing, input, audio, time, and primitive types |
 | `Engine` | `GameEngine`, scenes, entities, and components |
 | `Scripting` | `GameScript` base class and script registration/loading |
 | `UI` | HTML parsing, CSS parsing, layout, and rendering |
 
-The runtime deliberately keeps game code away from raw P/Invoke. The usual extension path is: native export -> interop binding -> managed wrapper -> gameplay usage.
+The runtime deliberately keeps game code away from raw P/Invoke. The usual extension path is: native export -> interop binding -> platform translation when needed -> managed wrapper -> gameplay usage. The platform layer now also owns native library resolution so platform-specific library layout does not leak into gameplay-facing code.
 
 ## Frame Lifecycle
 
@@ -100,7 +102,8 @@ This split allows scene content and game rules to stay in C# even though the win
 - Rendering is software-based, not GPU-accelerated.
 - Sprite loading is currently BMP-oriented.
 - Audio playback is currently WAV-oriented.
-- The engine targets Windows x64 only today.
+- The engine currently ships two Windows-native backends: x64 NASM and ARM64 NativeAOT.
+- The runtime loads whichever `assemblycore.dll` matches the current process architecture.
 - The runtime wraps the most important native exports first and can grow as new capabilities are needed.
 
 For extension guidance, continue with [implementation-guide.md](implementation-guide.md).

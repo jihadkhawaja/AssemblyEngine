@@ -19,6 +19,13 @@ struc EngineState
     .height         resd 1          ; Framebuffer height
     .stride         resd 1          ; Bytes per row (width * 4)
     .running        resd 1          ; 1 = engine running, 0 = quit
+    .vsync_enabled  resd 1          ; 1 = sync present with compositor, 0 = no sync
+    .window_mode    resd 1          ; 0 = windowed, 1 = maximized, 2 = borderless fullscreen
+    .restore_valid  resd 1          ; 1 = restore rect captured for borderless fullscreen
+    .restore_left   resd 1          ; Stored window left for borderless restore
+    .restore_top    resd 1          ; Stored window top for borderless restore
+    .restore_right  resd 1          ; Stored window right for borderless restore
+    .restore_bottom resd 1          ; Stored window bottom for borderless restore
 
     ; --- Input State ---
     .keys           resb 256        ; Current frame key states

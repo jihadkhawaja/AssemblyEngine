@@ -30,7 +30,12 @@ extern ReleaseDC
 extern LoadCursorA
 extern SetWindowTextA
 extern GetClientRect
+extern GetWindowRect
 extern AdjustWindowRectEx
+extern SetWindowPos
+extern GetWindowLongPtrA
+extern SetWindowLongPtrA
+extern GetSystemMetrics
 extern InvalidateRect
 
 ; --- gdi32.dll ---
@@ -51,3 +56,6 @@ extern waveOutClose
 extern waveOutPrepareHeader
 extern waveOutUnprepareHeader
 extern waveOutReset
+
+; --- dwmapi.dll ---
+extern DwmFlush

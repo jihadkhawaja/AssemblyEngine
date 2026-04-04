@@ -1,0 +1,55 @@
+name: Windows Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Build x64
+            runner: windows-latest
+            target: x64
+            artifact: windows-x64-build
+            installNasm: true
+          - name: Build ARM64
+            runner: windows-11-arm
+            target: arm64
+            artifact: windows-arm64-build
+            installNasm: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install NASM
+        if: ${{ matrix.installNasm }}
+        shell: pwsh
+        run: choco install nasm --yes --no-progress
+
+      - name: Validate toolchain
+        shell: pwsh
+        run: .\setup.ps1 -TargetArchitecture ${{ matrix.target }}
+
+      - name: Build engine and sample
+        shell: pwsh
+        run: .\shell\build.ps1 -TargetArchitecture ${{ matrix.target }}
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: build/output/

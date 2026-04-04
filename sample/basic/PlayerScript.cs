@@ -47,11 +47,16 @@ public sealed class PlayerScript : GameScript
     {
         _loop = Engine.Scripts.GetScript<GameLoopScript>();
         ResolvePlayer(resetMotion: true);
+        CenterPlayer();
     }
 
     public override void OnUpdate(float deltaTime)
     {
         ResolvePlayer();
+
+        if (Engine.Scripts.GetScript<SettingsMenuScript>()?.IsOpen == true)
+            return;
+
         UpdateTimers(deltaTime);
 
         if (_player is null || _loop?.GameOver == true)
@@ -100,6 +105,7 @@ public sealed class PlayerScript : GameScript
         _comboTimer = 0f;
         ResetMotion();
         ResolvePlayer(resetMotion: true);
+        CenterPlayer();
     }
 
     public void BeginWave()
@@ -108,6 +114,7 @@ public sealed class PlayerScript : GameScript
         _comboTimer = 0f;
         ResetMotion();
         ResolvePlayer(resetMotion: true);
+        CenterPlayer();
     }
 
     public void AddScore(int amount) => Score += amount;
@@ -234,5 +241,15 @@ public sealed class PlayerScript : GameScript
         _dashCooldown = 0f;
         _hurtTimer = 0f;
         _dashDir = Vector2.Zero;
+    }
+
+    private void CenterPlayer()
+    {
+        if (_player is null)
+            return;
+
+        _player.Position = new Vector2(
+            (Engine.Width - PlayerSize) / 2f,
+            (Engine.Height - PlayerSize) / 2f);
     }
 }

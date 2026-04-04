@@ -10,13 +10,20 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AssemblyName>SampleGame</AssemblyName>
     <RootNamespace>SampleGame</RootNamespace>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>AnyCPU;x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)' == 'ARM64'">
+    <PlatformTarget>ARM64</PlatformTarget>
+    <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
   </PropertyGroup>
 
   <PropertyGroup>
     <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\'))</RepoRoot>
     <NativeBuildScript>$(RepoRoot)shell\build_core.ps1</NativeBuildScript>
-    <NativeCoreDll>$(RepoRoot)build\output\assemblycore.dll</NativeCoreDll>
+    <NativeTargetArchitecture Condition="'$(PlatformTarget)' == 'ARM64' or '$(RuntimeIdentifier)' == 'win-arm64'">arm64</NativeTargetArchitecture>
+    <NativeTargetArchitecture Condition="'$(NativeTargetArchitecture)' == ''">x64</NativeTargetArchitecture>
+    <NativeCoreDll>$(RepoRoot)build\output\native\$(NativeTargetArchitecture)\assemblycore.dll</NativeCoreDll>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,10 +34,13 @@
     <None Update="ui\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="sample-settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
-  <Target Name="BuildNativeCore" BeforeTargets="BeforeBuild" Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true'">
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(NativeBuildScript)&quot;" />
+  <Target Name="BuildNativeCore" BeforeTargets="BeforeBuild" Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true' and '$(SkipNativeCoreBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(NativeBuildScript)&quot; -TargetArchitecture $(NativeTargetArchitecture)" />
   </Target>
 
   <Target Name="CopyNativeCoreToOutput" BeforeTargets="CopyFilesToOutputDirectory" Condition="Exists('$(NativeCoreDll)')">

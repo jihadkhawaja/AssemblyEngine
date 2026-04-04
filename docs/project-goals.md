@@ -8,11 +8,11 @@ AssemblyEngine is not trying to become a giant engine overnight. The current goa
 - Keep gameplay scripting and scene composition simple in C#
 - Support in-game UI with HTML/CSS instead of a separate browser runtime
 - Maintain a codebase that is easy to inspect, document, and extend
-- Grow toward multi-platform support from a stable Windows x64 foundation
+- Grow toward multi-platform support from a stable Windows x64 foundation while keeping the Windows ARM64 backend aligned with the same managed contract
 
 ## Current Milestone
 
-The current milestone is a solid Windows x64 vertical slice that includes:
+The current milestone is a solid Windows x64 vertical slice with a matching Windows ARM64 backend that preserves the same managed API surface. It includes:
 
 - Window creation and event processing
 - Software rendering primitives
@@ -27,13 +27,13 @@ The current milestone is a solid Windows x64 vertical slice that includes:
 
 ```mermaid
 flowchart LR
-    Today[Windows x64 today] --> Next[Additional platforms over time]
+    Today[Windows x64 + ARM64 today] --> Next[Additional native platforms over time]
     Next --> Desktop[Desktop targets]
     Next --> Mobile[Mobile targets]
     Next --> Web[Web target]
 ```
 
-Windows x64 remains the delivery focus until the native/runtime contract is stable enough to justify additional platform layers.
+Windows x64 remains the delivery focus until the native/runtime contract is stable enough to justify additional native platform layers.
 
 ## Near-Term Goals
 

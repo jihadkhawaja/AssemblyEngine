@@ -18,8 +18,11 @@
 
 ; --- Window Style ---
 %define WS_OVERLAPPEDWINDOW 0x00CF0000
+%define WS_POPUP            0x80000000
 %define WS_VISIBLE          0x10000000
 %define WS_EX_APPWINDOW     0x00040000
+%define GWL_STYLE           -16
+%define GWL_EXSTYLE         -20
 
 ; --- Window Messages ---
 %define WM_DESTROY          0x0002
@@ -36,6 +39,9 @@
 %define WM_RBUTTONUP        0x0205
 %define WM_MBUTTONDOWN      0x0207
 %define WM_MBUTTONUP        0x0208
+%define SIZE_RESTORED       0
+%define SIZE_MINIMIZED      1
+%define SIZE_MAXIMIZED      2
 
 ; --- Virtual Key Codes ---
 %define VK_ESCAPE           0x1B
@@ -50,14 +56,32 @@
 %define DIB_RGB_COLORS      0
 
 ; --- ShowWindow Commands ---
+%define SW_SHOWMAXIMIZED    3
 %define SW_SHOW             5
+%define SW_RESTORE          9
 %define SW_SHOWDEFAULT      10
+
+; --- SetWindowPos Flags ---
+%define SWP_NOSIZE          0x0001
+%define SWP_NOMOVE          0x0002
+%define SWP_NOZORDER        0x0004
+%define SWP_NOACTIVATE      0x0010
+%define SWP_FRAMECHANGED    0x0020
 
 ; --- PeekMessage Flags ---
 %define PM_REMOVE           0x0001
 
 ; --- Cursor ---
 %define IDC_ARROW           32512
+
+; --- System Metrics ---
+%define SM_CXSCREEN         0
+%define SM_CYSCREEN         1
+
+; --- Window Modes ---
+%define AE_WINDOWMODE_WINDOWED               0
+%define AE_WINDOWMODE_MAXIMIZED             1
+%define AE_WINDOWMODE_BORDERLESS_FULLSCREEN 2
 
 ; --- Memory ---
 %define PAGE_READWRITE      0x04
