@@ -30,7 +30,7 @@ dotnet build .\src\tools\AssemblyEngine.RuntimeMcpServer\AssemblyEngine.RuntimeM
 
 ## Run As An MCP Server
 
-Use the built apphost or `dotnet` with the project file. A typical client configuration looks like this:
+Use the built apphost or `dotnet` with the project file. For current VS Code builds, put this in `.vscode/mcp.json` so the workspace server is auto-discovered:
 
 ```json
 {
@@ -38,7 +38,7 @@ Use the built apphost or `dotnet` with the project file. A typical client config
     "assemblyengine-runtime": {
       "type": "stdio",
       "command": "dotnet",
-      "cwd": "${workspaceFolder:AssemblyEngine}",
+      "cwd": "${workspaceFolder}",
       "args": [
         "run",
         "--project",
@@ -50,6 +50,8 @@ Use the built apphost or `dotnet` with the project file. A typical client config
   }
 }
 ```
+
+Older workspace-setting-based MCP examples are no longer auto-discovered by VS Code. If you previously stored the server under the `mcp` section of `AssemblyEngine.code-workspace`, move it to `.vscode/mcp.json`.
 
 If you prefer the built executable, the default path after `shell/build.ps1` is `build/output/mcp/AssemblyEngine.RuntimeMcpServer.exe`.
 
