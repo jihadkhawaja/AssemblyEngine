@@ -20,7 +20,7 @@ That sequence keeps the engine understandable. Avoid adding a native feature wit
 ### Native core responsibilities
 
 - Create and own the Win32 window
-- Maintain the framebuffer
+- Maintain the fallback framebuffer and present path
 - Process input state
 - Track delta time and FPS
 - Manage native memory with a simple arena allocator
@@ -30,10 +30,23 @@ That sequence keeps the engine understandable. Avoid adding a native feature wit
 ### Managed runtime responsibilities
 
 - Provide developer-friendly APIs over the native exports
+- Own the unified managed color/depth render surface used by both 2D and 3D draw calls
+- Present that surface through Vulkan when available, or upload it to the native framebuffer when Vulkan is unavailable
 - Coordinate scenes and scripts
 - Define entities and components
 - Parse HTML and CSS for UI overlays
 - Render UI with the same graphics surface used by gameplay code
+
+## Unified Rendering Pipeline
+
+The renderer is now intentionally centralized in the managed runtime.
+
+- `Graphics` routes 2D primitives, sprites, meshes, and cubes into one managed render surface.
+- The render surface keeps both a color buffer and a depth buffer so 3D geometry can share the same final frame as 2D gameplay and UI.
+- When requested, the runtime tries to present that surface through a Vulkan swapchain.
+- If Vulkan cannot be initialized, the runtime emits a warning and presents the same framebuffer through the managed or native software path instead.
+
+That keeps 2D and 3D unified at the frame level instead of creating separate renderers with different presentation behavior.
 
 ## Adding a New Native Feature
 
@@ -179,6 +192,46 @@ engine.Scripts.RegisterScript(new ArenaScript());
 engine.Scenes.LoadScene("arena");
 ```
 
+## Adding 3D Content
+
+Use the same `Graphics` surface and scene/script model for 3D work. The minimal camera + cube path looks like this:
+
+```csharp
+using AssemblyEngine.Core;
+using AssemblyEngine.Rendering;
+using AssemblyEngine.Scripting;
+using Matrix4x4 = System.Numerics.Matrix4x4;
+using Vector3 = System.Numerics.Vector3;
+
+public sealed class CubeScript : GameScript
+{
+    private float _elapsed;
+
+    public override void OnUpdate(float deltaTime)
+    {
+        _elapsed += deltaTime;
+    }
+
+    public override void OnDraw()
+    {
+        Graphics.SetCamera(new Camera3D
+        {
+            Position = new Vector3(0f, 0f, 4f),
+            Target = Vector3.Zero
+        });
+
+        var transform =
+            Matrix4x4.CreateScale(1.2f) *
+            Matrix4x4.CreateFromYawPitchRoll(_elapsed, _elapsed * 0.6f, 0f);
+
+        Graphics.DrawCube(transform, new Color(72, 156, 255, 190));
+        Graphics.ResetCamera();
+    }
+}
+```
+
+If you add a new 3D primitive or camera helper, keep it on the same `Graphics` surface instead of introducing a separate 3D-specific frame loop.
+
 ## Adding a UI Overlay
 
 The current UI system is best used for HUDs, counters, menus, and centered overlays.
@@ -216,7 +269,7 @@ If you add a new UI capability, document the supported HTML or CSS behavior beca
 
 | Feature type | Best home |
 | --- | --- |
-| New draw primitive | `src/core/renderer.asm` + `src/runtime/Core/Graphics.cs` |
+| New draw primitive or 3D helper | `src/runtime/Rendering` + `src/runtime/Core/Graphics.cs` |
 | New input query | `src/core/input.asm` + `src/runtime/Core/InputSystem.cs` |
 | New audio capability | `src/core/audio.asm` + `src/runtime/Core/Audio.cs` |
 | New scene behavior | `src/runtime/Engine` or a game project |

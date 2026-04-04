@@ -14,10 +14,11 @@ public sealed class HudScript : GameScript
         var player = Engine.Scripts.GetScript<PlayerScript>();
         var settings = Engine.Scripts.GetScript<SettingsMenuScript>();
         var settingsOpen = settings?.IsOpen == true;
+        var backendLabel = Graphics.Backend == GraphicsBackend.Vulkan ? "Vulkan" : "Software";
 
         if (Engine.UI is not null)
         {
-            Engine.UI.UpdateText("fps-counter", $"FPS {Fps}");
+            Engine.UI.UpdateText("fps-counter", $"FPS {Fps} | {backendLabel}");
             Engine.UI.UpdateText("score", $"Score {player?.Score ?? 0}");
             Engine.UI.UpdateText("wave", $"Wave {loop?.Wave ?? 0}");
             Engine.UI.UpdateText("lives", $"Hull {loop?.Lives ?? 0}");

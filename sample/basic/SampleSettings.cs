@@ -9,6 +9,7 @@ public sealed class SampleSettings
     public WindowMode WindowMode { get; set; } = WindowMode.Windowed;
     public bool VSyncEnabled { get; set; } = true;
     public float UiScale { get; set; } = 1f;
+    public GraphicsBackend PresentationBackend { get; set; } = GraphicsBackend.Software;
 
     public void Sanitize()
     {
@@ -17,5 +18,7 @@ public sealed class SampleSettings
         UiScale = Math.Clamp(UiScale, 0.75f, 2f);
         if (!Enum.IsDefined(WindowMode))
             WindowMode = WindowMode.Windowed;
+        if (!Enum.IsDefined(PresentationBackend))
+            PresentationBackend = GraphicsBackend.Software;
     }
 }

@@ -17,12 +17,23 @@ public sealed class GameEngine
     private bool _initialized;
     private float _uiScale = 1f;
     private bool _vSyncEnabled = true;
+    private GraphicsBackend _presentationBackend = GraphicsBackend.Software;
 
     public int Width { get; private set; }
     public int Height { get; private set; }
     public string Title { get; private set; }
     public WindowMode WindowMode { get; private set; } = WindowMode.Windowed;
     public Color ClearColor { get; set; } = Color.CornflowerBlue;
+    public GraphicsBackend PresentationBackend
+    {
+        get => _presentationBackend;
+        set
+        {
+            _presentationBackend = value;
+            Graphics.SetPreferredBackend(value);
+        }
+    }
+
     public SceneManager Scenes { get; } = new();
     public ScriptManager Scripts { get; }
     public UIDocument? UI { get; private set; }
@@ -44,6 +55,7 @@ public sealed class GameEngine
         set
         {
             _vSyncEnabled = value;
+            Graphics.SetVSyncEnabled(value);
             if (_initialized)
                 NativeCore.SetVSyncEnabled(value ? 1 : 0);
         }
@@ -94,6 +106,8 @@ public sealed class GameEngine
         }
 
         NativeCore.SetVSyncEnabled(VSyncEnabled ? 1 : 0);
+        Graphics.SetPreferredBackend(PresentationBackend);
+        Graphics.SetVSyncEnabled(VSyncEnabled);
         if (NativeCore.SetWindowMode((int)WindowMode) == 0)
         {
             var exception = new InvalidOperationException($"Failed to apply window mode '{WindowMode}'.");
@@ -172,6 +186,7 @@ public sealed class GameEngine
                 Scenes.Update(dt);
                 Scripts.UpdateAll(dt);
 
+                Graphics.BeginFrame(Width, Height);
                 Graphics.Clear(ClearColor);
                 Scenes.Draw();
                 Scripts.DrawAll();
@@ -179,7 +194,7 @@ public sealed class GameEngine
                 UI?.Render(Width, Height);
                 RuntimeDiagnosticsBridge.Current.ProcessFrameEnd(this);
 
-                NativeCore.Present();
+                Graphics.EndFrame();
             }
         }
         catch (Exception ex)
@@ -203,6 +218,7 @@ public sealed class GameEngine
             {
                 try
                 {
+                    Graphics.Shutdown();
                     NativeCore.Shutdown();
                 }
                 catch (Exception ex)

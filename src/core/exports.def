@@ -11,6 +11,7 @@ EXPORTS
     ae_get_window_mode
     ae_get_window_width
     ae_get_window_height
+    ae_get_window_handle
 
     ; Renderer
     ae_clear
@@ -20,6 +21,7 @@ EXPORTS
     ae_draw_line
     ae_draw_circle
     ae_copy_framebuffer
+    ae_upload_framebuffer
 
     ; Sprites
     ae_load_sprite

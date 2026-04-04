@@ -1,10 +1,10 @@
 # AssemblyEngine
 
-AssemblyEngine is a 2D game engine with a native core and a C# runtime for gameplay code, scenes, components, and UI workflows. The current implementation targets Windows x64 and Windows ARM64, and uses HTML/CSS files for HUD and overlay rendering.
+AssemblyEngine is a Windows game engine with a native core and a C# runtime for gameplay code, scenes, components, UI workflows, and a unified render surface. The current implementation targets Windows x64 and Windows ARM64, uses HTML/CSS files for HUD and overlay rendering, and can present the managed framebuffer through Vulkan when that backend is explicitly requested.
 
 ## Why AssemblyEngine
 
-- **Assembly is a strong fit for AI-assisted engine work.** Let AI handle the low-level details of CPU registers, memory management, and platform APIs while you stay focused on expressive, high-level game design.
+- **AI speaks Assembly in his native tongue** Let AI handle the low-level details of CPU registers, memory management, and platform APIs while you stay focused on expressive, high-level game design.
 - Explore a readable low-level engine architecture without hiding the core behind a large native framework.
 - Keep gameplay code approachable in C# while the renderer, platform layer, input, timing, audio, and memory live in NASM.
 - Use simple HTML/CSS for in-game overlays instead of a separate browser process or a custom widget toolkit.
@@ -13,8 +13,9 @@ AssemblyEngine is a 2D game engine with a native core and a C# runtime for gamep
 ## Current Status
 
 - Supported platforms: Windows x64, Windows ARM64
-- Native core: NASM x64 backend, NativeAOT ARM64 backend, shared Win32/software-renderer contract
+- Native core: NASM x64 backend, NativeAOT ARM64 backend, shared Win32 window/input/audio contract with software presentation fallback
 - Managed runtime: .NET 10
+- Rendering: unified managed 2D/3D color + depth surface, opt-in Vulkan swapchain presentation, native framebuffer upload fallback
 - Sample games: Dash Harvest in `sample/basic`, Lantern Letters in `sample/visual-novel`, both with generated 8-bit SFX
 - UI system: runtime HTML/CSS parsing with a built-in text renderer
 
@@ -30,16 +31,20 @@ flowchart LR
 	Native --> Systems[Input, audio, timing, memory]
 ```
 
-The game project uses the managed runtime, the runtime bridges to the native core, and the native core owns the low-level platform and rendering services.
+The game project uses the managed runtime, the runtime bridges to the native core for windowing and low-level services, and the runtime's unified renderer feeds either a Vulkan presenter or the native framebuffer fallback.
 
 ## What You Can Build Today
 
-- Resizable 2D applications on Windows x64 and Windows ARM64 with windowed, maximized, and borderless fullscreen presentation modes
-- Immediate-mode style drawing via pixel, line, rectangle, and circle primitives
-- BMP sprite loading and drawing
+- Resizable 2D and lightweight 3D applications on Windows x64 and Windows ARM64 with windowed, maximized, and borderless fullscreen presentation modes
+- Unified 2D and 3D rendering on the same managed color/depth surface
+- Immediate-mode style drawing via pixel, line, rectangle, circle, mesh, and cube primitives
+- BMP sprite loading and drawing through the same managed renderer used by 3D geometry
 - WAV audio playback
 - Scene-based games with entities, components, and scripts
 - HTML/CSS HUD overlays updated from C# scripts
+- Vulkan swapchain presentation when `GameEngine.PresentationBackend` is set to `GraphicsBackend.Vulkan`, with native software blitting as fallback
+
+If Vulkan is explicitly requested but the runtime cannot load the required swapchain entry points from the active driver stack, AssemblyEngine logs a warning and continues on the unified software path instead of failing startup.
 
 ## Quick Start
 
@@ -93,6 +98,10 @@ Dash Harvest controls:
 
 Dash Harvest now also plays generated 8-bit SFX for dashes, pickups, hits, wave transitions, and game over.
 
+Dash Harvest also includes a small 3D cube backdrop rendered through the same surface as its 2D gameplay and HUD, which makes it a useful sanity check for the unified renderer and Vulkan presenter.
+
+To request Vulkan in the basic sample, set `presentationBackend` to `vulkan` in `sample/basic/sample-settings.json`.
+
 Lantern Letters controls:
 
 - `Space`, `Enter`, or `Right Arrow` advance dialogue
@@ -105,7 +114,7 @@ Lantern Letters also plays generated 8-bit UI and dialogue SFX for advancing tex
 
 The sample persists display preferences in `sample-settings.json`. `Window mode`, `Resolution`, `VSync`, and `UI scale` all apply from the in-game settings panel, and maximize or restore events now resize the engine surface dynamically.
 
-If you want to inspect or drive a running game from an AI agent, the repo also includes a stdio MCP server in `src/tools/AssemblyEngine.RuntimeMcpServer`. It can launch a game, tail structured runtime logs, return live runtime state, capture the current game window client area, and inject keyboard or mouse input. The checked-in `AssemblyEngine.code-workspace` file also includes an `assemblyengine-runtime` MCP server entry so VS Code can start it directly from the workspace. See [Runtime MCP server](docs/runtime-mcp.md).
+If you want to inspect or drive a running game from an AI agent, the repo also includes a stdio MCP server in `src/tools/AssemblyEngine.RuntimeMcpServer`. It can launch a game, tail structured runtime logs, return live runtime state, capture the current game window client area, and inject keyboard or mouse input. The checked-in `.vscode/mcp.json` file includes an `assemblyengine-runtime` server entry so current VS Code builds can auto-discover it from the workspace. See [Runtime MCP server](docs/runtime-mcp.md).
 
 Typical runtime MCP workflow:
 
@@ -172,7 +181,7 @@ public static class Program
 }
 ```
 
-`GameEngine` owns the frame loop, `Scene` creates and manages entities, and `GameScript` handles per-frame behavior. The sample project in `sample/basic` shows a larger version of the same pattern with a HUD overlay and arcade loop.
+`GameEngine` owns the frame loop, `Scene` creates and manages entities, and `GameScript` handles per-frame behavior. Entities now expose both 2D helpers and 3D transform fields (`Position3D`, `Scale3D`, `Rotation3D`) so gameplay code can stay in one scene graph while using either draw style. The sample project in `sample/basic` shows a larger version of the same pattern with a HUD overlay, arcade loop, and a simple rotating 3D backdrop.
 
 ## Repository Layout
 

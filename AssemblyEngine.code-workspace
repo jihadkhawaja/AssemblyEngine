@@ -3,24 +3,5 @@
 		{
 			"path": "."
 		}
-	],
-	"settings": {
-		"mcp": {
-			"servers": {
-				"assemblyengine-runtime": {
-					"type": "stdio",
-					"command": "dotnet",
-					"cwd": "${workspaceFolder:AssemblyEngine}",
-					"args": [
-						"run",
-						"--project",
-						"src/tools/AssemblyEngine.RuntimeMcpServer/AssemblyEngine.RuntimeMcpServer.csproj",
-						"-c",
-						"Release"
-					]
-				}
-			},
-			"inputs": []
-		}
-	}
+	]
 }

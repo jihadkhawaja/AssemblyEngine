@@ -16,7 +16,8 @@ public static class Program
         {
             ClearColor = new Color(5, 10, 18),
             UiScale = settings.UiScale,
-            VSyncEnabled = settings.VSyncEnabled
+            VSyncEnabled = settings.VSyncEnabled,
+            PresentationBackend = settings.PresentationBackend
         };
         engine.SetWindowMode(settings.WindowMode);
 
