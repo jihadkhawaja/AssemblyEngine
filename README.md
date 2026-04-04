@@ -4,7 +4,7 @@ AssemblyEngine is a 2D game engine with a native core and a C# runtime for gamep
 
 ## Why AssemblyEngine
 
-- **Assembly is the language of AI**, Let the AI handle the gritty, low-level details of CPU registers, memory management, and platform APIs. It thrives in the exactness of the depths, freeing you to speak the expressive, high-level language of creative game design!
+- **Assembly is a strong fit for AI-assisted engine work.** Let AI handle the low-level details of CPU registers, memory management, and platform APIs while you stay focused on expressive, high-level game design.
 - Explore a readable low-level engine architecture without hiding the core behind a large native framework.
 - Keep gameplay code approachable in C# while the renderer, platform layer, input, timing, audio, and memory live in NASM.
 - Use simple HTML/CSS for in-game overlays instead of a separate browser process or a custom widget toolkit.
@@ -80,6 +80,15 @@ Dash Harvest controls:
 - `F1` opens the display settings panel
 
 The sample persists display preferences in `sample-settings.json`. `Window mode`, `Resolution`, `VSync`, and `UI scale` all apply from the in-game settings panel, and maximize or restore events now resize the engine surface dynamically.
+
+If you want to inspect or drive a running game from an AI agent, the repo also includes a stdio MCP server in `src/tools/AssemblyEngine.RuntimeMcpServer`. It can launch a game, tail structured runtime logs, return live runtime state, capture the current game window client area, and inject keyboard or mouse input. The checked-in `AssemblyEngine.code-workspace` file also includes an `assemblyengine-runtime` MCP server entry so VS Code can start it directly from the workspace. See [Runtime MCP server](docs/runtime-mcp.md).
+
+Typical runtime MCP workflow:
+
+- Start the `assemblyengine-runtime` MCP server from the workspace or your MCP client.
+- Call `launch_game` with `build/output/SampleGame.exe` or another AssemblyEngine game executable.
+- Use `get_session_status` and `wait_for_logs` to inspect runtime state and tail logs.
+- Use `capture_screenshot` to grab the current game window view and `send_key` or mouse tools to drive the game.
 
 If you prefer to iterate from an IDE, building `sample/basic/SampleGame.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build. Choose the `ARM64` solution platform to build the native ARM64 backend.
 
@@ -159,6 +168,7 @@ public static class Program
 - [Architecture](docs/architecture.md)
 - [Project goals](docs/project-goals.md)
 - [Implementation guide](docs/implementation-guide.md)
+- [Runtime MCP server](docs/runtime-mcp.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## Roadmap

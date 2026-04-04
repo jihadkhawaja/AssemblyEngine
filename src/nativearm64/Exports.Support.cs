@@ -38,6 +38,45 @@ internal static unsafe partial class NativeExports
         return mask != 0 && (NativeContext.Engine.MouseButtons & mask) != 0 ? 1 : 0;
     }
 
+    [UnmanagedCallersOnly(EntryPoint = "ae_set_key_state")]
+    public static void SetKeyState(int keycode, int isDown)
+    {
+        if (keycode is < 0 or >= 256)
+            return;
+
+        NativeContext.Engine.Keys[keycode] = isDown != 0 ? (byte)1 : (byte)0;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "ae_set_mouse_position")]
+    public static void SetMousePosition(int x, int y)
+    {
+        NativeContext.Engine.MouseX = x;
+        NativeContext.Engine.MouseY = y;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "ae_set_mouse_button_state")]
+    public static void SetMouseButtonState(int button, int isDown)
+    {
+        var mask = button switch
+        {
+            0 => 1,
+            1 => 2,
+            2 => 4,
+            _ => 0
+        };
+
+        if (mask == 0)
+            return;
+
+        if (isDown != 0)
+        {
+            NativeContext.Engine.MouseButtons |= mask;
+            return;
+        }
+
+        NativeContext.Engine.MouseButtons &= ~mask;
+    }
+
     [UnmanagedCallersOnly(EntryPoint = "ae_get_delta_time")]
     public static int GetDeltaTimeBits() => BitConverter.SingleToInt32Bits(NativeContext.Engine.DeltaTime);
 

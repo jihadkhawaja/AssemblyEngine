@@ -14,6 +14,7 @@ global ae_draw_rect
 global ae_draw_filled_rect
 global ae_draw_line
 global ae_draw_circle
+global ae_copy_framebuffer
 
 section .text
 
@@ -50,6 +51,49 @@ ae_clear:
     rep stosd
 
 .done:
+    pop rdi
+    pop rsi
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; ============================================================================
+; ae_copy_framebuffer(destination: rcx, destination_length: edx) -> eax
+; Copies the current BGRA framebuffer into a caller-provided buffer.
+; ============================================================================
+ae_copy_framebuffer:
+    push rbp
+    mov rbp, rsp
+    push rsi
+    push rdi
+
+    test rcx, rcx
+    jz .copy_fail
+    test edx, edx
+    jle .copy_fail
+
+    lea rax, [rel g_engine]
+    mov rsi, [rax + EngineState.framebuffer]
+    test rsi, rsi
+    jz .copy_fail
+
+    mov eax, [rax + EngineState.width]
+    imul eax, [rax + EngineState.height]
+    imul eax, 4
+    cmp edx, eax
+    jl .copy_fail
+
+    mov r8d, eax
+    mov rdi, rcx
+    mov ecx, r8d
+    rep movsb
+    mov eax, r8d
+    jmp .copy_done
+
+.copy_fail:
+    xor eax, eax
+
+.copy_done:
     pop rdi
     pop rsi
     mov rsp, rbp

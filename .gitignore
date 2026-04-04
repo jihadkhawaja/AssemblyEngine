@@ -23,7 +23,6 @@ project.lock.json
 # IDE
 .vs/
 .vscode/.history/
-*.code-workspace
 
 # OS
 Thumbs.db

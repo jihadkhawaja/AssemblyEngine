@@ -66,6 +66,9 @@ internal static partial class NativeCore
     [LibraryImport(DllName, EntryPoint = "ae_draw_circle")]
     internal static partial void DrawCircle(int cx, int cy, int radius, int r, int g, int b, int a);
 
+    [LibraryImport(DllName, EntryPoint = "ae_copy_framebuffer")]
+    internal static unsafe partial int CopyFramebuffer(byte* destination, int destinationLength);
+
     // --- Sprites ---
     [LibraryImport(DllName, EntryPoint = "ae_load_sprite", StringMarshalling = StringMarshalling.Utf8)]
     internal static partial int LoadSprite(string path);
@@ -88,6 +91,15 @@ internal static partial class NativeCore
 
     [LibraryImport(DllName, EntryPoint = "ae_is_mouse_down")]
     internal static partial int IsMouseDown(int button);
+
+    [LibraryImport(DllName, EntryPoint = "ae_set_key_state")]
+    internal static partial void SetKeyState(int keycode, int isDown);
+
+    [LibraryImport(DllName, EntryPoint = "ae_set_mouse_position")]
+    internal static partial void SetMousePosition(int x, int y);
+
+    [LibraryImport(DllName, EntryPoint = "ae_set_mouse_button_state")]
+    internal static partial void SetMouseButtonState(int button, int isDown);
 
     // --- Audio ---
     [LibraryImport(DllName, EntryPoint = "ae_load_sound", StringMarshalling = StringMarshalling.Utf8)]

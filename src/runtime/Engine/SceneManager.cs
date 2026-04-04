@@ -1,3 +1,5 @@
+using AssemblyEngine.Diagnostics;
+
 namespace AssemblyEngine.Engine;
 
 /// <summary>
@@ -10,6 +12,7 @@ public sealed class SceneManager
     private Scene? _next;
 
     public Scene? ActiveScene => _active;
+    public int RegisteredSceneCount => _scenes.Count;
 
     public void Register(string name, Scene scene)
     {
@@ -22,17 +25,20 @@ public sealed class SceneManager
         if (!_scenes.TryGetValue(name, out var scene))
             throw new InvalidOperationException($"Scene '{name}' not registered.");
         _next = scene;
+        RuntimeDiagnosticsBridge.Current.LogInfo("engine.scene", $"Queued scene '{name}'.");
     }
 
     internal void ProcessTransition()
     {
         if (_next is null) return;
 
+        string? previousScene = _active?.Name;
         _active?.OnUnload();
         _active?.Clear();
         _active = _next;
         _next = null;
         _active.OnLoad();
+        RuntimeDiagnosticsBridge.Current.NotifySceneChanged(previousScene, _active.Name, _active.Entities.Count);
     }
 
     internal void Update(float deltaTime)

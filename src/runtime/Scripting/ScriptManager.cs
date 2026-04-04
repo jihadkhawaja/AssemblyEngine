@@ -1,3 +1,4 @@
+using AssemblyEngine.Diagnostics;
 using AssemblyEngine.Engine;
 using System.Reflection;
 
@@ -42,6 +43,8 @@ public sealed class ScriptManager
     {
         foreach (var s in _scripts)
             s.OnLoad();
+
+        RuntimeDiagnosticsBridge.Current.LogInfo("engine.scripts", $"Loaded {_scripts.Count} script(s).");
     }
 
     public void UpdateAll(float deltaTime)
@@ -58,9 +61,11 @@ public sealed class ScriptManager
 
     public void UnloadAll()
     {
+        int scriptCount = _scripts.Count;
         foreach (var s in _scripts)
             s.OnUnload();
         _scripts.Clear();
+        RuntimeDiagnosticsBridge.Current.LogInfo("engine.scripts", $"Unloaded {scriptCount} script(s).");
     }
 
     public T? GetScript<T>() where T : GameScript

@@ -19,6 +19,7 @@ EXPORTS
     ae_draw_filled_rect
     ae_draw_line
     ae_draw_circle
+    ae_copy_framebuffer
 
     ; Sprites
     ae_load_sprite
@@ -30,6 +31,9 @@ EXPORTS
     ae_get_mouse_x
     ae_get_mouse_y
     ae_is_mouse_down
+    ae_set_key_state
+    ae_set_mouse_position
+    ae_set_mouse_button_state
 
     ; Audio
     ae_load_sound

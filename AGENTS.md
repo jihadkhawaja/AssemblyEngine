@@ -27,3 +27,7 @@ shell folder should contain scripts to easily build, run and setup the project.
 ### Prerequisites
 - .NET 10 SDK and runtime
 - NASM
+
+## Testing
+- Write unit tests
+- Use AssemblyEngine.RuntimeMcpServer to check runtime snapshots

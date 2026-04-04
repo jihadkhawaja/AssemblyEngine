@@ -104,9 +104,11 @@ Write-Host ""
 # --- Configuration ---
 $CoreDir    = Join-Path $PSScriptRoot "..\src\core"
 $RuntimeDir = Join-Path $PSScriptRoot "..\src\runtime"
+$McpServerDir = Join-Path $PSScriptRoot "..\src\tools\AssemblyEngine.RuntimeMcpServer"
 $SampleDir  = Join-Path $PSScriptRoot "..\sample\basic"
 $BuildDir   = Join-Path $PSScriptRoot "..\build"
 $OutDir     = Join-Path $PSScriptRoot "..\build\output"
+$McpOutDir  = Join-Path $OutDir "mcp"
 $HostArchitecture = Get-HostArchitecture
 $ResolvedTargetArchitecture = Resolve-TargetArchitecture -RequestedArchitecture $TargetArchitecture -HostArchitecture $HostArchitecture
 $CoreBuildScript = Join-Path $PSScriptRoot 'build_core.ps1'
@@ -120,7 +122,7 @@ $DotnetExe = Resolve-ExecutablePath -Name 'dotnet' -FallbackPaths @(
 New-Item -ItemType Directory -Path $BuildDir, $OutDir -Force | Out-Null
 
 # --- Step 1: Build native core ---
-Write-Host ("[1/3] Building native core ({0})..." -f $ResolvedTargetArchitecture)
+Write-Host ("[1/4] Building native core ({0})..." -f $ResolvedTargetArchitecture)
 & $CoreBuildScript -TargetArchitecture $ResolvedTargetArchitecture
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to build the native core for $ResolvedTargetArchitecture."
@@ -129,7 +131,7 @@ Write-Host "  Native core built successfully."
 Write-Host ""
 
 # --- Step 2: Build C# Runtime ---
-Write-Host "[2/3] Building C# runtime..."
+Write-Host "[2/4] Building C# runtime..."
 & $DotnetExe build (Join-Path $RuntimeDir "AssemblyEngine.Runtime.csproj") -c Release -o $OutDir
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to build C# runtime."
@@ -137,8 +139,18 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "  Runtime built successfully."
 Write-Host ""
 
-# --- Step 3: Publish Sample Game ---
-Write-Host "[3/3] Publishing sample game..."
+# --- Step 3: Build MCP Server ---
+Write-Host "[3/4] Building runtime MCP server..."
+New-Item -ItemType Directory -Path $McpOutDir -Force | Out-Null
+& $DotnetExe build (Join-Path $McpServerDir "AssemblyEngine.RuntimeMcpServer.csproj") -c Release -o $McpOutDir
+if ($LASTEXITCODE -ne 0) {
+    throw "Failed to build the runtime MCP server."
+}
+Write-Host "  Runtime MCP server built successfully."
+Write-Host ""
+
+# --- Step 4: Publish Sample Game ---
+Write-Host "[4/4] Publishing sample game..."
 $samplePlatform = if ($ResolvedTargetArchitecture -eq 'arm64') { 'ARM64' } else { 'x64' }
 $sampleRid = if ($ResolvedTargetArchitecture -eq 'arm64') { 'win-arm64' } else { 'win-x64' }
 $samplePublishArtifacts = @(
@@ -176,4 +188,5 @@ Write-Host "==================================="
 Write-Host " Build Complete!"
 Write-Host " Output: $OutDir"
 Write-Host " Run:    $OutDir\SampleGame.exe"
+Write-Host " MCP:    $McpOutDir\AssemblyEngine.RuntimeMcpServer.exe"
 Write-Host "==================================="

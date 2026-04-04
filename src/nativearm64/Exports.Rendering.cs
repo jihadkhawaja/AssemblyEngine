@@ -122,6 +122,21 @@ internal static unsafe partial class NativeExports
         }
     }
 
+    [UnmanagedCallersOnly(EntryPoint = "ae_copy_framebuffer")]
+    public static unsafe int CopyFramebuffer(byte* destination, int destinationLength)
+    {
+        var state = NativeContext.Engine;
+        if (state.Framebuffer is null || destination is null || destinationLength <= 0)
+            return 0;
+
+        var byteCount = checked(state.Width * state.Height * 4);
+        if (destinationLength < byteCount)
+            return 0;
+
+        Buffer.MemoryCopy(state.Framebuffer, destination, destinationLength, byteCount);
+        return byteCount;
+    }
+
     private static void PlotCirclePoints(int cx, int cy, int x, int y, uint color)
     {
         WritePixel(cx + x, cy + y, color);

@@ -1,8 +1,10 @@
 using AssemblyEngine.Core;
+using AssemblyEngine.Diagnostics;
 using AssemblyEngine.Interop;
 using AssemblyEngine.Platform;
 using AssemblyEngine.Scripting;
 using AssemblyEngine.UI;
+using System.Runtime.ExceptionServices;
 
 namespace AssemblyEngine.Engine;
 
@@ -47,6 +49,8 @@ public sealed class GameEngine
         }
     }
 
+    internal bool IsInitialized => _initialized;
+
     public GameEngine(int width = 800, int height = 600, string title = "AssemblyEngine")
     {
         Width = width;
@@ -61,11 +65,15 @@ public sealed class GameEngine
         var css = cssPath is not null ? File.ReadAllText(cssPath) : null;
         UI = UIDocument.Parse(html, css);
         UI.RenderScale = UiScale;
+        RuntimeDiagnosticsBridge.Current.LogInfo("engine.ui", $"Loaded UI from '{Path.GetFileName(htmlPath)}'.", cssPath is null ? htmlPath : $"{htmlPath} | {cssPath}");
     }
 
     public void Initialize()
     {
         if (_initialized) return;
+
+        RuntimeDiagnosticsBridge.Current.Attach(this);
+        RuntimeDiagnosticsBridge.Current.LogInfo("engine.initialize", $"Initializing '{Title}'.");
 
         int result;
         try
@@ -74,19 +82,29 @@ public sealed class GameEngine
         }
         catch (Exception ex) when (ex is DllNotFoundException or BadImageFormatException)
         {
+            RuntimeDiagnosticsBridge.Current.LogError("engine.initialize", ex);
             throw EnginePlatform.Current.CreateNativeCoreLoadException(ex);
         }
 
         if (result == 0)
-            throw new InvalidOperationException("Failed to initialize native engine core.");
+        {
+            var exception = new InvalidOperationException("Failed to initialize native engine core.");
+            RuntimeDiagnosticsBridge.Current.LogError("engine.initialize", exception);
+            throw exception;
+        }
 
         NativeCore.SetVSyncEnabled(VSyncEnabled ? 1 : 0);
         if (NativeCore.SetWindowMode((int)WindowMode) == 0)
-            throw new InvalidOperationException($"Failed to apply window mode '{WindowMode}'.");
+        {
+            var exception = new InvalidOperationException($"Failed to apply window mode '{WindowMode}'.");
+            RuntimeDiagnosticsBridge.Current.LogError("engine.initialize", exception);
+            throw exception;
+        }
 
         SyncWindowState();
 
         _initialized = true;
+        RuntimeDiagnosticsBridge.Current.NotifyEngineStarted(this);
     }
 
     public bool Resize(int width, int height)
@@ -108,6 +126,7 @@ public sealed class GameEngine
             return false;
 
         SyncWindowState();
+        RuntimeDiagnosticsBridge.Current.LogInfo("engine.window", $"Resized window to {Width}x{Height}.");
         return true;
     }
 
@@ -126,6 +145,7 @@ public sealed class GameEngine
             return false;
 
         SyncWindowState();
+        RuntimeDiagnosticsBridge.Current.LogInfo("engine.window", $"Changed window mode to '{WindowMode}'.");
         return true;
     }
 
@@ -134,32 +154,73 @@ public sealed class GameEngine
         if (!_initialized)
             Initialize();
 
-        Scenes.ProcessTransition();
-        Scripts.LoadAll();
+        Exception? failure = null;
+        Exception? cleanupFailure = null;
 
-        while (NativeCore.PollEvents() != 0)
+        try
         {
-            SyncWindowState();
-            float dt = Time.DeltaTime;
+            Scenes.ProcessTransition();
+            Scripts.LoadAll();
+            RuntimeDiagnosticsBridge.Current.LogInfo("engine.run", "Game loop started.");
 
-            // Update phase
-            Scenes.Update(dt);
-            Scripts.UpdateAll(dt);
+            while (NativeCore.PollEvents() != 0)
+            {
+                SyncWindowState();
+                RuntimeDiagnosticsBridge.Current.ProcessFrameStart(this);
+                float dt = Time.DeltaTime;
 
-            // Draw phase
-            Graphics.Clear(ClearColor);
-            Scenes.Draw();
-            Scripts.DrawAll();
+                Scenes.Update(dt);
+                Scripts.UpdateAll(dt);
 
-            // Draw UI overlay
-            UI?.Render(Width, Height);
+                Graphics.Clear(ClearColor);
+                Scenes.Draw();
+                Scripts.DrawAll();
 
-            NativeCore.Present();
+                UI?.Render(Width, Height);
+                RuntimeDiagnosticsBridge.Current.ProcessFrameEnd(this);
+
+                NativeCore.Present();
+            }
+        }
+        catch (Exception ex)
+        {
+            failure = ex;
+            RuntimeDiagnosticsBridge.Current.ReportFatalException("engine.run", ex);
+        }
+        finally
+        {
+            try
+            {
+                Scripts.UnloadAll();
+            }
+            catch (Exception ex)
+            {
+                cleanupFailure ??= ex;
+                RuntimeDiagnosticsBridge.Current.LogError("engine.shutdown", ex);
+            }
+
+            if (_initialized)
+            {
+                try
+                {
+                    NativeCore.Shutdown();
+                }
+                catch (Exception ex)
+                {
+                    cleanupFailure ??= ex;
+                    RuntimeDiagnosticsBridge.Current.LogError("engine.shutdown", ex);
+                }
+            }
+
+            _initialized = false;
+            RuntimeDiagnosticsBridge.Current.Detach(this, failure ?? cleanupFailure);
         }
 
-        Scripts.UnloadAll();
-        NativeCore.Shutdown();
-        _initialized = false;
+        if (failure is null && cleanupFailure is not null)
+            ExceptionDispatchInfo.Capture(cleanupFailure).Throw();
+
+        if (failure is not null)
+            ExceptionDispatchInfo.Capture(failure).Throw();
     }
 
     public void Quit()
