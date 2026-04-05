@@ -162,9 +162,9 @@ internal sealed class RuntimeGameSession : IAsyncDisposable
         cancellationToken.ThrowIfCancellationRequested();
 
         if (!OperatingSystem.IsWindows())
-            throw new PlatformNotSupportedException("Window capture is only available on Windows.");
+            throw new PlatformNotSupportedException("Framebuffer capture is only available on Windows.");
 
-        return Task.FromResult(RuntimeWindowCapture.CaptureClientArea(_process));
+        return SendCommandAsync<object?, RuntimeScreenshot>(RuntimeDiagnosticsProtocol.CaptureScreenshotCommand, null, cancellationToken);
     }
 
     public Task<RuntimeStateSnapshot> RequestStateAsync(CancellationToken cancellationToken)

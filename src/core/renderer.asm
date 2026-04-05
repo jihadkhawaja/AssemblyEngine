@@ -15,6 +15,7 @@ global ae_draw_filled_rect
 global ae_draw_line
 global ae_draw_circle
 global ae_copy_framebuffer
+global ae_upload_framebuffer
 
 section .text
 
@@ -94,6 +95,49 @@ ae_copy_framebuffer:
     xor eax, eax
 
 .copy_done:
+    pop rdi
+    pop rsi
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; ============================================================================
+; ae_upload_framebuffer(source: rcx, source_length: edx) -> eax
+; Copies a caller-owned BGRA framebuffer into the engine backbuffer.
+; ============================================================================
+ae_upload_framebuffer:
+    push rbp
+    mov rbp, rsp
+    push rsi
+    push rdi
+
+    test rcx, rcx
+    jz .upload_fail
+    test edx, edx
+    jle .upload_fail
+
+    mov r8, rcx
+    lea rax, [rel g_engine]
+    mov rdi, [rax + EngineState.framebuffer]
+    test rdi, rdi
+    jz .upload_fail
+
+    mov eax, [rax + EngineState.width]
+    imul eax, [rax + EngineState.height]
+    imul eax, 4
+    cmp edx, eax
+    jl .upload_fail
+
+    mov rsi, r8
+    mov ecx, eax
+    rep movsb
+    mov eax, 1
+    jmp .upload_done
+
+.upload_fail:
+    xor eax, eax
+
+.upload_done:
     pop rdi
     pop rsi
     mov rsp, rbp

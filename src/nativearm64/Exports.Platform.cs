@@ -121,6 +121,12 @@ internal static unsafe partial class NativeExports
         return NativeContext.Engine.Height;
     }
 
+    [UnmanagedCallersOnly(EntryPoint = "ae_get_window_handle")]
+    public static nint GetWindowHandle()
+    {
+        return NativeContext.Engine.Window;
+    }
+
     private static void UpdateTimer(EngineState state)
     {
         if (state.PerfFrequency <= 0)

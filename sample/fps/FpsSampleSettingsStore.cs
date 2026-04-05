@@ -2,9 +2,9 @@ using AssemblyEngine.Core;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SampleGame;
+namespace FpsSample;
 
-internal static class SampleSettingsStore
+internal static class FpsSampleSettingsStore
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -12,20 +12,20 @@ internal static class SampleSettingsStore
         WriteIndented = true
     };
 
-    static SampleSettingsStore()
+    static FpsSampleSettingsStore()
     {
         JsonOptions.Converters.Add(new GraphicsBackendJsonConverter());
         JsonOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     }
 
-    public static SampleSettings Load(string path)
+    public static FpsSampleSettings Load(string path)
     {
         if (File.Exists(path))
         {
             try
             {
                 var json = File.ReadAllText(path);
-                var settings = JsonSerializer.Deserialize<SampleSettings>(json, JsonOptions);
+                var settings = JsonSerializer.Deserialize<FpsSampleSettings>(json, JsonOptions);
                 if (settings is not null)
                 {
                     settings.Sanitize();
@@ -38,12 +38,12 @@ internal static class SampleSettingsStore
             }
         }
 
-        var defaults = new SampleSettings();
+        var defaults = new FpsSampleSettings();
         Save(path, defaults);
         return defaults;
     }
 
-    public static void Save(string path, SampleSettings settings)
+    public static void Save(string path, FpsSampleSettings settings)
     {
         settings.Sanitize();
 

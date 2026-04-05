@@ -47,6 +47,9 @@ internal static partial class NativeCore
     [LibraryImport(DllName, EntryPoint = "ae_get_window_height")]
     internal static partial int GetWindowHeight();
 
+    [LibraryImport(DllName, EntryPoint = "ae_get_window_handle")]
+    internal static partial nint GetWindowHandle();
+
     // --- Renderer ---
     [LibraryImport(DllName, EntryPoint = "ae_clear")]
     internal static partial void Clear(int r, int g, int b, int a);
@@ -68,6 +71,9 @@ internal static partial class NativeCore
 
     [LibraryImport(DllName, EntryPoint = "ae_copy_framebuffer")]
     internal static unsafe partial int CopyFramebuffer(byte* destination, int destinationLength);
+
+    [LibraryImport(DllName, EntryPoint = "ae_upload_framebuffer")]
+    internal static unsafe partial int UploadFramebuffer(byte* source, int sourceLength);
 
     // --- Sprites ---
     [LibraryImport(DllName, EntryPoint = "ae_load_sprite", StringMarshalling = StringMarshalling.Utf8)]

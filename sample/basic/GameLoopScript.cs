@@ -1,6 +1,9 @@
 using AssemblyEngine.Core;
 using AssemblyEngine.Engine;
+using AssemblyEngine.Rendering;
 using AssemblyEngine.Scripting;
+using Matrix4x4 = System.Numerics.Matrix4x4;
+using Vector3 = System.Numerics.Vector3;
 
 namespace SampleGame;
 
@@ -357,6 +360,19 @@ public sealed class GameLoopScript : GameScript
 
     private void DrawArenaBackdrop()
     {
+        var cubeRotation = Matrix4x4.CreateFromYawPitchRoll(_elapsed * 0.82f, _elapsed * 0.48f, _elapsed * 0.21f);
+        var cubeTransform = Matrix4x4.CreateScale(1.2f) * cubeRotation;
+        var wireframeTransform = Matrix4x4.CreateScale(1.33f) * cubeRotation;
+
+        Graphics.SetCamera(new Camera3D
+        {
+            Position = new Vector3(0f, 0.35f, 4.1f),
+            Target = Vector3.Zero
+        });
+        Graphics.DrawCube(cubeTransform, new Color(16, 72, 122, 170));
+        Graphics.DrawCube(wireframeTransform, new Color(132, 214, 255, 200), wireframe: true);
+        Graphics.ResetCamera();
+
         var pulse = 0.5f + (0.5f * MathF.Sin(_elapsed * 1.8f));
         var highlight = new Color(96, (byte)(170 + (40f * pulse)), 230, 120);
 

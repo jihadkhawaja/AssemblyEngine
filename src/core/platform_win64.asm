@@ -17,6 +17,7 @@ global ae_set_window_mode
 global ae_get_window_mode
 global ae_get_window_width
 global ae_get_window_height
+global ae_get_window_handle
 global g_engine
 global ae_wndproc
 
@@ -402,6 +403,15 @@ ae_get_window_width:
 ae_get_window_height:
     lea rax, [rel g_engine]
     mov eax, [rax + EngineState.height]
+    ret
+
+; ============================================================================
+; ae_get_window_handle() -> rax
+; Returns the native HWND used for presentation and external graphics APIs.
+; ============================================================================
+ae_get_window_handle:
+    lea rax, [rel g_engine]
+    mov rax, [rax + EngineState.hwnd]
     ret
 
 ; ============================================================================

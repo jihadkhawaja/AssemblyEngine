@@ -1,0 +1,170 @@
+body {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#top-bar {
+    position: absolute;
+    left: 20px;
+    top: 16px;
+    width: 920px;
+    height: 36px;
+    background-color: rgba(6, 12, 20, 0.82);
+    display: flex;
+    flex-direction: row;
+    padding: 8px 12px;
+    gap: 20px;
+    border-width: 1;
+    border-color: #63E0F2;
+}
+
+#fps-counter {
+    color: #B7FFF4;
+    font-size: 14;
+    width: 150px;
+    height: 24px;
+}
+
+#health {
+    color: #FF8E8E;
+    font-size: 14;
+    width: 96px;
+    height: 24px;
+}
+
+#drones {
+    color: #FFD980;
+    font-size: 14;
+    width: 112px;
+    height: 24px;
+}
+
+#accuracy {
+    color: #A8FFC2;
+    font-size: 14;
+    width: 124px;
+    height: 24px;
+}
+
+#timer {
+    color: #E6F5FF;
+    font-size: 14;
+    width: 104px;
+    height: 24px;
+}
+
+#center-message {
+    position: absolute;
+    left: 222px;
+    top: 102px;
+    width: 560px;
+    height: 108px;
+    background-color: rgba(6, 14, 22, 0.90);
+    border-width: 2;
+    border-color: #8DFFB1;
+    padding: 14px 18px;
+}
+
+#message-title {
+    color: #F7FF9A;
+    font-size: 28;
+    width: 500px;
+    height: 36px;
+}
+
+#message-subtitle {
+    color: #E8F5FF;
+    font-size: 16;
+    width: 520px;
+    height: 48px;
+}
+
+#objective-panel {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    width: 620px;
+    height: 58px;
+    background-color: rgba(5, 12, 18, 0.80);
+    padding: 10px 12px;
+    border-width: 1;
+    border-color: #2E8694;
+}
+
+#objective {
+    color: #FFFFFF;
+    font-size: 15;
+    width: 590px;
+    height: 24px;
+}
+
+#hint {
+    color: #93A9C4;
+    font-size: 13;
+    width: 590px;
+    height: 18px;
+}
+
+#help-panel {
+    position: absolute;
+    right: 20px;
+    top: 76px;
+    width: 292px;
+    height: 194px;
+    background-color: rgba(5, 12, 18, 0.88);
+    border-width: 1;
+    border-color: #FFD980;
+    padding: 12px 14px;
+}
+
+#help-title {
+    color: #FFD980;
+    font-size: 22;
+    width: 250px;
+    height: 28px;
+}
+
+#help-row-1 {
+    color: #E8F5FF;
+    font-size: 14;
+    width: 254px;
+    height: 22px;
+}
+
+#help-row-2 {
+    color: #E8F5FF;
+    font-size: 14;
+    width: 254px;
+    height: 22px;
+}
+
+#help-row-3 {
+    color: #E8F5FF;
+    font-size: 14;
+    width: 254px;
+    height: 22px;
+}
+
+#help-row-4 {
+    color: #E8F5FF;
+    font-size: 14;
+    width: 254px;
+    height: 22px;
+}
+
+#help-row-5 {
+    color: #E8F5FF;
+    font-size: 14;
+    width: 254px;
+    height: 22px;
+}
+
+#help-footer {
+    color: #93A9C4;
+    font-size: 12;
+    width: 254px;
+    height: 24px;
+}

@@ -1,13 +1,13 @@
 # Runtime MCP Server
 
-AssemblyEngine now includes a stdio MCP server that can launch a game, stream runtime logs, inspect state, capture the current game window client area, and inject keyboard or mouse input into the running engine.
+AssemblyEngine now includes a stdio MCP server that can launch a game, stream runtime logs, inspect state, capture the current game framebuffer, and inject keyboard or mouse input into the running engine.
 
 ## What It Exposes
 
 - `launch_game`: starts a game executable with the runtime diagnostics bridge enabled
 - `get_session_status`: returns the current process and runtime state snapshot as JSON
 - `wait_for_logs`: returns buffered runtime and process logs after a sequence cursor
-- `capture_screenshot`: returns the current game window client area as a PNG image
+- `capture_screenshot`: returns the current game framebuffer as a PNG image
 - `send_key`: sends `tap`, `down`, or `up` keyboard actions using engine key names
 - `move_mouse`: moves the in-game mouse to client coordinates inside the game window
 - `click_mouse`: taps a mouse button at client coordinates inside the game window
@@ -66,8 +66,8 @@ If you prefer the built executable, the default path after `shell/build.ps1` is 
 
 ## Notes
 
-- Screenshots are captured from the running game window's client device context, so the crop follows the client area instead of desktop screen coordinates.
-- Capture fails if the game window is not created yet or the client area has no size.
+- Screenshots are captured through the runtime diagnostics bridge at frame end, so they reflect the engine's current rendered frame without sampling the desktop.
+- Capture fails if the engine window is not initialized yet.
 - Synthetic input is injected at the engine input layer after `PollEvents()`, which makes `tap` actions visible to gameplay code on the next update.
 - Mouse coordinates are client coordinates relative to the game window.
 - Runtime logs include both structured engine events and any redirected child-process stdout or stderr.
