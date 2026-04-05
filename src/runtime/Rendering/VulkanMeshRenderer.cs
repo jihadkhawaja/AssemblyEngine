@@ -90,7 +90,7 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
             _indices.Add((uint)(idx + baseVertex));
 
         _draws.Add(new DrawCall(firstIndex, mesh.Indices.Count,
-            Matrix4x4.Transpose(mvp),
+            mvp,
             color.R / 255f, color.G / 255f, color.B / 255f, color.A / 255f,
             wireframe));
     }

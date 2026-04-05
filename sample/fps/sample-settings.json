@@ -1,0 +1,8 @@
+{
+  "width": 1024,
+  "height": 640,
+  "windowMode": "windowed",
+  "vSyncEnabled": true,
+  "uiScale": 1.0,
+  "presentationBackend": "vulkan"
+}

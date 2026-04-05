@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AssemblyName>FpsSample</AssemblyName>
+    <RootNamespace>FpsSample</RootNamespace>
+    <Platforms>AnyCPU;x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)' == 'ARM64'">
+    <PlatformTarget>ARM64</PlatformTarget>
+    <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\'))</RepoRoot>
+    <NativeBuildScript>$(RepoRoot)shell\build_core.ps1</NativeBuildScript>
+    <NativeTargetArchitecture Condition="'$(PlatformTarget)' == 'ARM64' or '$(RuntimeIdentifier)' == 'win-arm64'">arm64</NativeTargetArchitecture>
+    <NativeTargetArchitecture Condition="'$(NativeTargetArchitecture)' == ''">x64</NativeTargetArchitecture>
+    <NativeCoreDll>$(RepoRoot)build\output\native\$(NativeTargetArchitecture)\assemblycore.dll</NativeCoreDll>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\runtime\AssemblyEngine.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ui\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="sample-settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="BuildNativeCore" BeforeTargets="BeforeBuild" Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true' and '$(SkipNativeCoreBuild)' != 'true'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(NativeBuildScript)&quot; -TargetArchitecture $(NativeTargetArchitecture)" />
+  </Target>
+
+  <Target Name="CopyNativeCoreToOutput" BeforeTargets="CopyFilesToOutputDirectory" Condition="Exists('$(NativeCoreDll)')">
+    <Copy SourceFiles="$(NativeCoreDll)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

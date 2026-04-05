@@ -5,7 +5,7 @@ AssemblyEngine is intentionally small and readable. Contributions should preserv
 ## Before You Start
 
 - The native runtime targets are Windows x64 and Windows ARM64 today. The x64 path is still NASM-based, and the ARM64 path is built from the NativeAOT backend.
-- Run the setup check before your first build:
+- Run setup before your first build so missing prerequisites are installed and the solution is restored:
 
 ```powershell
 .\setup.ps1

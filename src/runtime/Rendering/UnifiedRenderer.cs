@@ -144,6 +144,8 @@ internal sealed class UnifiedRenderer : IDisposable
 
         fixed (uint* colorBuffer = _surface.ColorBuffer)
         {
+            NativeCore.UploadFramebuffer((byte*)colorBuffer, _surface.ByteLength);
+
             if (_preferredBackend == GraphicsBackend.Vulkan
                 && _vulkanPresenter is not null
                 && _vulkanPresenter.Present((IntPtr)colorBuffer, _surface.Width, _surface.Height, _surface.Stride))
@@ -157,7 +159,6 @@ internal sealed class UnifiedRenderer : IDisposable
             if (_softwarePresenter.Present((IntPtr)colorBuffer, _surface.Width, _surface.Height, _surface.Stride))
                 return;
 
-            NativeCore.UploadFramebuffer((byte*)colorBuffer, _surface.ByteLength);
             NativeCore.Present();
         }
     }

@@ -192,9 +192,8 @@ public sealed class GameEngine
                 Scripts.DrawAll();
 
                 UI?.Render(Width, Height);
-                RuntimeDiagnosticsBridge.Current.ProcessFrameEnd(this);
-
                 Graphics.EndFrame();
+                RuntimeDiagnosticsBridge.Current.ProcessFrameEnd(this);
             }
         }
         catch (Exception ex)

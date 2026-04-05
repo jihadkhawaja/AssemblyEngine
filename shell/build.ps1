@@ -7,7 +7,7 @@
 
 param(
     [string] $TargetArchitecture,
-    [ValidateSet('basic', 'visual-novel')]
+    [ValidateSet('basic', 'visual-novel', 'fps')]
     [string] $Sample = 'basic'
 )
 
@@ -125,6 +125,11 @@ $SampleProjects = @{
         ProjectFile = 'SampleGame.csproj'
         AssemblyName = 'SampleGame'
     }
+    'fps' = @{
+        Directory = Join-Path $PSScriptRoot '..\sample\fps'
+        ProjectFile = 'FpsSample.csproj'
+        AssemblyName = 'FpsSample'
+    }
     'visual-novel' = @{
         Directory = Join-Path $PSScriptRoot '..\sample\visual-novel'
         ProjectFile = 'VisualNovelSample.csproj'
@@ -177,7 +182,8 @@ Write-Host ("[4/4] Publishing sample '{0}'..." -f $Sample)
 $samplePlatform = if ($ResolvedTargetArchitecture -eq 'arm64') { 'ARM64' } else { 'x64' }
 $sampleRid = if ($ResolvedTargetArchitecture -eq 'arm64') { 'win-arm64' } else { 'win-x64' }
 $samplePublishArtifacts = @()
-foreach ($assemblyName in @('SampleGame', 'VisualNovelSample')) {
+foreach ($sampleDefinition in $SampleProjects.Values) {
+    $assemblyName = $sampleDefinition.AssemblyName
     $samplePublishArtifacts += @(
         ("{0}.exe" -f $assemblyName),
         ("{0}.dll" -f $assemblyName),
