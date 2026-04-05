@@ -80,6 +80,20 @@ To publish the 3D FPS sample instead:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -Sample fps
 ```
 
+To publish self-contained bundles for every sample into isolated folders:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\publish_samples.ps1 -TargetArchitecture x64
+```
+
+To publish the same bundle layout for Windows ARM64:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\publish_samples.ps1 -TargetArchitecture arm64
+```
+
+Those outputs land in `build/sample-publish/<architecture>` and contain runnable sample binaries, not source or standalone engine SDK artifacts.
+
 To build the native ARM64 backend explicitly:
 
 ```powershell

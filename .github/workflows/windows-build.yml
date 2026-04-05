@@ -1,4 +1,6 @@
-name: Windows Release
+name: Windows Sample Binaries Release
+
+run-name: Release self-contained sample binaries for supported Windows targets
 
 on:
   workflow_dispatch:
@@ -12,7 +14,7 @@ concurrency:
 
 jobs:
   prepare_release:
-    name: Prepare release metadata
+    name: Prepare sample release metadata
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
@@ -53,7 +55,7 @@ jobs:
 
             core.info(`Next release tag: ${tag}`);
             core.setOutput('tag', tag);
-            core.setOutput('release_name', `AssemblyEngine ${tag}`);
+            core.setOutput('release_name', `AssemblyEngine Sample Binaries ${tag}`);
 
   build:
     name: ${{ matrix.name }}
@@ -63,17 +65,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Build Windows x64
+          - name: Publish Windows x64 samples
             runner: windows-latest
             target: x64
-            artifact: windows-x64-release
-            asset_suffix: windows-x64
+            artifact: windows-x64-sample-binaries
+            asset_suffix: windows-x64-samples
+            output_dir: build\sample-publish\x64
             installNasm: true
-          - name: Build Windows ARM64
+          - name: Publish Windows ARM64 samples
             runner: windows-11-arm
             target: arm64
-            artifact: windows-arm64-release
-            asset_suffix: windows-arm64
+            artifact: windows-arm64-sample-binaries
+            asset_suffix: windows-arm64-samples
+            output_dir: build\sample-publish\arm64
             installNasm: false
 
     steps:
@@ -94,17 +98,36 @@ jobs:
         shell: pwsh
         run: .\setup.ps1 -TargetArchitecture ${{ matrix.target }}
 
-      - name: Build engine and sample
+      - name: Publish self-contained samples
         shell: pwsh
-        run: .\shell\build.ps1 -TargetArchitecture ${{ matrix.target }}
+        run: .\shell\publish_samples.ps1 -TargetArchitecture ${{ matrix.target }} -OutputRoot '${{ matrix.output_dir }}'
+
+      - name: Summarize published samples
+        shell: pwsh
+        run: |
+          @"
+          ## Windows sample binaries
+          This workflow publishes self-contained runnable sample applications for Windows ${{ matrix.target }}.
+          The packaged zip contains sample folders only and is not a source archive or standalone engine SDK/runtime binary drop.
+
+          Included samples:
+          - basic (Dash Harvest)
+          - fps
+          - visual-novel
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
 
       - name: Package binaries
         id: package
         shell: pwsh
         run: |
-          $assetName = "AssemblyEngine-${{ needs.prepare_release.outputs.tag }}-${{ matrix.asset_suffix }}.zip"
+          $assetName = "AssemblyEngine-samples-${{ needs.prepare_release.outputs.tag }}-${{ matrix.asset_suffix }}.zip"
           $assetPath = Join-Path $env:GITHUB_WORKSPACE $assetName
-          $sourcePath = Join-Path $env:GITHUB_WORKSPACE 'build\output\*'
+          $publishRoot = Join-Path $env:GITHUB_WORKSPACE '${{ matrix.output_dir }}'
+          $sourcePath = Join-Path $publishRoot '*'
+
+          if (-not (Test-Path $publishRoot)) {
+            throw "Sample output '$publishRoot' was not produced."
+          }
 
           if (Test-Path $assetPath) {
             Remove-Item $assetPath -Force
@@ -122,7 +145,7 @@ jobs:
           if-no-files-found: error
 
   release:
-    name: Publish GitHub release
+    name: Publish GitHub sample release
     needs:
       - prepare_release
       - build
@@ -132,7 +155,20 @@ jobs:
       - name: Download packaged artifacts
         uses: actions/download-artifact@v4
         with:
-          path: release-assets
+          path: release-sample-assets
+
+      - name: Write release notes
+        run: |
+          cat > release-notes.md <<'EOF'
+          Self-contained Windows sample bundles for AssemblyEngine.
+
+          These assets contain runnable sample applications for the currently supported Windows targets:
+          - basic (Dash Harvest)
+          - fps
+          - visual-novel
+
+          They are sample bundles only. They are not source archives and not standalone engine SDK/runtime binaries.
+          EOF
 
       - name: Create release and upload assets
         env:
@@ -141,9 +177,9 @@ jobs:
           RELEASE_TAG: ${{ needs.prepare_release.outputs.tag }}
         run: |
           gh release create "$RELEASE_TAG" \
-            release-assets/windows-x64-release/*.zip \
-            release-assets/windows-arm64-release/*.zip \
+            release-sample-assets/windows-x64-sample-binaries/*.zip \
+            release-sample-assets/windows-arm64-sample-binaries/*.zip \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
             --title "$RELEASE_NAME" \
-            --generate-notes
+            --notes-file release-notes.md
