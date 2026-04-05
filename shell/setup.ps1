@@ -54,6 +54,7 @@ function Find-Executable {
 function Add-UniqueListItem {
     param(
         [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
         [System.Collections.Generic.List[string]] $List,
 
         [Parameter(Mandatory)]
