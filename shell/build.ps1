@@ -7,7 +7,7 @@
 
 param(
     [string] $TargetArchitecture,
-    [ValidateSet('basic', 'visual-novel', 'fps')]
+    [ValidateSet('basic', 'visual-novel', 'fps', 'rts')]
     [string] $Sample = 'basic'
 )
 
@@ -129,6 +129,11 @@ $SampleProjects = @{
         Directory = Join-Path $PSScriptRoot '..\sample\fps'
         ProjectFile = 'FpsSample.csproj'
         AssemblyName = 'FpsSample'
+    }
+    'rts' = @{
+        Directory = Join-Path $PSScriptRoot '..\sample\rts'
+        ProjectFile = 'RtsSample.csproj'
+        AssemblyName = 'RtsSample'
     }
     'visual-novel' = @{
         Directory = Join-Path $PSScriptRoot '..\sample\visual-novel'

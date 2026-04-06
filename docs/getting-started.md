@@ -80,6 +80,12 @@ To publish the 3D FPS sample instead:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -Sample fps
 ```
 
+To publish the RTS sample instead:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -Sample rts
+```
+
 To publish self-contained bundles for every sample into isolated folders:
 
 ```powershell
@@ -120,9 +126,15 @@ Or, after using `-Sample fps`:
 .\build\output\FpsSample.exe
 ```
 
+Or, after using `-Sample rts`:
+
+```powershell
+.\build\output\RtsSample.exe
+```
+
 On Windows ARM64, the default build is native `win-arm64`. If you built `-TargetArchitecture x64`, Windows runs the sample through the x64 emulation layer instead.
 
-The default sample is Dash Harvest, a small arcade loop used to exercise scenes, scripts, collision, the HTML/CSS HUD, and generated 8-bit SFX. The repository also includes Citadel Breach in `sample/fps`, a 3D FPS arena sample built from cubes, camera control, hitscan shooting, and a HUD overlay, plus Lantern Letters in `sample/visual-novel`, a dialogue-driven sample with generated character sprites, parallax backgrounds, save/load, skip mode, and its own 8-bit SFX set.
+The default sample is Dash Harvest, a small arcade loop used to exercise scenes, scripts, collision, the HTML/CSS HUD, and generated 8-bit SFX. The repository also includes Citadel Breach in `sample/fps`, a 3D FPS arena sample built from cubes, camera control, hitscan shooting, and a HUD overlay, Frontier Foundry in `sample/rts`, a top-down RTS sample with harvesting, production queues, rally points, and escalating raids, plus Lantern Letters in `sample/visual-novel`, a dialogue-driven sample with generated character sprites, parallax backgrounds, save/load, skip mode, and its own 8-bit SFX set.
 
 Controls:
 
@@ -147,6 +159,18 @@ Citadel Breach controls:
 - Hold `Shift` to sprint
 - `F1` toggles the help panel
 - `R` or `Enter` restarts after mission clear or failure
+
+Frontier Foundry controls:
+
+- Left drag selects units; hold Shift to add or Ctrl to remove
+- Right click issues move or harvest orders
+- Right click with no selection moves the HQ rally point
+- Left click the minimap instantly recenters the camera
+- Middle click snaps the camera to the cursor position
+- `Q` queues a worker and `E` queues a guard
+- `1`, `2`, and `3` select workers, guards, or all units, and `Space` focuses the current selection or HQ
+- Arrow keys or moving the cursor to the screen edge pans the camera
+- `F1` toggles the command brief and `R` or `Enter` restarts after victory or defeat
 
 The sample stores its display preferences in `sample-settings.json` next to the executable. `Window mode`, `Resolution`, `VSync`, and `UI scale` all apply from the in-game settings panel, and maximize or restore events resize the engine surface dynamically.
 
@@ -182,6 +206,12 @@ Or for the FPS sample:
 dotnet build .\sample\fps\FpsSample.csproj -c Release
 ```
 
+Or for the RTS sample:
+
+```powershell
+dotnet build .\sample\rts\RtsSample.csproj -c Release
+```
+
 On Windows, both sample projects invoke `shell/build_core.ps1` before the managed build, so the native DLL is rebuilt automatically. Use the `ARM64` platform in the solution or pass `-p:Platform=ARM64` on the command line to target the native ARM64 backend.
 
 ## 6. Open the Workspace
@@ -200,6 +230,7 @@ You can work with either of these entry points:
 | `src/runtime` | Managed runtime, interop, scenes, scripts, and UI |
 | `sample/basic` | Sample game project |
 | `sample/fps` | 3D FPS sample project |
+| `sample/rts` | Top-down RTS sample project |
 | `sample/visual-novel` | Visual novel sample project |
 | `shell` | Build and setup automation |
 | `docs` | Project documentation |

@@ -16,7 +16,7 @@ AssemblyEngine is a Windows game engine with a native core and a C# runtime for 
 - Native core: NASM x64 backend, NativeAOT ARM64 backend, shared Win32 window/input/audio contract with software presentation fallback
 - Managed runtime: .NET 10
 - Rendering: unified managed 2D/3D color + depth surface, opt-in Vulkan swapchain presentation, native framebuffer upload fallback
-- Sample games: Dash Harvest in `sample/basic`, Citadel Breach in `sample/fps`, Lantern Letters in `sample/visual-novel`
+- Sample games: Dash Harvest in `sample/basic`, Citadel Breach in `sample/fps`, Frontier Foundry in `sample/rts`, Lantern Letters in `sample/visual-novel`
 - UI system: runtime HTML/CSS parsing with a built-in text renderer
 
 ## Project Overview
@@ -96,6 +96,12 @@ To publish the 3D FPS sample instead, run:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -Sample fps
 ```
 
+To publish the RTS sample instead, run:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -Sample rts
+```
+
 To publish self-contained bundles for every sample into isolated folders, run:
 
 ```powershell
@@ -126,6 +132,12 @@ Or, after using `-Sample fps`:
 
 ```powershell
 .\build\output\FpsSample.exe
+```
+
+Or, after using `-Sample rts`:
+
+```powershell
+.\build\output\RtsSample.exe
 ```
 
 Dash Harvest controls:
@@ -160,6 +172,18 @@ Citadel Breach controls:
 - `F1` toggles the control panel
 - `R` or `Enter` restarts after mission clear or failure
 
+Frontier Foundry controls:
+
+- Left drag selects units; hold Shift to add or Ctrl to remove
+- Right click issues move or harvest orders
+- Right click with no selection moves the HQ rally point
+- Left click the minimap instantly recenters the camera
+- Middle click snaps the camera to the cursor position
+- `Q` queues a worker and `E` queues a guard
+- `1`, `2`, and `3` select workers, guards, or all units, and `Space` focuses the current selection or HQ
+- Arrow keys or moving the cursor to the screen edge pans the camera
+- `F1` toggles the command brief and `R` or `Enter` restarts after victory or defeat
+
 The sample persists display preferences in `sample-settings.json`. `Window mode`, `Resolution`, `VSync`, and `UI scale` all apply from the in-game settings panel, and maximize or restore events now resize the engine surface dynamically.
 
 If you want to inspect or drive a running game from an AI agent, the repo also includes a stdio MCP server in `src/tools/AssemblyEngine.RuntimeMcpServer`. It can launch a game, tail structured runtime logs, return live runtime state, capture the current game framebuffer, and inject keyboard or mouse input. The checked-in `.vscode/mcp.json` file includes an `assemblyengine-runtime` server entry so current VS Code builds can auto-discover it from the workspace. See [Runtime MCP server](docs/runtime-mcp.md).
@@ -171,7 +195,7 @@ Typical runtime MCP workflow:
 - Use `get_session_status` and `wait_for_logs` to inspect runtime state and tail logs.
 - Use `capture_screenshot` to grab the current rendered frame and `send_key` or mouse tools to drive the game.
 
-If you prefer to iterate from an IDE, building `sample/basic/SampleGame.csproj`, `sample/fps/FpsSample.csproj`, or `sample/visual-novel/VisualNovelSample.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build. Choose the `ARM64` solution platform to build the native ARM64 backend.
+If you prefer to iterate from an IDE, building `sample/basic/SampleGame.csproj`, `sample/fps/FpsSample.csproj`, `sample/rts/RtsSample.csproj`, or `sample/visual-novel/VisualNovelSample.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build. Choose the `ARM64` solution platform to build the native ARM64 backend.
 
 ## Minimal Example
 
@@ -240,6 +264,7 @@ public static class Program
 | `src/runtime` | Managed runtime, interop layer, scene system, and UI stack |
 | `sample/basic` | Playable 2D arcade sample built on top of the runtime |
 | `sample/fps` | Playable 3D FPS arena sample built on top of the runtime |
+| `sample/rts` | Playable top-down RTS sample with harvesting, production, and enemy raids |
 | `sample/visual-novel` | Visual novel sample with dialogue, save/load, sprites, and parallax |
 | `shell` | Build and setup scripts |
 | `docs` | Project documentation and diagrams |

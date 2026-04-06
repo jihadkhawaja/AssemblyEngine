@@ -3,25 +3,28 @@
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|ARM64" Project="ARM64" />
   </Project>
-  <Project Path="src/tools/AssemblyEngine.RuntimeMcpServer/AssemblyEngine.RuntimeMcpServer.csproj">
-    <Platform Solution="*|x64" Project="Any CPU" />
-    <Platform Solution="*|ARM64" Project="Any CPU" />
-  </Project>
+  <Project Path="src/tools/AssemblyEngine.RuntimeMcpServer/AssemblyEngine.RuntimeMcpServer.csproj" />
   <Configurations>
     <Platform Name="Any CPU" />
     <Platform Name="x64" />
     <Platform Name="ARM64" />
   </Configurations>
-  <Project Path="sample/basic/SampleGame.csproj">
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|ARM64" Project="ARM64" />
-  </Project>
-  <Project Path="sample/fps/FpsSample.csproj">
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|ARM64" Project="ARM64" />
-  </Project>
-  <Project Path="sample/visual-novel/VisualNovelSample.csproj">
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|ARM64" Project="ARM64" />
-  </Project>
+  <Folder Name="/sample/">
+    <Project Path="sample/basic/SampleGame.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="sample/fps/FpsSample.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="sample/rts/RtsSample.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="sample/visual-novel/VisualNovelSample.csproj">
+      <Platform Solution="*|ARM64" Project="ARM64" />
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
 </Solution>

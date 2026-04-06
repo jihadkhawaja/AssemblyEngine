@@ -1,0 +1,299 @@
+body {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
+#top-bar {
+    position: absolute;
+    left: 18px;
+    top: 16px;
+    width: 900px;
+    height: 36px;
+    background-color: rgba(6, 11, 16, 0.84);
+    display: flex;
+    flex-direction: row;
+    padding: 8px 12px;
+    gap: 18px;
+    border-width: 1;
+    border-color: #8FE8FF;
+}
+
+#fps-counter {
+    color: #C2FAFF;
+    font-size: 14;
+    width: 152px;
+    height: 24px;
+}
+
+#ore {
+    color: #FFE08A;
+    font-size: 14;
+    width: 116px;
+    height: 24px;
+}
+
+#hq {
+    color: #FFC0B3;
+    font-size: 14;
+    width: 94px;
+    height: 24px;
+}
+
+#workers {
+    color: #AEE5FF;
+    font-size: 14;
+    width: 110px;
+    height: 24px;
+}
+
+#guards {
+    color: #B9FFCF;
+    font-size: 14;
+    width: 108px;
+    height: 24px;
+}
+
+#wave {
+    color: #F7FF9A;
+    font-size: 14;
+    width: 190px;
+    height: 24px;
+}
+
+#center-message {
+    position: absolute;
+    left: 292px;
+    top: 88px;
+    width: 600px;
+    height: 112px;
+    background-color: rgba(6, 13, 19, 0.90);
+    border-width: 2;
+    border-color: #FFE08A;
+    padding: 14px 18px;
+}
+
+#message-title {
+    color: #F7FF9A;
+    font-size: 28;
+    width: 540px;
+    height: 34px;
+}
+
+#message-subtitle {
+    color: #E6F8FF;
+    font-size: 16;
+    width: 560px;
+    height: 52px;
+}
+
+#intel-panel {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    width: 720px;
+    height: 126px;
+    background-color: rgba(5, 11, 16, 0.86);
+    border-width: 1;
+    border-color: #4AA8C6;
+    padding: 10px 12px;
+}
+
+#objective {
+    color: #FFFFFF;
+    font-size: 15;
+    width: 690px;
+    height: 24px;
+}
+
+#selection {
+    color: #B9FFCF;
+    font-size: 14;
+    width: 690px;
+    height: 22px;
+}
+
+#selection-detail {
+    color: #CDE6F6;
+    font-size: 13;
+    width: 690px;
+    height: 22px;
+}
+
+#hint {
+    color: #9CB3CB;
+    font-size: 13;
+    width: 690px;
+    height: 38px;
+}
+
+#production-panel {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    width: 364px;
+    height: 96px;
+    background-color: rgba(5, 11, 16, 0.88);
+    border-width: 1;
+    border-color: #F0C86A;
+    padding: 10px 12px;
+}
+
+#queue {
+    color: #FFE08A;
+    font-size: 14;
+    width: 338px;
+    height: 24px;
+}
+
+#rally {
+    color: #C2FAFF;
+    font-size: 13;
+    width: 338px;
+    height: 22px;
+}
+
+#map-hint {
+    color: #B9D8EA;
+    font-size: 12;
+    width: 338px;
+    height: 30px;
+}
+
+#tactical-panel {
+    position: absolute;
+    right: 20px;
+    top: 326px;
+    width: 328px;
+    height: 140px;
+    background-color: rgba(5, 11, 16, 0.88);
+    border-width: 1;
+    border-color: #7FD8FF;
+    padding: 12px 14px;
+}
+
+#camera {
+    color: #C2FAFF;
+    font-size: 13;
+    width: 290px;
+    height: 20px;
+}
+
+#forces {
+    color: #B9FFCF;
+    font-size: 13;
+    width: 290px;
+    height: 20px;
+}
+
+#economy {
+    color: #FFE08A;
+    font-size: 13;
+    width: 290px;
+    height: 20px;
+}
+
+#roster-1 {
+    color: #E6F8FF;
+    font-size: 12;
+    width: 290px;
+    height: 18px;
+}
+
+#roster-2 {
+    color: #E6F8FF;
+    font-size: 12;
+    width: 290px;
+    height: 18px;
+}
+
+#roster-3 {
+    color: #9CB3CB;
+    font-size: 12;
+    width: 290px;
+    height: 18px;
+}
+
+#help-panel {
+    position: absolute;
+    right: 20px;
+    top: 74px;
+    width: 328px;
+    height: 236px;
+    background-color: rgba(5, 11, 16, 0.88);
+    border-width: 1;
+    border-color: #FFE08A;
+    padding: 12px 14px;
+}
+
+#help-title {
+    color: #FFE08A;
+    font-size: 22;
+    width: 286px;
+    height: 28px;
+}
+
+#help-row-1 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-row-2 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-row-3 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-row-4 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-row-5 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-row-6 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-row-7 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-row-8 {
+    color: #E6F8FF;
+    font-size: 14;
+    width: 290px;
+    height: 22px;
+}
+
+#help-footer {
+    color: #9CB3CB;
+    font-size: 12;
+    width: 290px;
+    height: 28px;
+}

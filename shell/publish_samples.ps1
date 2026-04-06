@@ -127,6 +127,11 @@ $sampleDefinitions = @(
         Project = Join-Path $repoRoot 'sample\fps\FpsSample.csproj'
     },
     @{
+        Key = 'rts'
+        DisplayName = 'Frontier Foundry'
+        Project = Join-Path $repoRoot 'sample\rts\RtsSample.csproj'
+    },
+    @{
         Key = 'visual-novel'
         DisplayName = 'Visual Novel Sample'
         Project = Join-Path $repoRoot 'sample\visual-novel\VisualNovelSample.csproj'
@@ -180,6 +185,7 @@ $bundleReadme = @(
     'Included sample folders:',
     ' - basic (Dash Harvest)',
     ' - fps',
+    ' - rts (Frontier Foundry)',
     ' - visual-novel'
 ) -join [Environment]::NewLine
 
