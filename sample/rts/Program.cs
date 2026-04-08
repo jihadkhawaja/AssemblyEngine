@@ -22,7 +22,7 @@ public static class Program
 
         engine.SetWindowMode(settings.WindowMode);
         engine.Scenes.Register("frontier", new RtsScene());
-    engine.Scripts.RegisterScript(new RtsAudioScript(audioDir));
+        engine.Scripts.RegisterScript(new RtsAudioScript(audioDir));
         engine.Scripts.RegisterScript(new RtsGameScript());
         engine.Scripts.RegisterScript(new RtsHudScript());
 
