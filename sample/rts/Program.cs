@@ -9,6 +9,8 @@ public static class Program
     {
         var settingsPath = Path.Combine(AppContext.BaseDirectory, "sample-settings.json");
         var settings = RtsSampleSettingsStore.Load(settingsPath);
+        var audioDir = Path.Combine(AppContext.BaseDirectory, "generated-audio", "rts");
+        RtsAudioAssets.EnsureAssets(audioDir);
 
         var engine = new GameEngine(settings.Width, settings.Height, "AssemblyEngine - Frontier Foundry")
         {
@@ -20,6 +22,7 @@ public static class Program
 
         engine.SetWindowMode(settings.WindowMode);
         engine.Scenes.Register("frontier", new RtsScene());
+    engine.Scripts.RegisterScript(new RtsAudioScript(audioDir));
         engine.Scripts.RegisterScript(new RtsGameScript());
         engine.Scripts.RegisterScript(new RtsHudScript());
 

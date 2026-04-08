@@ -21,6 +21,8 @@ public sealed class RtsHudScript : GameScript
         Engine.UI.UpdateText("selection-detail", game.SelectionDetail);
         Engine.UI.UpdateText("hint", game.HintText);
         Engine.UI.UpdateText("queue", game.QueueSummary);
+        Engine.UI.UpdateText("queue-worker-button", game.WorkerBuildButtonText);
+        Engine.UI.UpdateText("queue-guard-button", game.GuardBuildButtonText);
         Engine.UI.UpdateText("rally", game.RallySummary);
         Engine.UI.UpdateText("camera", game.CameraSummary);
         Engine.UI.UpdateText("forces", game.ForceSummary);

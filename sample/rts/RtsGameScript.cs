@@ -36,12 +36,22 @@ public sealed class RtsGameScript : GameScript
         new Vector2(2070f, 150f),
         new Vector2(1760f, 310f)
     ];
+    private static readonly string[] BlockingHudElementIds =
+    [
+        "top-bar",
+        "center-message",
+        "intel-panel",
+        "production-panel",
+        "tactical-panel",
+        "help-panel"
+    ];
 
     private readonly Random _random = new();
     private readonly List<RtsUnit> _units = [];
     private readonly List<RtsResourceNode> _resourceNodes = [];
     private readonly List<ShotEffect> _shotEffects = [];
     private readonly List<ProductionOrder> _productionQueue = [];
+    private RtsAudioScript _audio = null!;
     private Vector2 _cameraPosition;
     private Vector2 _commandPulsePosition;
     private Vector2 _navigationPulsePosition;
@@ -78,6 +88,10 @@ public sealed class RtsGameScript : GameScript
     public int GuardCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Guard);
 
     public int RaiderCount => _units.Count(unit => unit.IsAlive && unit.IsEnemy);
+
+    public string WorkerBuildButtonText => GetProductionButtonText(RtsUnitRole.Worker, "Q");
+
+    public string GuardBuildButtonText => GetProductionButtonText(RtsUnitRole.Guard, "E");
 
     public string BackendLabel => Graphics.Backend == GraphicsBackend.Vulkan ? "Vulkan" : "Software";
 
@@ -197,7 +211,7 @@ public sealed class RtsGameScript : GameScript
         get
         {
             if (_productionQueue.Count == 0)
-                return $"Queue idle | Q Worker {WorkerCost} ore | E Guard {GuardCost} ore";
+                return "Queue idle | Click a build card or press Q / E";
 
             var parts = new List<string>(_productionQueue.Count);
             for (var index = 0; index < _productionQueue.Count; index++)
@@ -248,13 +262,16 @@ public sealed class RtsGameScript : GameScript
 
     public string RosterLine3 => GetSelectionRosterLine(2);
 
-    public string MapHintText => "Minimap left click recenters | Middle click snaps to cursor | Space focuses selection.";
+    public string MapHintText => "Build cards click/Q/E | Minimap LMB jumps | MMB snaps";
 
     public string HintText =>
-        "Drag select | Shift add | Ctrl remove | RMB orders | LMB minimap or MMB snap camera | Space focus | Q/E build | F1 help";
+        "Drag select | Shift add | Ctrl remove | RMB orders | Build cards click/Q/E | LMB minimap | MMB snap | Space focus | F1 help";
 
     public override void OnLoad()
     {
+        _audio = Engine.Scripts.GetScript<RtsAudioScript>()
+            ?? throw new InvalidOperationException("RtsAudioScript must be registered before RtsGameScript loads.");
+
         ResetScenario();
     }
 
@@ -284,6 +301,7 @@ public sealed class RtsGameScript : GameScript
 
         _missionTime += deltaTime;
         HandleHotkeys();
+        HandleHudButtons(leftMouseDown);
         HandleNavigation(leftMouseDown, middleMouseDown);
         UpdateCamera(deltaTime);
         HandleSelection(leftMouseDown);
@@ -353,6 +371,7 @@ public sealed class RtsGameScript : GameScript
         SpawnPlayerUnit(RtsUnitRole.Worker, HeadquartersPosition + new Vector2(30f, 16f), sendToRally: false);
         SpawnPlayerUnit(RtsUnitRole.Guard, HeadquartersPosition + new Vector2(76f, -18f), sendToRally: true);
         SelectPlayerUnits(unit => unit.Role == RtsUnitRole.Worker);
+        _audio.PlayMissionStart();
     }
 
     private void UpdateBanner(float deltaTime)
@@ -431,9 +450,29 @@ public sealed class RtsGameScript : GameScript
             FocusCameraOnSelection();
     }
 
+    private void HandleHudButtons(bool leftMouseDown)
+    {
+        if (!leftMouseDown || _leftMouseWasDown)
+            return;
+
+        if (IsPointInsideUiElement(MousePosition, "queue-worker-button"))
+        {
+            QueueProduction(RtsUnitRole.Worker);
+            return;
+        }
+
+        if (IsPointInsideUiElement(MousePosition, "queue-guard-button"))
+            QueueProduction(RtsUnitRole.Guard);
+    }
+
     private void HandleNavigation(bool leftMouseDown, bool middleMouseDown)
     {
         var mouseOnMinimap = IsPointInsideMinimap(MousePosition);
+        if (!mouseOnMinimap && IsPointerInsideBlockingHud(MousePosition))
+        {
+            _minimapNavigationActive = false;
+            return;
+        }
 
         if (leftMouseDown && !_leftMouseWasDown && mouseOnMinimap)
         {
@@ -475,6 +514,9 @@ public sealed class RtsGameScript : GameScript
 
         if (leftMouseDown && !_leftMouseWasDown)
         {
+            if (IsPointerInsideBlockingHud(MousePosition))
+                return;
+
             _selectionActive = true;
             _selectionStartScreen = MousePosition;
             _selectionEndScreen = MousePosition;
@@ -492,7 +534,7 @@ public sealed class RtsGameScript : GameScript
 
     private void HandleCommands(bool rightMouseDown)
     {
-        if (!rightMouseDown || _rightMouseWasDown || IsPointInsideMinimap(MousePosition))
+        if (!rightMouseDown || _rightMouseWasDown || IsPointInsideMinimap(MousePosition) || IsPointerInsideBlockingHud(MousePosition))
             return;
 
         var selectedUnits = GetSelectedUnits();
@@ -501,6 +543,7 @@ public sealed class RtsGameScript : GameScript
         {
             _rallyPoint = worldPosition;
             SetCommandPulse(_rallyPoint);
+            _audio.PlayRally();
             ShowTransientMessage("Rally Updated", $"Fresh units will stage in the {DescribeSector(_rallyPoint)}.", 1.1f);
             return;
         }
@@ -535,26 +578,40 @@ public sealed class RtsGameScript : GameScript
 
     private void QueueProduction(RtsUnitRole role)
     {
-        if (_productionQueue.Count >= QueueLimit)
+        var availability = GetProductionAvailability(role);
+        if (availability == ProductionAvailability.QueueFull)
         {
+            _audio.PlayDenied();
             ShowTransientMessage("Queue Full", "The foundry can hold four production orders at a time.", 1f);
             return;
         }
 
-        var cost = role == RtsUnitRole.Worker ? WorkerCost : GuardCost;
-        if (_oreStockpile < cost)
+        var cost = GetProductionCost(role);
+        if (availability == ProductionAvailability.InsufficientOre)
         {
+            _audio.PlayDenied();
             ShowTransientMessage("Ore Low", $"Need {cost} ore to queue a {GetRoleLabel(role).ToLowerInvariant()}.", 1f);
             return;
         }
 
         _oreStockpile -= cost;
-        var buildTime = role == RtsUnitRole.Worker ? 2.5f : 4.1f;
+        var buildTime = GetProductionBuildTime(role);
         _productionQueue.Add(new ProductionOrder(role, buildTime));
+        _audio.PlayQueue(role);
         ShowTransientMessage(
             $"{GetRoleLabel(role)} Queued",
             $"{GetRoleLabel(role)} fabrication started. Cost {cost} ore.",
             0.9f);
+    }
+
+    private ProductionAvailability GetProductionAvailability(RtsUnitRole role)
+    {
+        if (_productionQueue.Count >= QueueLimit)
+            return ProductionAvailability.QueueFull;
+
+        return _oreStockpile >= GetProductionCost(role)
+            ? ProductionAvailability.Ready
+            : ProductionAvailability.InsufficientOre;
     }
 
     private void UpdateProduction(float deltaTime)
@@ -570,6 +627,7 @@ public sealed class RtsGameScript : GameScript
         _productionQueue.RemoveAt(0);
         var spawnOffset = new Vector2(84f + (_random.NextSingle() * 26f), -34f + (_random.NextSingle() * 68f));
         SpawnPlayerUnit(order.Role, HeadquartersPosition + spawnOffset, sendToRally: true);
+    _audio.PlayUnitReady();
         ShowTransientMessage(
             $"{order.Label} Ready",
             $"A new {order.Label.ToLowerInvariant()} is moving toward the {DescribeSector(_rallyPoint)}.",
@@ -601,6 +659,7 @@ public sealed class RtsGameScript : GameScript
         }
 
         _nextWaveTimer = Math.Max(8f, WaveInterval - Math.Min(8f, _waveIndex * 0.85f));
+        _audio.PlayRaidAlert();
         ShowTransientMessage(
             $"Raid {_waveIndex} Inbound",
             $"{raiderCount} raiders crossed the ridge. Queue guards with E and keep the ore moving.",
@@ -644,6 +703,7 @@ public sealed class RtsGameScript : GameScript
                 if (MoveUnit(worker, HeadquartersPosition, deltaTime, HeadquartersHalfWidth + 12f))
                 {
                     _oreStockpile += worker.CarryOre;
+                    _audio.PlayDeposit();
                     worker.CarryOre = 0;
                     worker.HarvestProgress = 0f;
                     worker.ReturningToBase = false;
@@ -677,6 +737,7 @@ public sealed class RtsGameScript : GameScript
                     {
                         node.RemainingOre -= minedOre;
                         worker.CarryOre += minedOre;
+                        _audio.PlayMine();
                     }
 
                     if (worker.CarryOre >= worker.CarryCapacity || node.IsDepleted)
@@ -728,6 +789,7 @@ public sealed class RtsGameScript : GameScript
                     raider.AttackCooldown = raider.AttackInterval;
                     target.Health = Math.Max(0f, target.Health - raider.AttackDamage);
                     _shotEffects.Add(new ShotEffect(raider.Position, target.Position, new Color(255, 122, 92), 0.12f));
+                    _audio.PlayUnderAttack();
                 }
             }
             else
@@ -746,6 +808,7 @@ public sealed class RtsGameScript : GameScript
                 raider.AttackCooldown = raider.AttackInterval;
                 _hqHealth = Math.Max(0f, _hqHealth - raider.AttackDamage);
                 _shotEffects.Add(new ShotEffect(raider.Position, HeadquartersPosition, new Color(255, 122, 92), 0.12f));
+                _audio.PlayUnderAttack();
             }
         }
         else
@@ -771,6 +834,7 @@ public sealed class RtsGameScript : GameScript
     {
         var resourceNodeIndex = FindResourceNodeIndex(worldPosition);
         var columns = (int)MathF.Ceiling(MathF.Sqrt(selectedUnits.Count));
+        var issuedHarvestOrder = false;
         for (var index = 0; index < selectedUnits.Count; index++)
         {
             var unit = selectedUnits[index];
@@ -779,6 +843,7 @@ public sealed class RtsGameScript : GameScript
 
             if (resourceNodeIndex >= 0 && unit.Role == RtsUnitRole.Worker)
             {
+                issuedHarvestOrder = true;
                 unit.OrderType = RtsUnitOrderType.Harvest;
                 unit.AssignedNodeIndex = resourceNodeIndex;
                 unit.ReturningToBase = false;
@@ -795,6 +860,7 @@ public sealed class RtsGameScript : GameScript
         }
 
         SetCommandPulse(resourceNodeIndex >= 0 ? _resourceNodes[resourceNodeIndex].Position : worldPosition);
+        _audio.PlayOrder(issuedHarvestOrder);
     }
 
     private bool MoveUnit(RtsUnit unit, Vector2 target, float deltaTime, float stopDistance)
@@ -819,6 +885,8 @@ public sealed class RtsGameScript : GameScript
         target.Health = Math.Max(0f, target.Health - attacker.AttackDamage);
         attacker.AimDirection = SafeNormalize(target.Position - attacker.Position, attacker.AimDirection);
         _shotEffects.Add(new ShotEffect(attacker.Position, target.Position, color, 0.12f));
+        if (attacker.Role == RtsUnitRole.Guard)
+            _audio.PlayGuardFire();
     }
 
     private void ResolveUnitSeparation()
@@ -877,6 +945,7 @@ public sealed class RtsGameScript : GameScript
             _gameOver = true;
             _bannerTitle = "Outpost Lost";
             _bannerSubtitle = "The refinery collapsed under the raid. Press R or Enter to restart the mission.";
+            _audio.PlayDefeat();
             return;
         }
 
@@ -885,6 +954,7 @@ public sealed class RtsGameScript : GameScript
             _victory = true;
             _bannerTitle = "Stockpile Secure";
             _bannerSubtitle = $"{_oreStockpile} ore banked in {_missionTime:0.0}s. Press R or Enter to run the scenario again.";
+            _audio.PlayVictory();
         }
     }
 
@@ -1376,6 +1446,31 @@ public sealed class RtsGameScript : GameScript
             MinimapHeight);
     }
 
+    private bool IsPointerInsideBlockingHud(Vector2 screenPosition)
+    {
+        for (var index = 0; index < BlockingHudElementIds.Length; index++)
+        {
+            if (IsPointInsideUiElement(screenPosition, BlockingHudElementIds[index]))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsPointInsideUiElement(Vector2 screenPosition, string elementId)
+    {
+        return TryGetUiElementBounds(elementId, out var bounds) && bounds.Contains(screenPosition);
+    }
+
+    private bool TryGetUiElementBounds(string elementId, out Rectangle bounds)
+    {
+        if (Engine.UI is not null && Engine.UI.TryGetBounds(elementId, Engine.Width, Engine.Height, out bounds))
+            return true;
+
+        bounds = default;
+        return false;
+    }
+
     private bool IsPointInsideMinimap(Vector2 screenPosition) => GetMinimapBounds().Contains(screenPosition);
 
     private Vector2 WorldToScreen(Vector2 worldPosition) => worldPosition - _cameraPosition;
@@ -1417,6 +1512,18 @@ public sealed class RtsGameScript : GameScript
             sum += units[index].Position;
 
         return sum * (1f / units.Count);
+    }
+
+    private string GetProductionButtonText(RtsUnitRole role, string hotkey)
+    {
+        var status = GetProductionAvailability(role) switch
+        {
+            ProductionAvailability.Ready => "READY",
+            ProductionAvailability.InsufficientOre => "LOW ORE",
+            _ => "QUEUE FULL"
+        };
+
+        return $"{hotkey} {GetRoleLabel(role).ToUpperInvariant()} {GetProductionCost(role)} | {status}";
     }
 
     private string GetSelectionRosterLine(int index)
@@ -1508,6 +1615,16 @@ public sealed class RtsGameScript : GameScript
         return vertical == "midfield" ? $"{vertical} {horizontal}" : $"{vertical} {horizontal}";
     }
 
+    private static int GetProductionCost(RtsUnitRole role)
+    {
+        return role == RtsUnitRole.Worker ? WorkerCost : GuardCost;
+    }
+
+    private static float GetProductionBuildTime(RtsUnitRole role)
+    {
+        return role == RtsUnitRole.Worker ? 2.5f : 4.1f;
+    }
+
     private void ShowTransientMessage(string title, string subtitle, float duration)
     {
         if (_victory || _gameOver)
@@ -1516,6 +1633,13 @@ public sealed class RtsGameScript : GameScript
         _bannerTitle = title;
         _bannerSubtitle = subtitle;
         _bannerTimer = duration;
+    }
+
+    private enum ProductionAvailability
+    {
+        Ready,
+        InsufficientOre,
+        QueueFull
     }
 
     private sealed class ProductionOrder

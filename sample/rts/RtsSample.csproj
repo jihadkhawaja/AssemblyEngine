@@ -31,12 +31,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\shared\EightBitSoundBuilder.cs" Link="EightBitSoundBuilder.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="ui\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="sample-settings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.3.0" />
+    <PackageReference Include="System.Windows.Extensions" Version="10.0.5" />
   </ItemGroup>
 
   <Target Name="BuildNativeCore" BeforeTargets="BeforeBuild" Condition="'$(OS)' == 'Windows_NT' and '$(DesignTimeBuild)' != 'true' and '$(SkipNativeCoreBuild)' != 'true'">

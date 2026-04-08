@@ -1,3 +1,5 @@
+using AssemblyEngine.Core;
+
 namespace AssemblyEngine.UI;
 
 /// <summary>
@@ -9,6 +11,9 @@ public sealed class UIDocument
     public UIElement Root { get; }
     public Dictionary<string, UIStyle> Styles { get; }
     public float RenderScale { get; set; } = 1f;
+    private int _lastViewportWidth = -1;
+    private int _lastViewportHeight = -1;
+    private bool _layoutDirty = true;
 
     private UIDocument(UIElement root, Dictionary<string, UIStyle> styles)
     {
@@ -35,18 +40,42 @@ public sealed class UIDocument
         // Clear existing text children and set new text
         el.Children.RemoveAll(c => c.Tag == "#text");
         el.Children.Add(new UIElement { Tag = "#text", Text = text, Parent = el });
+        _layoutDirty = true;
     }
 
     public void SetVisible(string id, bool visible)
     {
         var el = FindById(id);
         if (el is not null)
+        {
             el.ComputedStyle.Visible = visible;
+            _layoutDirty = true;
+        }
+    }
+
+    public bool TryGetBounds(string id, int viewportWidth, int viewportHeight, out Rectangle bounds)
+    {
+        EnsureLayout(viewportWidth, viewportHeight);
+
+        var element = FindById(id);
+        if (element is null || !IsVisible(element))
+        {
+            bounds = default;
+            return false;
+        }
+
+        bounds = new Rectangle(
+            ScaleValue(element.LayoutX),
+            ScaleValue(element.LayoutY),
+            ScaleValue(element.LayoutWidth),
+            ScaleValue(element.LayoutHeight));
+
+        return bounds.Width > 0f && bounds.Height > 0f;
     }
 
     public void Render(int viewportWidth, int viewportHeight)
     {
-        UILayoutEngine.Layout(Root, 0, 0, viewportWidth, viewportHeight);
+        EnsureLayout(viewportWidth, viewportHeight);
         UIRenderer.Render(Root, RenderScale);
     }
 
@@ -100,5 +129,29 @@ public sealed class UIDocument
         target.AlignItems = source.AlignItems;
         target.JustifyContent = source.JustifyContent;
         target.Gap = source.Gap;
+    }
+
+    private void EnsureLayout(int viewportWidth, int viewportHeight)
+    {
+        if (!_layoutDirty && _lastViewportWidth == viewportWidth && _lastViewportHeight == viewportHeight)
+            return;
+
+        UILayoutEngine.Layout(Root, 0, 0, viewportWidth, viewportHeight);
+        _lastViewportWidth = viewportWidth;
+        _lastViewportHeight = viewportHeight;
+        _layoutDirty = false;
+    }
+
+    private bool IsVisible(UIElement element)
+    {
+        if (!element.ComputedStyle.Visible || element.ComputedStyle.Display == "none")
+            return false;
+
+        return element.Parent is null || IsVisible(element.Parent);
+    }
+
+    private float ScaleValue(int value)
+    {
+        return RenderScale == 1f ? value : MathF.Round(value * RenderScale);
     }
 }
