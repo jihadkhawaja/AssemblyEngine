@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "VisualNovelSample": {
+    "FpsSample": {
       "commandName": "Project",
       "hotReloadEnabled": false,
       "nativeDebugging": false

@@ -1,8 +1,11 @@
+using AssemblyEngine.Core;
 using AssemblyEngine.Interop;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using EngineGraphics = AssemblyEngine.Core.Graphics;
+using DrawingRectangle = System.Drawing.Rectangle;
 
 namespace AssemblyEngine.Diagnostics;
 
@@ -21,17 +24,16 @@ internal static class RuntimeFrameCapture
 
         unsafe
         {
-            fixed (byte* framebufferPointer = framebuffer)
-            {
-                copiedBytes = NativeCore.CopyFramebuffer(framebufferPointer, framebuffer.Length);
-            }
+            copiedBytes = EngineGraphics.TryCopyCurrentFrame(framebuffer, out var managedBytes)
+                ? managedBytes
+                : 0;
         }
 
         if (copiedBytes != framebuffer.Length)
             throw new InvalidOperationException("Failed to capture the current framebuffer.");
 
         using var bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-        var bounds = new Rectangle(0, 0, width, height);
+        var bounds = new DrawingRectangle(0, 0, width, height);
         BitmapData? bitmapData = null;
 
         try

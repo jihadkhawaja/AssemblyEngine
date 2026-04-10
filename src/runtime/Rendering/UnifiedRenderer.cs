@@ -2,6 +2,7 @@ using AssemblyEngine.Core;
 using AssemblyEngine.Diagnostics;
 using AssemblyEngine.Interop;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 namespace AssemblyEngine.Rendering;
@@ -20,6 +21,7 @@ internal sealed class UnifiedRenderer : IDisposable
     private GraphicsBackend _preferredBackend = GraphicsBackend.Software;
     private bool _reportedVulkanFallback;
     private bool _reportedMeshRendererFallback;
+    private bool _reportedSoftwarePresentFailure;
     private Color _clearColor;
 
     public GraphicsBackend Backend { get; private set; } = GraphicsBackend.Software;
@@ -144,23 +146,45 @@ internal sealed class UnifiedRenderer : IDisposable
 
         fixed (uint* colorBuffer = _surface.ColorBuffer)
         {
-            NativeCore.UploadFramebuffer((byte*)colorBuffer, _surface.ByteLength);
-
             if (_preferredBackend == GraphicsBackend.Vulkan
                 && _vulkanPresenter is not null
                 && _vulkanPresenter.Present((IntPtr)colorBuffer, _surface.Width, _surface.Height, _surface.Stride))
             {
                 Backend = _meshRenderer is not null ? GraphicsBackend.Vulkan : GraphicsBackend.Software;
+                _reportedSoftwarePresentFailure = false;
                 return;
             }
 
             Backend = _meshRenderer is not null ? GraphicsBackend.Vulkan : GraphicsBackend.Software;
             ReportVulkanFallbackIfNeeded();
             if (_softwarePresenter.Present((IntPtr)colorBuffer, _surface.Width, _surface.Height, _surface.Stride))
+            {
+                _reportedSoftwarePresentFailure = false;
+                return;
+            }
+
+            if (_reportedSoftwarePresentFailure)
                 return;
 
-            NativeCore.Present();
+            _reportedSoftwarePresentFailure = true;
+            RuntimeDiagnosticsBridge.Current.LogWarning("engine.render",
+                "Software presentation failed after Vulkan fallback; frame was not presented.");
         }
+    }
+
+    public bool TryCopyFramebuffer(Span<byte> destination, out int bytesWritten)
+    {
+        bytesWritten = 0;
+        if (_surface.Width <= 0 || _surface.Height <= 0 || _surface.ColorBuffer.Length == 0)
+            return false;
+
+        var source = MemoryMarshal.AsBytes<uint>(_surface.ColorBuffer);
+        if (destination.Length < source.Length)
+            return false;
+
+        source.CopyTo(destination);
+        bytesWritten = source.Length;
+        return true;
     }
 
     public void Shutdown()

@@ -1,5 +1,6 @@
 using AssemblyEngine.Rendering;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace AssemblyEngine.Core;
 
@@ -23,6 +24,9 @@ public static class Graphics
     internal static void EndFrame() => Renderer.Present();
 
     internal static void Shutdown() => Renderer.Shutdown();
+
+    internal static bool TryCopyCurrentFrame(Span<byte> destination, out int bytesWritten) =>
+        Renderer.TryCopyFramebuffer(destination, out bytesWritten);
 
     internal static void SetVSyncEnabled(bool enabled) => Renderer.SetVSyncEnabled(enabled);
 

@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AssemblyName>RtsSample</AssemblyName>
     <RootNamespace>RtsSample</RootNamespace>

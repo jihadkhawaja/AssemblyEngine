@@ -2,7 +2,8 @@
   "profiles": {
     "RtsSample": {
       "commandName": "Project",
-      "hotReloadEnabled": false
+      "hotReloadEnabled": false,
+      "nativeDebugging": false
     },
     "WSL": {
       "commandName": "WSL2",
