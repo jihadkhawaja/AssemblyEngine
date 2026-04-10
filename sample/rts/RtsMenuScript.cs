@@ -82,6 +82,13 @@ internal sealed class RtsMenuScript : GameScript
         if (Engine.UI is null)
             return;
 
+        if (_game.MatchRunning && _lobbyMode != LobbyMode.None)
+        {
+            _lobbyMode = LobbyMode.None;
+            _pendingOperation = null;
+            _statusText = "Mission started.";
+        }
+
         var inLobby = _lobbyMode != LobbyMode.None;
         Engine.UI.SetVisible("front-end-root", !_game.MatchRunning);
         Engine.UI.SetVisible("menu-shell", !_game.MatchRunning && !inLobby);
