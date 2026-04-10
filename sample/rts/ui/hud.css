@@ -214,10 +214,7 @@ body {
     top: 106px;
 }
 
-#menu-address-1,
-#menu-address-2,
-#menu-address-3,
-#menu-address-4,
+#menu-address-value,
 #menu-port-value {
     background-color: rgba(22, 42, 58, 0.94);
     border-width: 1;
@@ -226,31 +223,13 @@ body {
     font-size: 16;
 }
 
-#menu-address-1,
-#menu-address-2,
-#menu-address-3,
-#menu-address-4 {
+#menu-address-value {
     position: absolute;
-    top: 126px;
-    width: 48px;
-    height: 22px;
-    padding: 6px 6px;
-}
-
-#menu-address-1 {
     left: 18px;
-}
-
-#menu-address-2 {
-    left: 84px;
-}
-
-#menu-address-3 {
-    left: 150px;
-}
-
-#menu-address-4 {
-    left: 216px;
+    top: 126px;
+    width: 248px;
+    height: 24px;
+    padding: 6px 8px;
 }
 
 #menu-port-label {
@@ -371,9 +350,7 @@ body {
 
 #menu-status,
 #lobby-peer-1,
-#lobby-peer-2,
-#lobby-peer-3,
-#lobby-peer-4 {
+#lobby-peer-2 {
     color: #E4F7FF;
 }
 
@@ -462,9 +439,7 @@ body {
 }
 
 #lobby-peer-1,
-#lobby-peer-2,
-#lobby-peer-3,
-#lobby-peer-4 {
+#lobby-peer-2 {
     width: 520px;
     height: 24px;
     background-color: rgba(16, 30, 41, 0.94);
@@ -484,18 +459,6 @@ body {
     position: absolute;
     left: 18px;
     top: 94px;
-}
-
-#lobby-peer-3 {
-    position: absolute;
-    left: 18px;
-    top: 140px;
-}
-
-#lobby-peer-4 {
-    position: absolute;
-    left: 18px;
-    top: 186px;
 }
 
 #lobby-controls-panel {

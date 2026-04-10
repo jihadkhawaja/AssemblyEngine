@@ -397,7 +397,8 @@ public sealed partial class RtsGameScript : GameScript
         HandleSelection(leftMouseDown, placementInputConsumed);
         HandleCommands(rightMouseDown, placementInputConsumed);
         UpdateProduction(deltaTime);
-        UpdateEnemyWaves(deltaTime);
+        if (!IsMultiplayerMatch)
+            UpdateEnemyWaves(deltaTime);
         UpdateUnits(deltaTime);
         UpdateStructures(deltaTime);
         ResolveUnitSeparation();
@@ -1091,6 +1092,9 @@ public sealed partial class RtsGameScript : GameScript
 
     private void UpdateDefenseTower(RtsStructure tower)
     {
+        if (tower.UnderConstruction)
+            return;
+
         var target = FindNearestUnit(tower.Position, unit => unit.IsEnemy && unit.IsAlive, tower.DetectionRange);
         if (target is null)
             return;

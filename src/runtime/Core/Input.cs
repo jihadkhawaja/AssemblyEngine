@@ -72,6 +72,7 @@ public enum KeyCode
     PageUp,
     PageDown,
     Insert,
+    OemPeriod,
 }
 
 /// <summary>

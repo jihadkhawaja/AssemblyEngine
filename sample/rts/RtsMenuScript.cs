@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using AssemblyEngine.Core;
 using AssemblyEngine.Networking;
 using AssemblyEngine.Scripting;
@@ -26,7 +27,7 @@ internal sealed class RtsMenuScript : GameScript
     private readonly string _settingsPath;
     private readonly RtsMenuInputField _playerNameField;
     private readonly RtsMenuInputField _portField;
-    private readonly RtsMenuInputField[] _addressFields;
+    private readonly RtsMenuInputField _addressField;
     private RtsGameScript _game = null!;
     private RtsMenuInputField? _focusedField;
     private Task? _pendingOperation;
@@ -40,14 +41,7 @@ internal sealed class RtsMenuScript : GameScript
         _settingsPath = settingsPath;
         _playerNameField = new RtsMenuInputField("menu-player-value", 24, value => char.IsLetterOrDigit(value) || value == ' ', settings.PlayerName);
         _portField = new RtsMenuInputField("menu-port-value", 5, char.IsDigit, settings.MultiplayerPort.ToString());
-        _addressFields =
-        [
-            new RtsMenuInputField("menu-address-1", 3, char.IsDigit),
-            new RtsMenuInputField("menu-address-2", 3, char.IsDigit),
-            new RtsMenuInputField("menu-address-3", 3, char.IsDigit),
-            new RtsMenuInputField("menu-address-4", 3, char.IsDigit)
-        ];
-        LoadAddressFields(settings.PeerAddress);
+        _addressField = new RtsMenuInputField("menu-address-value", 15, c => char.IsDigit(c) || c == '.', settings.PeerAddress);
     }
 
     public override void OnLoad()
@@ -95,8 +89,7 @@ internal sealed class RtsMenuScript : GameScript
 
         Engine.UI.UpdateText("menu-player-value", FormatField(_playerNameField));
         Engine.UI.UpdateText("menu-port-value", FormatField(_portField));
-        for (var index = 0; index < _addressFields.Length; index++)
-            Engine.UI.UpdateText(_addressFields[index].ElementId, FormatField(_addressFields[index]));
+        Engine.UI.UpdateText("menu-address-value", FormatField(_addressField));
 
         Engine.UI.UpdateText("menu-status", _statusText);
         Engine.UI.UpdateText("lobby-status", _statusText);
@@ -104,10 +97,12 @@ internal sealed class RtsMenuScript : GameScript
         Engine.UI.UpdateText("lobby-endpoint", GetLobbyEndpointText());
         Engine.UI.UpdateText("lobby-peer-1", GetPeerLine(0));
         Engine.UI.UpdateText("lobby-peer-2", GetPeerLine(1));
-        Engine.UI.UpdateText("lobby-peer-3", GetPeerLine(2));
-        Engine.UI.UpdateText("lobby-peer-4", GetPeerLine(3));
         Engine.UI.UpdateText("lobby-ready-button", GetReadyButtonText());
-        Engine.UI.UpdateText("lobby-start-button", _pendingOperation is null ? "START MISSION" : "WORKING...");
+
+        var isHost = Engine.Multiplayer.Role == MultiplayerSessionRole.Host;
+        Engine.UI.SetVisible("lobby-start-button", isHost);
+        if (isHost)
+            Engine.UI.UpdateText("lobby-start-button", _pendingOperation is null ? "START MISSION" : "WORKING...");
     }
 
     private void HandleStatusChanged(object? sender, MultiplayerStatusChangedEventArgs args)
@@ -139,12 +134,8 @@ internal sealed class RtsMenuScript : GameScript
             _focusedField = _playerNameField;
         else if (TryHit("menu-port-value"))
             _focusedField = _portField;
-
-        for (var index = 0; index < _addressFields.Length; index++)
-        {
-            if (TryHit(_addressFields[index].ElementId))
-                _focusedField = _addressFields[index];
-        }
+        else if (TryHit("menu-address-value"))
+            _focusedField = _addressField;
     }
 
     private void HandleFieldInput()
@@ -168,8 +159,21 @@ internal sealed class RtsMenuScript : GameScript
                 changed |= _focusedField.Append(value);
         }
 
+        if (ReferenceEquals(_focusedField, _addressField) && IsKeyPressed(KeyCode.OemPeriod))
+            changed |= _focusedField.Append('.');
+
         if (_focusedField == _playerNameField && IsKeyPressed(KeyCode.Space))
             changed |= _focusedField.Append(' ');
+
+        if (IsKeyDown(KeyCode.Control) && IsKeyPressed(KeyCode.V))
+        {
+            var clipboardText = ReadClipboardText();
+            if (!string.IsNullOrEmpty(clipboardText))
+            {
+                _focusedField.SetValue(clipboardText);
+                changed = true;
+            }
+        }
 
         if (changed)
             PersistSettings();
@@ -230,7 +234,7 @@ internal sealed class RtsMenuScript : GameScript
             return;
         }
 
-        var address = mode == LobbyMode.JoinLocal ? "127.0.0.1" : GetJoinAddress();
+        var address = mode == LobbyMode.JoinLocal ? "127.0.0.1" : _addressField.Value;
         var joinTransport = mode == LobbyMode.JoinLocal ? MultiplayerTransportMode.Localhost : MultiplayerTransportMode.PeerToPeer;
         BeginOperation(
             () => Engine.Multiplayer.JoinAsync(new MultiplayerJoinOptions(address, ParsePort(), _playerNameField.Value, joinTransport)),
@@ -311,7 +315,7 @@ internal sealed class RtsMenuScript : GameScript
             return $"JOIN TARGET | {addressText} | PORT {ParsePort()}";
         }
 
-        return $"JOIN TARGET | {GetJoinAddress()} | PORT {ParsePort()}";
+        return $"JOIN TARGET | {_addressField.Value} | PORT {ParsePort()}";
     }
 
     private string GetReadyButtonText()
@@ -323,9 +327,55 @@ internal sealed class RtsMenuScript : GameScript
     private string FormatField(RtsMenuInputField field)
     {
         var prefix = ReferenceEquals(_focusedField, field) ? "| " : "  ";
-        var value = string.IsNullOrWhiteSpace(field.Value) ? "_" : field.Value;
+        var value = string.IsNullOrWhiteSpace(field.Value) ? "-" : field.Value;
         return prefix + value;
     }
+
+    private static string? ReadClipboardText()
+    {
+        if (!OpenClipboard(IntPtr.Zero))
+            return null;
+
+        try
+        {
+            var handle = GetClipboardData(13); // CF_UNICODETEXT
+            if (handle == IntPtr.Zero)
+                return null;
+
+            var pointer = GlobalLock(handle);
+            if (pointer == IntPtr.Zero)
+                return null;
+
+            try
+            {
+                return Marshal.PtrToStringUni(pointer);
+            }
+            finally
+            {
+                GlobalUnlock(handle);
+            }
+        }
+        finally
+        {
+            CloseClipboard();
+        }
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool OpenClipboard(IntPtr hWndNewOwner);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool CloseClipboard();
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr GetClipboardData(uint uFormat);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr GlobalLock(IntPtr hMem);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GlobalUnlock(IntPtr hMem);
 
     private bool TryHit(string elementId)
     {
@@ -341,24 +391,12 @@ internal sealed class RtsMenuScript : GameScript
             : 40444;
     }
 
-    private string GetJoinAddress()
-    {
-        return string.Join('.', _addressFields.Select(field => string.IsNullOrWhiteSpace(field.Value) ? "0" : field.Value));
-    }
-
     private void PersistSettings()
     {
         _settings.PlayerName = string.IsNullOrWhiteSpace(_playerNameField.Value) ? "Commander" : _playerNameField.Value;
         _settings.MultiplayerPort = ParsePort();
-        _settings.PeerAddress = GetJoinAddress();
+        _settings.PeerAddress = _addressField.Value;
         RtsSampleSettingsStore.Save(_settingsPath, _settings);
-    }
-
-    private void LoadAddressFields(string address)
-    {
-        var octets = address.Split('.', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        for (var index = 0; index < _addressFields.Length; index++)
-            _addressFields[index].SetValue(index < octets.Length ? octets[index] : index == 0 ? "127" : "0");
     }
 
     private enum LobbyMode

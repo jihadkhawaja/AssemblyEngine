@@ -96,6 +96,7 @@ internal sealed class WindowsEnginePlatform : IEnginePlatform
             KeyCode.PageUp => 0x21,
             KeyCode.PageDown => 0x22,
             KeyCode.Insert => 0x2D,
+            KeyCode.OemPeriod => 0xBE,
             _ => throw new ArgumentOutOfRangeException(nameof(keyCode), keyCode, "Unknown engine key code.")
         };
     }
