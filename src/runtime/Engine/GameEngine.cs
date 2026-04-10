@@ -110,11 +110,14 @@ public sealed class GameEngine
         NativeCore.SetVSyncEnabled(VSyncEnabled ? 1 : 0);
         Graphics.SetPreferredBackend(PresentationBackend);
         Graphics.SetVSyncEnabled(VSyncEnabled);
-        if (NativeCore.SetWindowMode((int)WindowMode) == 0)
+        var desiredWindowMode = WindowMode;
+        SyncWindowState();
+
+        if (WindowMode != desiredWindowMode)
         {
-            var exception = new InvalidOperationException($"Failed to apply window mode '{WindowMode}'.");
-            RuntimeDiagnosticsBridge.Current.LogError("engine.initialize", exception);
-            throw exception;
+            if (NativeCore.SetWindowMode((int)desiredWindowMode) == 0)
+                throw new InvalidOperationException($"Failed to apply window mode '{desiredWindowMode}'.");
+            SyncWindowState();
         }
 
         SyncWindowState();
