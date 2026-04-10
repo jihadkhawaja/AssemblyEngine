@@ -755,7 +755,7 @@ body {
 #unit-panel {
     position: absolute;
     right: 10px;
-    top: 10px;
+    bottom: 10px;
     width: 200px;
     height: 172px;
     background-color: rgba(22, 18, 14, 0.94);

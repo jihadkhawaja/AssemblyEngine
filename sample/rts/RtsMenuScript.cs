@@ -120,7 +120,11 @@ internal sealed class RtsMenuScript : GameScript
     private void HandleGameStarted(object? sender, MultiplayerGameStartedEventArgs args)
     {
         if (Engine.Multiplayer.Role == MultiplayerSessionRole.Client)
+        {
+            _lobbyMode = LobbyMode.None;
+            _pendingOperation = null;
             _statusText = $"Mission started by {args.Initiator.DisplayName}.";
+        }
     }
 
     private void HandleFieldFocus(bool leftMouseDown)

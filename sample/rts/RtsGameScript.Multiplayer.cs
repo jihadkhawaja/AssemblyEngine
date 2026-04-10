@@ -164,8 +164,21 @@ public sealed partial class RtsGameScript
             return;
         }
 
-        if (_sessionMode == RtsSessionMode.Client && string.Equals(args.Type, RtsMultiplayerMessageTypes.Snapshot, StringComparison.Ordinal))
-            ApplySnapshot(args.DeserializePayload<RtsGameSnapshot>());
+        if (string.Equals(args.Type, RtsMultiplayerMessageTypes.Snapshot, StringComparison.Ordinal))
+        {
+            if (!_matchRunning && Engine.Multiplayer.Role == MultiplayerSessionRole.Client)
+            {
+                _sessionMode = RtsSessionMode.Client;
+                _matchRunning = true;
+                _snapshotBroadcastTimer = 0f;
+                _localSelectedUnitIds.Clear();
+                _activePlacementType = null;
+                _selectionActive = false;
+            }
+
+            if (_sessionMode == RtsSessionMode.Client)
+                ApplySnapshot(args.DeserializePayload<RtsGameSnapshot>());
+        }
     }
 
     private void HandleClientHotkeys()
