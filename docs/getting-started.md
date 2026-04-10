@@ -167,7 +167,7 @@ Frontier Foundry controls:
 - Right click with no selection moves the HQ rally point
 - Left click the minimap instantly recenters the camera
 - Middle click snaps the camera to the cursor position
-- `Q` queues a worker and `E` queues a guard
+- `Q` queues a worker, `E` queues a guard, and `R` or `T` starts structure placement so you can click a highlighted pad for a structure or defense tower
 - `1`, `2`, and `3` select workers, guards, or all units, and `Space` focuses the current selection or HQ
 - Arrow keys or moving the cursor to the screen edge pans the camera
 - `F1` toggles the command brief and `R` or `Enter` restarts after victory or defeat

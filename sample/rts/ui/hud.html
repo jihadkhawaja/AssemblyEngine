@@ -19,29 +19,40 @@
     </div>
 
     <div id="intel-panel">
-        <div id="objective">Mine cobalt shards and hold the refinery through the next raid.</div>
-        <div id="selection">No units selected. Drag a box to select your workers.</div>
-        <div id="selection-detail">Roster idle | Shift adds to selection | Ctrl removes | Space centers the camera on HQ.</div>
-        <div id="hint">Drag select | Shift add | Ctrl remove | RMB orders | LMB minimap or MMB snap camera | Space focus | Q/E build | F1 help</div>
+        <div id="objective">MINE | ORE LEFT 230</div>
+        <div id="selection">NO SELECTION | RMB SETS RALLY</div>
     </div>
 
     <div id="production-panel">
-        <div id="queue">Queue idle | Q Worker 45 ore | E Guard 70 ore</div>
-        <div id="build-buttons">
-            <div id="queue-worker-button">Q WORKER 45 | READY</div>
-            <div id="queue-guard-button">E GUARD 70 | READY</div>
+        <div id="production-title">PRODUCTION</div>
+        <div id="queue">QUEUE 0/4</div>
+        <div id="build-row-1">
+            <div id="queue-worker-button">
+                <div id="queue-worker-label">RECRUIT WORKER</div>
+                <div id="queue-worker-detail">Q | 45 ORE | READY</div>
+            </div>
+            <div id="queue-guard-button">
+                <div id="queue-guard-label">RECRUIT GUARD</div>
+                <div id="queue-guard-detail">E | 70 ORE | READY</div>
+            </div>
         </div>
-        <div id="rally">Rally lower west lane | Fresh units move there after production.</div>
-        <div id="map-hint">Build cards click/Q/E | Minimap LMB jumps | MMB snaps</div>
+        <div id="build-row-2">
+            <div id="queue-building-button">
+                <div id="queue-building-label">BUILD STRUCTURE</div>
+                <div id="queue-building-detail">R | 85 ORE | PICK PAD</div>
+            </div>
+            <div id="queue-tower-button">
+                <div id="queue-tower-label">BUILD DEFENSE TOWER</div>
+                <div id="queue-tower-detail">T | 95 ORE | PICK PAD</div>
+            </div>
+        </div>
+        <div id="production-mode">Q/E RECRUIT NOW | R/T PICK A BUILD PAD</div>
+        <div id="production-sites">OPEN PADS | STRUCTURE 3/3 | TOWER 4/4</div>
     </div>
 
     <div id="tactical-panel">
-        <div id="camera">Camera lower west lane | Cursor 320/1060</div>
-        <div id="forces">Field 4 | Hostiles 0 | Injured 0 | Queue 0/4</div>
-        <div id="economy">Field 770 ore | Veins 4/4 | Carry 0 | Raider salvage +8</div>
-        <div id="roster-1">WRK-01 48/48 | Ore 0/40 | Standing by</div>
-        <div id="roster-2">WRK-02 48/48 | Ore 0/40 | Standing by</div>
-        <div id="roster-3">WRK-03 48/48 | Ore 0/40 | Standing by</div>
+        <div id="forces">UNITS 4 | RAIDERS 0 | DMG 0 | Q 0/4</div>
+        <div id="economy">ORE 770 | VEINS 4/4 | CARRY 0</div>
     </div>
 
     <div id="help-panel">
@@ -53,7 +64,7 @@
         <div id="help-row-5">Right click with no selection to move the rally point.</div>
         <div id="help-row-6">Left click the minimap to instantly recenter the camera.</div>
         <div id="help-row-7">Middle click anywhere to snap the camera to that world position.</div>
-        <div id="help-row-8">Click the Worker or Guard build card, or press Q / E. 1/2/3 select groups and Space focuses them.</div>
+        <div id="help-row-8">Recruit workers and guards with Q / E. For structures, press R / T or click the build card, then click a highlighted pad. Right click or Esc cancels placement.</div>
         <div id="help-footer">Mine 320 ore before the HQ is destroyed. F1 hides this panel and R or Enter restarts.</div>
     </div>
 </body>

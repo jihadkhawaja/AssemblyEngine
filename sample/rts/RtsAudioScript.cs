@@ -59,9 +59,9 @@ internal sealed class RtsAudioScript : GameScript
 
     public void PlayRally() => PlayCue("rally", 0.1f);
 
-    public void PlayQueue(RtsUnitRole role)
+    public void PlayQueue(RtsProductionType productionType)
     {
-        PlayCue(role == RtsUnitRole.Worker ? "queue-worker" : "queue-guard", 0.05f);
+        PlayCue(productionType == RtsProductionType.Worker ? "queue-worker" : "queue-guard", 0.05f);
     }
 
     public void PlayDenied() => PlayCue("queue-denied", 0.12f);

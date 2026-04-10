@@ -13,6 +13,8 @@ public sealed class RtsGameScript : GameScript
     private const int VictoryOreGoalValue = 320;
     private const int WorkerCost = 45;
     private const int GuardCost = 70;
+    private const int BuildingCost = 85;
+    private const int DefenseTowerCost = 95;
     private const int QueueLimit = 4;
     private const int SalvagePerRaider = 8;
     private const int HarvestAmount = 10;
@@ -24,7 +26,7 @@ public sealed class RtsGameScript : GameScript
     private const float MinimapWidth = 198f;
     private const float MinimapHeight = 126f;
     private const float MinimapMargin = 18f;
-    private const float MinimapBottomOffset = 116f;
+    private const float MinimapBottomOffset = 200f;
     private const float CommandPulseDuration = 0.9f;
     private const float NavigationPulseDuration = 0.72f;
     private static readonly Vector2 HeadquartersPosition = new(320f, 1060f);
@@ -35,6 +37,19 @@ public sealed class RtsGameScript : GameScript
         new Vector2(1980f, 250f),
         new Vector2(2070f, 150f),
         new Vector2(1760f, 310f)
+    ];
+    private static readonly Vector2[] BuildingSitePositions =
+    [
+        new Vector2(550f, 1180f),
+        new Vector2(980f, 1080f),
+        new Vector2(1410f, 1150f)
+    ];
+    private static readonly Vector2[] DefenseTowerSitePositions =
+    [
+        new Vector2(760f, 1030f),
+        new Vector2(1090f, 820f),
+        new Vector2(1460f, 610f),
+        new Vector2(1740f, 900f)
     ];
     private static readonly string[] BlockingHudElementIds =
     [
@@ -47,10 +62,12 @@ public sealed class RtsGameScript : GameScript
     ];
 
     private readonly Random _random = new();
+    private readonly List<RtsStructure> _structures = [];
     private readonly List<RtsUnit> _units = [];
     private readonly List<RtsResourceNode> _resourceNodes = [];
     private readonly List<ShotEffect> _shotEffects = [];
     private readonly List<ProductionOrder> _productionQueue = [];
+    private RtsProductionType? _activePlacementType;
     private RtsAudioScript _audio = null!;
     private Vector2 _cameraPosition;
     private Vector2 _commandPulsePosition;
@@ -69,7 +86,7 @@ public sealed class RtsGameScript : GameScript
     private bool _middleMouseWasDown;
     private bool _minimapNavigationActive;
     private bool _rightMouseWasDown;
-    private bool _helpVisible = true;
+    private bool _helpVisible;
     private bool _victory;
     private bool _gameOver;
     private int _oreStockpile;
@@ -87,11 +104,19 @@ public sealed class RtsGameScript : GameScript
 
     public int GuardCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Guard);
 
+    public int BuildingCount => _structures.Count(structure => structure.IsAlive && structure.Type == RtsStructureType.Building);
+
+    public int DefenseTowerCount => _structures.Count(structure => structure.IsAlive && structure.Type == RtsStructureType.DefenseTower);
+
     public int RaiderCount => _units.Count(unit => unit.IsAlive && unit.IsEnemy);
 
-    public string WorkerBuildButtonText => GetProductionButtonText(RtsUnitRole.Worker, "Q");
+    public string WorkerBuildButtonText => GetProductionButtonText(RtsProductionType.Worker, "Q");
 
-    public string GuardBuildButtonText => GetProductionButtonText(RtsUnitRole.Guard, "E");
+    public string GuardBuildButtonText => GetProductionButtonText(RtsProductionType.Guard, "E");
+
+    public string BuildingBuildButtonText => GetProductionButtonText(RtsProductionType.Building, "R");
+
+    public string DefenseTowerBuildButtonText => GetProductionButtonText(RtsProductionType.DefenseTower, "T");
 
     public string BackendLabel => Graphics.Backend == GraphicsBackend.Vulkan ? "Vulkan" : "Software";
 
@@ -125,16 +150,16 @@ public sealed class RtsGameScript : GameScript
         get
         {
             if (_victory)
-                return "Victory. Frontier Foundry is stocked and extraction is green. Press R or Enter to rerun.";
+                return "VICTORY | PRESS R";
 
             if (_gameOver)
-                return "The HQ went dark before the stockpile was filled. Press R or Enter to restart.";
+                return "HQ LOST | PRESS R";
 
             var remainingOre = Math.Max(0, VictoryOreGoalValue - _oreStockpile);
             if (RaiderCount > 0)
-                return $"Hold the line. {RaiderCount} raiders are active and {remainingOre} ore still needs to reach the foundry.";
+                return $"RAID {RaiderCount} | ORE LEFT {remainingOre}";
 
-            return $"Mine cobalt shards and bank {remainingOre} more ore while the next raid timer is ticking.";
+            return $"MINE | ORE LEFT {remainingOre}";
         }
     }
 
@@ -144,7 +169,7 @@ public sealed class RtsGameScript : GameScript
         {
             var selectedUnits = GetSelectedUnits();
             if (selectedUnits.Count == 0)
-                return "No units selected. Drag a box, left click the minimap to jump the camera, or right click empty ground to move the HQ rally point.";
+                return "NO SELECTION | RMB SETS RALLY";
 
             if (selectedUnits.Count == 1)
             {
@@ -154,18 +179,18 @@ public sealed class RtsGameScript : GameScript
                     if (unit.OrderType == RtsUnitOrderType.Harvest && TryGetResourceNode(unit.AssignedNodeIndex, out var node))
                     {
                         var state = unit.ReturningToBase ? "Returning to HQ" : $"Mining {node.Name}";
-                        return $"Worker selected | Carry {unit.CarryOre}/{unit.CarryCapacity} | {state}.";
+                        return $"WORKER | {unit.CarryOre}/{unit.CarryCapacity} | {state.ToUpperInvariant()}";
                     }
 
-                    return $"Worker selected | Carry {unit.CarryOre}/{unit.CarryCapacity} | Right click a vein to harvest.";
+                    return $"WORKER | {unit.CarryOre}/{unit.CarryCapacity} | RMB VEIN";
                 }
 
-                return $"Guard selected | Auto-engages raiders in range | Right click to hold a position.";
+                return "GUARD | AUTO DEFEND | RMB HOLD";
             }
 
             var workers = selectedUnits.Count(unit => unit.Role == RtsUnitRole.Worker);
             var guards = selectedUnits.Count(unit => unit.Role == RtsUnitRole.Guard);
-            return $"{selectedUnits.Count} units selected | Workers {workers} | Guards {guards} | Right click to issue orders.";
+            return $"SEL {selectedUnits.Count} | WRK {workers} | GRD {guards}";
         }
     }
 
@@ -175,7 +200,7 @@ public sealed class RtsGameScript : GameScript
         {
             var selectedUnits = GetSelectedUnits();
             if (selectedUnits.Count == 0)
-                return "Roster idle | Shift adds to selection | Ctrl removes | Space centers the camera on HQ.";
+                return "SHIFT ADD | CTRL CUT | SPACE HQ";
 
             float totalHealth = 0f;
             float maxHealth = 0f;
@@ -202,7 +227,7 @@ public sealed class RtsGameScript : GameScript
                     moving++;
             }
 
-            return $"Integrity {(int)MathF.Ceiling(totalHealth)}/{(int)MathF.Ceiling(maxHealth)} | Moving {moving} | Mining {harvesting} | Returning {returning} | Carry {carriedOre}";
+            return $"HP {(int)MathF.Ceiling(totalHealth)}/{(int)MathF.Ceiling(maxHealth)} | MOVE {moving} | MINE {harvesting} | BACK {returning} | ORE {carriedOre}";
         }
     }
 
@@ -211,20 +236,20 @@ public sealed class RtsGameScript : GameScript
         get
         {
             if (_productionQueue.Count == 0)
-                return "Queue idle | Click a build card or press Q / E";
+                return $"QUEUE 0/{QueueLimit}";
 
-            var parts = new List<string>(_productionQueue.Count);
-            for (var index = 0; index < _productionQueue.Count; index++)
-            {
-                var order = _productionQueue[index];
-                parts.Add(index == 0 ? $"{order.Label} {order.RemainingTime:0.0}s" : order.Label);
-            }
-
-            return "Queue: " + string.Join(" > ", parts);
+            var order = _productionQueue[0];
+            return $"QUEUE {_productionQueue.Count}/{QueueLimit} | {order.Label.ToUpperInvariant()} {order.RemainingTime:0.0}s";
         }
     }
 
-    public string RallySummary => $"Rally {DescribeSector(_rallyPoint)} | Fresh units move there after production.";
+    public string ProductionModeText => _activePlacementType is { } productionType
+        ? $"PLACE {GetPlacementLabel(productionType).ToUpperInvariant()} | CLICK OPEN PAD | RMB/ESC CANCEL"
+        : "Q/E RECRUIT NOW | R/T PICK A BUILD PAD";
+
+    public string ProductionSitesSummary => $"OPEN PADS | STRUCTURE {GetOpenSiteCount(RtsProductionType.Building)}/{BuildingSitePositions.Length} | TOWER {GetOpenSiteCount(RtsProductionType.DefenseTower)}/{DefenseTowerSitePositions.Length}";
+
+    public string RallySummary => $"RALLY {DescribeSector(_rallyPoint).ToUpperInvariant()}";
 
     public string CameraSummary
     {
@@ -232,7 +257,7 @@ public sealed class RtsGameScript : GameScript
         {
             var cameraCenter = GetCameraCenterWorld();
             var cursor = GetCursorWorldPosition();
-            return $"Camera {DescribeSector(cameraCenter)} | Cursor {cursor.X:0}/{cursor.Y:0}";
+            return $"CAM {DescribeSector(cameraCenter).ToUpperInvariant()} | {cursor.X:0}/{cursor.Y:0}";
         }
     }
 
@@ -241,7 +266,7 @@ public sealed class RtsGameScript : GameScript
         get
         {
             var injured = _units.Count(unit => unit.IsAlive && unit.IsPlayerControlled && unit.Health < unit.MaxHealth);
-            return $"Field {WorkerCount + GuardCount} | Hostiles {RaiderCount} | Injured {injured} | Queue {_productionQueue.Count}/{QueueLimit}";
+            return $"UNITS {WorkerCount + GuardCount} | RAIDERS {RaiderCount} | DMG {injured} | Q {_productionQueue.Count}/{QueueLimit}";
         }
     }
 
@@ -252,7 +277,7 @@ public sealed class RtsGameScript : GameScript
             var activeVeins = _resourceNodes.Count(node => !node.IsDepleted);
             var fieldOre = _resourceNodes.Sum(node => Math.Max(0, node.RemainingOre));
             var carriedOre = _units.Where(unit => unit.IsAlive && unit.Role == RtsUnitRole.Worker).Sum(unit => unit.CarryOre);
-            return $"Field {fieldOre} ore | Veins {activeVeins}/{_resourceNodes.Count} | Carry {carriedOre} | Raider salvage +{SalvagePerRaider}";
+            return $"ORE {fieldOre} | VEINS {activeVeins}/{_resourceNodes.Count} | CARRY {carriedOre}";
         }
     }
 
@@ -262,10 +287,10 @@ public sealed class RtsGameScript : GameScript
 
     public string RosterLine3 => GetSelectionRosterLine(2);
 
-    public string MapHintText => "Build cards click/Q/E | Minimap LMB jumps | MMB snaps";
+    public string MapHintText => string.Empty;
 
     public string HintText =>
-        "Drag select | Shift add | Ctrl remove | RMB orders | Build cards click/Q/E | LMB minimap | MMB snap | Space focus | F1 help";
+        "DRAG | SHIFT | CTRL | RMB | Q/E/R/T | F1";
 
     public override void OnLoad()
     {
@@ -302,15 +327,18 @@ public sealed class RtsGameScript : GameScript
         _missionTime += deltaTime;
         HandleHotkeys();
         HandleHudButtons(leftMouseDown);
+        var placementInputConsumed = HandleStructurePlacement(leftMouseDown, rightMouseDown);
         HandleNavigation(leftMouseDown, middleMouseDown);
         UpdateCamera(deltaTime);
-        HandleSelection(leftMouseDown);
-        HandleCommands(rightMouseDown);
+        HandleSelection(leftMouseDown, placementInputConsumed);
+        HandleCommands(rightMouseDown, placementInputConsumed);
         UpdateProduction(deltaTime);
         UpdateEnemyWaves(deltaTime);
         UpdateUnits(deltaTime);
+        UpdateStructures(deltaTime);
         ResolveUnitSeparation();
         CleanupDestroyedUnits();
+        CleanupDestroyedStructures();
         CheckScenarioState();
 
         _leftMouseWasDown = leftMouseDown;
@@ -333,10 +361,12 @@ public sealed class RtsGameScript : GameScript
 
     private void ResetScenario()
     {
+        _structures.Clear();
         _units.Clear();
         _resourceNodes.Clear();
         _shotEffects.Clear();
         _productionQueue.Clear();
+        _activePlacementType = null;
         _oreStockpile = 90;
         _hqHealth = HeadquartersMaxHealth;
         _waveIndex = 0;
@@ -349,7 +379,7 @@ public sealed class RtsGameScript : GameScript
         _navigationPulsePosition = Vector2.Zero;
         _commandPulseTimer = 0f;
         _navigationPulseTimer = 0f;
-        _helpVisible = true;
+        _helpVisible = false;
         _victory = false;
         _gameOver = false;
         _selectionActive = false;
@@ -360,6 +390,7 @@ public sealed class RtsGameScript : GameScript
         _rallyPoint = HeadquartersPosition + new Vector2(220f, -40f);
         _cameraPosition = ClampCamera(HeadquartersPosition - new Vector2(240f, 280f));
 
+        RtsStructure.ResetIds();
         RtsUnit.ResetIds();
         _resourceNodes.Add(new RtsResourceNode("West Vein", new Vector2(670f, 930f), 180));
         _resourceNodes.Add(new RtsResourceNode("Central Vein", new Vector2(1020f, 760f), 210));
@@ -431,11 +462,20 @@ public sealed class RtsGameScript : GameScript
 
     private void HandleHotkeys()
     {
+        if (IsKeyPressed(KeyCode.Escape))
+            CancelStructurePlacement();
+
         if (IsKeyPressed(KeyCode.Q))
-            QueueProduction(RtsUnitRole.Worker);
+            QueueProduction(RtsProductionType.Worker);
 
         if (IsKeyPressed(KeyCode.E))
-            QueueProduction(RtsUnitRole.Guard);
+            QueueProduction(RtsProductionType.Guard);
+
+        if (IsKeyPressed(KeyCode.R))
+            QueueProduction(RtsProductionType.Building);
+
+        if (IsKeyPressed(KeyCode.T))
+            QueueProduction(RtsProductionType.DefenseTower);
 
         if (IsKeyPressed(KeyCode.D1))
             SelectPlayerUnits(unit => unit.Role == RtsUnitRole.Worker);
@@ -457,12 +497,54 @@ public sealed class RtsGameScript : GameScript
 
         if (IsPointInsideUiElement(MousePosition, "queue-worker-button"))
         {
-            QueueProduction(RtsUnitRole.Worker);
+            QueueProduction(RtsProductionType.Worker);
             return;
         }
 
         if (IsPointInsideUiElement(MousePosition, "queue-guard-button"))
-            QueueProduction(RtsUnitRole.Guard);
+        {
+            QueueProduction(RtsProductionType.Guard);
+            return;
+        }
+
+        if (IsPointInsideUiElement(MousePosition, "queue-building-button"))
+        {
+            QueueProduction(RtsProductionType.Building);
+            return;
+        }
+
+        if (IsPointInsideUiElement(MousePosition, "queue-tower-button"))
+            QueueProduction(RtsProductionType.DefenseTower);
+    }
+
+    private bool HandleStructurePlacement(bool leftMouseDown, bool rightMouseDown)
+    {
+        if (_activePlacementType is not { } productionType)
+            return false;
+
+        if (rightMouseDown && !_rightMouseWasDown)
+        {
+            CancelStructurePlacement();
+            return true;
+        }
+
+        if (!leftMouseDown || _leftMouseWasDown || IsPointInsideMinimap(MousePosition) || IsPointerInsideBlockingHud(MousePosition))
+            return false;
+
+        if (!TryGetSelectableStructurePad(productionType, MousePosition, out var reservedSite))
+        {
+            _audio.PlayDenied();
+            ShowTransientMessage(
+                "Select Pad",
+                $"Click a highlighted {GetPlacementLabel(productionType).ToLowerInvariant()} pad to queue this build.",
+                1f);
+            return true;
+        }
+
+        if (QueueProduction(productionType, reservedSite))
+            _activePlacementType = null;
+
+        return true;
     }
 
     private void HandleNavigation(bool leftMouseDown, bool middleMouseDown)
@@ -507,9 +589,9 @@ public sealed class RtsGameScript : GameScript
         }
     }
 
-    private void HandleSelection(bool leftMouseDown)
+    private void HandleSelection(bool leftMouseDown, bool placementInputConsumed)
     {
-        if (_minimapNavigationActive)
+        if (_minimapNavigationActive || placementInputConsumed || _activePlacementType is not null)
             return;
 
         if (leftMouseDown && !_leftMouseWasDown)
@@ -532,8 +614,11 @@ public sealed class RtsGameScript : GameScript
         }
     }
 
-    private void HandleCommands(bool rightMouseDown)
+    private void HandleCommands(bool rightMouseDown, bool placementInputConsumed)
     {
+        if (placementInputConsumed || _activePlacementType is not null)
+            return;
+
         if (!rightMouseDown || _rightMouseWasDown || IsPointInsideMinimap(MousePosition) || IsPointerInsideBlockingHud(MousePosition))
             return;
 
@@ -576,42 +661,117 @@ public sealed class RtsGameScript : GameScript
             clickedUnit.Selected = !subtractive;
     }
 
-    private void QueueProduction(RtsUnitRole role)
+    private bool QueueProduction(RtsProductionType productionType)
     {
-        var availability = GetProductionAvailability(role);
-        if (availability == ProductionAvailability.QueueFull)
+        if (UsesStructurePad(productionType))
         {
-            _audio.PlayDenied();
-            ShowTransientMessage("Queue Full", "The foundry can hold four production orders at a time.", 1f);
-            return;
+            BeginStructurePlacement(productionType);
+            return false;
         }
 
-        var cost = GetProductionCost(role);
-        if (availability == ProductionAvailability.InsufficientOre)
-        {
-            _audio.PlayDenied();
-            ShowTransientMessage("Ore Low", $"Need {cost} ore to queue a {GetRoleLabel(role).ToLowerInvariant()}.", 1f);
-            return;
-        }
-
-        _oreStockpile -= cost;
-        var buildTime = GetProductionBuildTime(role);
-        _productionQueue.Add(new ProductionOrder(role, buildTime));
-        _audio.PlayQueue(role);
-        ShowTransientMessage(
-            $"{GetRoleLabel(role)} Queued",
-            $"{GetRoleLabel(role)} fabrication started. Cost {cost} ore.",
-            0.9f);
+        return QueueProduction(productionType, null);
     }
 
-    private ProductionAvailability GetProductionAvailability(RtsUnitRole role)
+    private bool QueueProduction(RtsProductionType productionType, Vector2? reservedSite)
+    {
+        var availability = GetProductionAvailability(productionType);
+        if (availability != ProductionAvailability.Ready)
+        {
+            ShowProductionUnavailable(productionType, availability);
+            return false;
+        }
+
+        if (reservedSite is { } site && !IsStructurePadAvailable(productionType, site))
+        {
+            _audio.PlayDenied();
+            ShowTransientMessage(
+                "Pad Taken",
+                $"That {GetPlacementLabel(productionType).ToLowerInvariant()} pad is no longer open.",
+                1f);
+            return false;
+        }
+
+        var cost = GetProductionCost(productionType);
+        _oreStockpile -= cost;
+        var buildTime = GetProductionBuildTime(productionType);
+        _productionQueue.Add(new ProductionOrder(productionType, buildTime, reservedSite));
+        _audio.PlayQueue(productionType);
+
+        var subtitle = reservedSite is { } placementSite
+            ? $"{GetProductionLabel(productionType)} reserved for the {DescribeSector(placementSite)} pad. Cost {cost} ore."
+            : $"{GetProductionLabel(productionType)} fabrication started. Cost {cost} ore.";
+
+        ShowTransientMessage(
+            $"{GetProductionLabel(productionType)} Queued",
+            subtitle,
+            0.9f);
+        return true;
+    }
+
+    private ProductionAvailability GetProductionAvailability(RtsProductionType productionType)
     {
         if (_productionQueue.Count >= QueueLimit)
             return ProductionAvailability.QueueFull;
 
-        return _oreStockpile >= GetProductionCost(role)
+        if (UsesStructurePad(productionType) && GetReservedSiteCount(productionType) >= GetProductionSiteCapacity(productionType))
+            return ProductionAvailability.SiteFull;
+
+        return _oreStockpile >= GetProductionCost(productionType)
             ? ProductionAvailability.Ready
             : ProductionAvailability.InsufficientOre;
+    }
+
+    private void BeginStructurePlacement(RtsProductionType productionType)
+    {
+        var availability = GetProductionAvailability(productionType);
+        if (availability != ProductionAvailability.Ready)
+        {
+            ShowProductionUnavailable(productionType, availability);
+            return;
+        }
+
+        _activePlacementType = productionType;
+        _selectionActive = false;
+        _minimapNavigationActive = false;
+        ShowTransientMessage(
+            $"Place {GetProductionLabel(productionType)}",
+            $"Click an open {GetPlacementLabel(productionType).ToLowerInvariant()} pad to queue the build. Right click or Esc cancels.",
+            1.15f);
+    }
+
+    private bool CancelStructurePlacement()
+    {
+        if (_activePlacementType is not { } productionType)
+            return false;
+
+        _activePlacementType = null;
+        _selectionActive = false;
+        ShowTransientMessage(
+            "Placement Cancelled",
+            $"{GetProductionLabel(productionType)} placement was cancelled.",
+            0.8f);
+        return true;
+    }
+
+    private void ShowProductionUnavailable(RtsProductionType productionType, ProductionAvailability availability)
+    {
+        _audio.PlayDenied();
+        var cost = GetProductionCost(productionType);
+
+        switch (availability)
+        {
+            case ProductionAvailability.QueueFull:
+                ShowTransientMessage("Queue Full", "The foundry can hold four production orders at a time.", 1f);
+                break;
+
+            case ProductionAvailability.SiteFull:
+                ShowTransientMessage("Pads Full", $"All {GetPlacementLabel(productionType).ToLowerInvariant()} pads are already reserved.", 1f);
+                break;
+
+            default:
+                ShowTransientMessage("Ore Low", $"Need {cost} ore to queue a {GetProductionLabel(productionType).ToLowerInvariant()}.", 1f);
+                break;
+        }
     }
 
     private void UpdateProduction(float deltaTime)
@@ -625,12 +785,33 @@ public sealed class RtsGameScript : GameScript
             return;
 
         _productionQueue.RemoveAt(0);
-        var spawnOffset = new Vector2(84f + (_random.NextSingle() * 26f), -34f + (_random.NextSingle() * 68f));
-        SpawnPlayerUnit(order.Role, HeadquartersPosition + spawnOffset, sendToRally: true);
-    _audio.PlayUnitReady();
+        if (TryMapToUnitRole(order.Type, out var role))
+        {
+            var spawnOffset = new Vector2(84f + (_random.NextSingle() * 26f), -34f + (_random.NextSingle() * 68f));
+            SpawnPlayerUnit(role, HeadquartersPosition + spawnOffset, sendToRally: true);
+            _audio.PlayUnitReady();
+            ShowTransientMessage(
+                $"{GetProductionLabel(order.Type)} Ready",
+                $"A new {GetProductionLabel(order.Type).ToLowerInvariant()} is moving toward the {DescribeSector(_rallyPoint)}.",
+                1f);
+            return;
+        }
+
+        if (!TryDeployStructure(order.Type, order.ReservedSite, out var structure))
+        {
+            _oreStockpile += GetProductionCost(order.Type);
+            _audio.PlayDenied();
+            ShowTransientMessage(
+                "Pad Lost",
+                $"{GetProductionLabel(order.Type)} fabrication completed but its reserved pad was no longer available. Ore refunded.",
+                1.2f);
+            return;
+        }
+
+        _audio.PlayUnitReady();
         ShowTransientMessage(
-            $"{order.Label} Ready",
-            $"A new {order.Label.ToLowerInvariant()} is moving toward the {DescribeSector(_rallyPoint)}.",
+            $"{GetProductionLabel(order.Type)} Online",
+            $"{GetProductionLabel(order.Type)} deployed in the {DescribeSector(structure.Position)}.",
             1f);
     }
 
@@ -690,6 +871,20 @@ public sealed class RtsGameScript : GameScript
                     UpdateRaider(unit, deltaTime);
                     break;
             }
+        }
+    }
+
+    private void UpdateStructures(float deltaTime)
+    {
+        for (var index = 0; index < _structures.Count; index++)
+        {
+            var structure = _structures[index];
+            if (!structure.IsAlive)
+                continue;
+
+            structure.AttackCooldown = Math.Max(0f, structure.AttackCooldown - deltaTime);
+            if (structure.Type == RtsStructureType.DefenseTower)
+                UpdateDefenseTower(structure);
         }
     }
 
@@ -776,6 +971,22 @@ public sealed class RtsGameScript : GameScript
         UpdateMoveOrder(guard, deltaTime);
     }
 
+    private void UpdateDefenseTower(RtsStructure tower)
+    {
+        var target = FindNearestUnit(tower.Position, unit => unit.IsEnemy && unit.IsAlive, tower.DetectionRange);
+        if (target is null)
+            return;
+
+        var distance = Vector2.Distance(tower.Position, target.Position);
+        if (distance > tower.AttackRange + target.Radius || tower.AttackCooldown > 0f)
+            return;
+
+        tower.AttackCooldown = tower.AttackInterval;
+        target.Health = Math.Max(0f, target.Health - tower.AttackDamage);
+        _shotEffects.Add(new ShotEffect(tower.Position, target.Position, new Color(255, 232, 132), 0.12f));
+        _audio.PlayGuardFire();
+    }
+
     private void UpdateRaider(RtsUnit raider, float deltaTime)
     {
         var target = FindNearestUnit(raider.Position, unit => unit.IsPlayerControlled && unit.IsAlive, raider.DetectionRange);
@@ -795,6 +1006,28 @@ public sealed class RtsGameScript : GameScript
             else
             {
                 MoveUnit(raider, target.Position, deltaTime, raider.AttackRange + target.Radius - 2f);
+            }
+
+            return;
+        }
+
+        var structureTarget = FindNearestStructure(raider.Position, structure => structure.IsAlive, raider.DetectionRange);
+        if (structureTarget is not null)
+        {
+            var distance = Vector2.Distance(raider.Position, structureTarget.Position);
+            if (distance <= raider.AttackRange + structureTarget.Radius)
+            {
+                if (raider.AttackCooldown <= 0f)
+                {
+                    raider.AttackCooldown = raider.AttackInterval;
+                    structureTarget.Health = Math.Max(0f, structureTarget.Health - raider.AttackDamage);
+                    _shotEffects.Add(new ShotEffect(raider.Position, structureTarget.Position, new Color(255, 122, 92), 0.12f));
+                    _audio.PlayUnderAttack();
+                }
+            }
+            else
+            {
+                MoveUnit(raider, structureTarget.Position, deltaTime, raider.AttackRange + structureTarget.Radius - 2f);
             }
 
             return;
@@ -938,6 +1171,15 @@ public sealed class RtsGameScript : GameScript
             _oreStockpile += salvage;
     }
 
+    private void CleanupDestroyedStructures()
+    {
+        for (var index = _structures.Count - 1; index >= 0; index--)
+        {
+            if (!_structures[index].IsAlive)
+                _structures.RemoveAt(index);
+        }
+    }
+
     private void CheckScenarioState()
     {
         if (!_gameOver && _hqHealth <= 0f)
@@ -1000,6 +1242,9 @@ public sealed class RtsGameScript : GameScript
         Graphics.DrawRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(255, 130, 112));
         Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 70f), new Color(255, 180, 142));
         Graphics.DrawLine((int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 70f), new Color(255, 180, 142));
+
+        DrawStructurePads();
+        DrawPlayerStructures();
     }
 
     private void DrawResourceNodes()
@@ -1131,6 +1376,17 @@ public sealed class RtsGameScript : GameScript
         Graphics.DrawFilledRect((int)beacon.X - 3, (int)beacon.Y - 3, 6, 6, new Color(255, 120, 105));
         var rally = WorldToMinimap(_rallyPoint, bounds);
         DrawMinimapMarker(rally, new Color(111, 210, 255), 4);
+
+        foreach (var structure in _structures)
+        {
+            if (!structure.IsAlive)
+                continue;
+
+            var point = WorldToMinimap(structure.Position, bounds);
+            var color = structure.Type == RtsStructureType.Building ? new Color(255, 210, 146) : new Color(246, 246, 177);
+            var size = structure.Type == RtsStructureType.Building ? 4 : 5;
+            Graphics.DrawFilledRect((int)point.X - (size / 2), (int)point.Y - (size / 2), size, size, color);
+        }
 
         foreach (var unit in _units)
         {
@@ -1331,6 +1587,28 @@ public sealed class RtsGameScript : GameScript
         return result;
     }
 
+    private RtsStructure? FindNearestStructure(Vector2 origin, Func<RtsStructure, bool> predicate, float range)
+    {
+        var bestDistanceSquared = range * range;
+        RtsStructure? result = null;
+
+        foreach (var structure in _structures)
+        {
+            if (!predicate(structure))
+                continue;
+
+            var delta = structure.Position - origin;
+            var distanceSquared = delta.LengthSquared;
+            if (distanceSquared <= bestDistanceSquared)
+            {
+                bestDistanceSquared = distanceSquared;
+                result = structure;
+            }
+        }
+
+        return result;
+    }
+
     private int FindResourceNodeIndex(Vector2 worldPosition)
     {
         var bestDistance = 52f;
@@ -1514,16 +1792,248 @@ public sealed class RtsGameScript : GameScript
         return sum * (1f / units.Count);
     }
 
-    private string GetProductionButtonText(RtsUnitRole role, string hotkey)
+    private string GetProductionButtonText(RtsProductionType productionType, string hotkey)
     {
-        var status = GetProductionAvailability(role) switch
+        if (_activePlacementType == productionType)
+            return $"{hotkey} | {GetProductionCost(productionType)} ORE | PICK PAD";
+
+        var status = GetProductionAvailability(productionType) switch
         {
             ProductionAvailability.Ready => "READY",
             ProductionAvailability.InsufficientOre => "LOW ORE",
+            ProductionAvailability.SiteFull => "PADS FULL",
             _ => "QUEUE FULL"
         };
 
-        return $"{hotkey} {GetRoleLabel(role).ToUpperInvariant()} {GetProductionCost(role)} | {status}";
+        return $"{hotkey} | {GetProductionCost(productionType)} ORE | {status}";
+    }
+
+    private bool TryDeployStructure(RtsProductionType productionType, Vector2? reservedSite, out RtsStructure structure)
+    {
+        if (!TryMapToStructureType(productionType, out var structureType)
+            || reservedSite is not { } position
+            || !IsKnownStructurePad(structureType, position)
+            || IsStructurePadOccupied(structureType, position)
+            || IsStructurePadQueued(structureType, position))
+        {
+            structure = null!;
+            return false;
+        }
+
+        structure = new RtsStructure(structureType, position);
+        _structures.Add(structure);
+        return true;
+    }
+
+    private void DrawStructurePads()
+    {
+        DrawStructurePads(BuildingSitePositions, RtsStructureType.Building);
+        DrawStructurePads(DefenseTowerSitePositions, RtsStructureType.DefenseTower);
+    }
+
+    private void DrawStructurePads(Vector2[] pads, RtsStructureType structureType)
+    {
+        var placementActiveForType = false;
+        var hoveredPad = Vector2.Zero;
+        if (_activePlacementType is { } activeProductionType
+            && TryMapToStructureType(activeProductionType, out var activeStructureType)
+            && activeStructureType == structureType)
+        {
+            placementActiveForType = true;
+            if (TryGetSelectableStructurePad(activeProductionType, MousePosition, out var activePad))
+                hoveredPad = activePad;
+        }
+
+        for (var index = 0; index < pads.Length; index++)
+        {
+            var pad = pads[index];
+            if (IsStructurePadOccupied(structureType, pad))
+                continue;
+
+            var screen = WorldToScreen(pad);
+            if (!IsOnScreen(screen, structureType == RtsStructureType.Building ? 42f : 32f))
+                continue;
+
+            var reserved = IsStructurePadQueued(structureType, pad);
+            var hovered = placementActiveForType && Vector2.Distance(hoveredPad, pad) <= 1f;
+
+            if (structureType == RtsStructureType.Building)
+            {
+                var outline = hovered
+                    ? new Color(255, 232, 150)
+                    : placementActiveForType
+                        ? new Color(228, 192, 128, 170)
+                        : reserved
+                            ? new Color(138, 116, 92, 150)
+                            : new Color(188, 155, 119, 110);
+                var fill = hovered
+                    ? new Color(255, 220, 140, 62)
+                    : placementActiveForType
+                        ? new Color(220, 188, 126, 34)
+                        : reserved
+                            ? new Color(120, 96, 70, 44)
+                            : Color.Transparent;
+
+                if (fill.A > 0)
+                    Graphics.DrawFilledRect((int)screen.X - 32, (int)screen.Y - 24, 64, 48, fill);
+
+                Graphics.DrawRect((int)screen.X - 32, (int)screen.Y - 24, 64, 48, outline);
+                Graphics.DrawLine((int)screen.X - 26, (int)screen.Y + 16, (int)screen.X + 26, (int)screen.Y + 16, outline);
+            }
+            else
+            {
+                var outline = hovered
+                    ? new Color(255, 244, 170)
+                    : placementActiveForType
+                        ? new Color(246, 246, 177, 180)
+                        : reserved
+                            ? new Color(134, 136, 116, 150)
+                            : new Color(246, 246, 177, 120);
+                var fill = hovered
+                    ? new Color(246, 246, 177, 56)
+                    : placementActiveForType
+                        ? new Color(246, 246, 177, 30)
+                        : reserved
+                            ? new Color(118, 122, 142, 40)
+                            : Color.Transparent;
+
+                if (fill.A > 0)
+                    Graphics.DrawFilledRect((int)screen.X - 11, (int)screen.Y - 11, 22, 22, fill);
+
+                Graphics.DrawCircle((int)screen.X, (int)screen.Y, 20, outline);
+                Graphics.DrawRect((int)screen.X - 11, (int)screen.Y - 11, 22, 22, outline);
+            }
+        }
+    }
+
+    private void DrawPlayerStructures()
+    {
+        for (var index = 0; index < _structures.Count; index++)
+        {
+            var structure = _structures[index];
+            if (!structure.IsAlive)
+                continue;
+
+            var screen = WorldToScreen(structure.Position);
+            var margin = Math.Max(structure.HalfSize.X, structure.HalfSize.Y) + 18f;
+            if (!IsOnScreen(screen, margin))
+                continue;
+
+            var topLeft = WorldToScreen(structure.Position - structure.HalfSize);
+            var width = (int)(structure.HalfSize.X * 2f);
+            var height = (int)(structure.HalfSize.Y * 2f);
+            var left = (int)topLeft.X;
+            var top = (int)topLeft.Y;
+            Graphics.DrawFilledRect(left, top, width, height, structure.FillColor);
+            Graphics.DrawRect(left, top, width, height, structure.AccentColor);
+
+            if (structure.Type == RtsStructureType.Building)
+            {
+                Graphics.DrawFilledRect(left + 8, top + 10, width - 16, 12, new Color(68, 44, 34));
+                Graphics.DrawFilledRect(left + 10, top + 26, 12, 10, new Color(255, 210, 108));
+                Graphics.DrawFilledRect(left + width - 22, top + 26, 12, 10, new Color(255, 210, 108));
+            }
+            else
+            {
+                Graphics.DrawFilledRect(left + 4, top + 4, width - 8, height - 8, new Color(70, 74, 92));
+                Graphics.DrawLine((int)screen.X, top - 8, (int)screen.X, top + 14, structure.AccentColor);
+                Graphics.DrawLine((int)screen.X, top + 6, left + width + 10, top - 2, structure.AccentColor);
+            }
+
+            if (structure.Health < structure.MaxHealth)
+                DrawBar(structure.Position + new Vector2(0f, -structure.HalfSize.Y - 16f), width + 12, 5, structure.Health / structure.MaxHealth, new Color(124, 255, 170));
+        }
+    }
+
+    private bool IsStructurePadOccupied(RtsStructureType structureType, Vector2 pad)
+    {
+        for (var index = 0; index < _structures.Count; index++)
+        {
+            var structure = _structures[index];
+            if (structure.IsAlive
+                && structure.Type == structureType
+                && Vector2.Distance(structure.Position, pad) <= 1f)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsStructurePadQueued(RtsStructureType structureType, Vector2 pad)
+    {
+        for (var index = 0; index < _productionQueue.Count; index++)
+        {
+            var order = _productionQueue[index];
+            if (order.ReservedSite is not { } reservedSite || !TryMapToStructureType(order.Type, out var reservedType))
+                continue;
+
+            if (reservedType == structureType && Vector2.Distance(reservedSite, pad) <= 1f)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsStructurePadAvailable(RtsProductionType productionType, Vector2 pad)
+    {
+        return TryMapToStructureType(productionType, out var structureType)
+            && IsKnownStructurePad(structureType, pad)
+            && !IsStructurePadOccupied(structureType, pad)
+            && !IsStructurePadQueued(structureType, pad);
+    }
+
+    private bool TryGetSelectableStructurePad(RtsProductionType productionType, Vector2 screenPosition, out Vector2 pad)
+    {
+        if (!TryMapToStructureType(productionType, out var structureType))
+        {
+            pad = Vector2.Zero;
+            return false;
+        }
+
+        var worldPosition = ScreenToWorld(screenPosition);
+        var pads = GetStructurePadPositions(structureType);
+        var bestDistance = float.MaxValue;
+        pad = Vector2.Zero;
+        for (var index = 0; index < pads.Length; index++)
+        {
+            var candidate = pads[index];
+            if (!IsStructurePadAvailable(productionType, candidate) || !IsPointInsideStructurePad(structureType, worldPosition, candidate))
+                continue;
+
+            var distance = Vector2.Distance(worldPosition, candidate);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                pad = candidate;
+            }
+        }
+
+        return bestDistance < float.MaxValue;
+    }
+
+    private static bool IsPointInsideStructurePad(RtsStructureType structureType, Vector2 worldPosition, Vector2 pad)
+    {
+        if (structureType == RtsStructureType.Building)
+        {
+            var bounds = new Rectangle(pad.X - 34f, pad.Y - 26f, 68f, 52f);
+            return bounds.Contains(worldPosition);
+        }
+
+        return Vector2.Distance(worldPosition, pad) <= 24f;
+    }
+
+    private static bool IsKnownStructurePad(RtsStructureType structureType, Vector2 pad)
+    {
+        var pads = GetStructurePadPositions(structureType);
+        for (var index = 0; index < pads.Length; index++)
+        {
+            if (Vector2.Distance(pads[index], pad) <= 1f)
+                return true;
+        }
+
+        return false;
     }
 
     private string GetSelectionRosterLine(int index)
@@ -1615,14 +2125,140 @@ public sealed class RtsGameScript : GameScript
         return vertical == "midfield" ? $"{vertical} {horizontal}" : $"{vertical} {horizontal}";
     }
 
-    private static int GetProductionCost(RtsUnitRole role)
+    private int GetReservedSiteCount(RtsProductionType productionType)
     {
-        return role == RtsUnitRole.Worker ? WorkerCost : GuardCost;
+        if (!TryMapToStructureType(productionType, out var structureType))
+            return 0;
+
+        var liveStructures = _structures.Count(structure => structure.IsAlive && structure.Type == structureType);
+        var queuedStructures = _productionQueue.Count(order => order.Type == productionType);
+        return liveStructures + queuedStructures;
     }
 
-    private static float GetProductionBuildTime(RtsUnitRole role)
+    private int GetOpenSiteCount(RtsProductionType productionType)
     {
-        return role == RtsUnitRole.Worker ? 2.5f : 4.1f;
+        if (!TryMapToStructureType(productionType, out var structureType))
+            return 0;
+
+        var openSites = 0;
+        var pads = GetStructurePadPositions(structureType);
+        for (var index = 0; index < pads.Length; index++)
+        {
+            if (!IsStructurePadOccupied(structureType, pads[index]) && !IsStructurePadQueued(structureType, pads[index]))
+                openSites++;
+        }
+
+        return openSites;
+    }
+
+    private static bool UsesStructurePad(RtsProductionType productionType)
+    {
+        return productionType == RtsProductionType.Building || productionType == RtsProductionType.DefenseTower;
+    }
+
+    private static int GetProductionCost(RtsProductionType productionType)
+    {
+        return productionType switch
+        {
+            RtsProductionType.Worker => WorkerCost,
+            RtsProductionType.Guard => GuardCost,
+            RtsProductionType.Building => BuildingCost,
+            _ => DefenseTowerCost
+        };
+    }
+
+    private static int GetProductionSiteCapacity(RtsProductionType productionType)
+    {
+        return productionType switch
+        {
+            RtsProductionType.Building => BuildingSitePositions.Length,
+            RtsProductionType.DefenseTower => DefenseTowerSitePositions.Length,
+            _ => 0
+        };
+    }
+
+    private static float GetProductionBuildTime(RtsProductionType productionType)
+    {
+        return productionType switch
+        {
+            RtsProductionType.Worker => 2.5f,
+            RtsProductionType.Guard => 4.1f,
+            RtsProductionType.Building => 5.4f,
+            _ => 4.8f
+        };
+    }
+
+    private static string GetProductionLabel(RtsProductionType productionType)
+    {
+        return productionType switch
+        {
+            RtsProductionType.Worker => "Worker",
+            RtsProductionType.Guard => "Guard",
+            RtsProductionType.Building => "Structure",
+            _ => "Defense Tower"
+        };
+    }
+
+    private static string GetPlacementLabel(RtsProductionType productionType)
+    {
+        return productionType switch
+        {
+            RtsProductionType.Building => "Structure",
+            RtsProductionType.DefenseTower => "Tower",
+            _ => GetProductionLabel(productionType)
+        };
+    }
+
+    private static string GetProductionQueueLabel(RtsProductionType productionType)
+    {
+        return productionType switch
+        {
+            RtsProductionType.Worker => "Worker",
+            RtsProductionType.Guard => "Guard",
+            RtsProductionType.Building => "Structure",
+            _ => "Defense Tower"
+        };
+    }
+
+    private static bool TryMapToUnitRole(RtsProductionType productionType, out RtsUnitRole role)
+    {
+        switch (productionType)
+        {
+            case RtsProductionType.Worker:
+                role = RtsUnitRole.Worker;
+                return true;
+
+            case RtsProductionType.Guard:
+                role = RtsUnitRole.Guard;
+                return true;
+
+            default:
+                role = default;
+                return false;
+        }
+    }
+
+    private static bool TryMapToStructureType(RtsProductionType productionType, out RtsStructureType structureType)
+    {
+        switch (productionType)
+        {
+            case RtsProductionType.Building:
+                structureType = RtsStructureType.Building;
+                return true;
+
+            case RtsProductionType.DefenseTower:
+                structureType = RtsStructureType.DefenseTower;
+                return true;
+
+            default:
+                structureType = default;
+                return false;
+        }
+    }
+
+    private static Vector2[] GetStructurePadPositions(RtsStructureType structureType)
+    {
+        return structureType == RtsStructureType.Building ? BuildingSitePositions : DefenseTowerSitePositions;
     }
 
     private void ShowTransientMessage(string title, string subtitle, float duration)
@@ -1639,21 +2275,25 @@ public sealed class RtsGameScript : GameScript
     {
         Ready,
         InsufficientOre,
+        SiteFull,
         QueueFull
     }
 
     private sealed class ProductionOrder
     {
-        public RtsUnitRole Role { get; }
+        public RtsProductionType Type { get; }
 
         public string Label { get; }
 
+        public Vector2? ReservedSite { get; }
+
         public float RemainingTime { get; set; }
 
-        public ProductionOrder(RtsUnitRole role, float buildTime)
+        public ProductionOrder(RtsProductionType productionType, float buildTime, Vector2? reservedSite)
         {
-            Role = role;
-            Label = GetRoleLabel(role);
+            Type = productionType;
+            Label = GetProductionQueueLabel(productionType);
+            ReservedSite = reservedSite;
             RemainingTime = buildTime;
         }
     }

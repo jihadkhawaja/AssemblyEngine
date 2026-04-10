@@ -93,8 +93,8 @@ body {
     position: absolute;
     left: 20px;
     bottom: 20px;
-    width: 720px;
-    height: 126px;
+    width: 360px;
+    height: 56px;
     background-color: rgba(5, 11, 16, 0.86);
     border-width: 1;
     border-color: #4AA8C6;
@@ -103,142 +103,195 @@ body {
 
 #objective {
     color: #FFFFFF;
-    font-size: 15;
-    width: 690px;
-    height: 24px;
+    font-size: 14;
+    width: 330px;
+    height: 18px;
 }
 
 #selection {
     color: #B9FFCF;
     font-size: 14;
-    width: 690px;
-    height: 22px;
-}
-
-#selection-detail {
-    color: #CDE6F6;
-    font-size: 13;
-    width: 690px;
-    height: 22px;
-}
-
-#hint {
-    color: #9CB3CB;
-    font-size: 13;
-    width: 690px;
-    height: 38px;
+    width: 330px;
+    height: 18px;
 }
 
 #production-panel {
     position: absolute;
     right: 20px;
     bottom: 12px;
-    width: 364px;
-    height: 104px;
+    width: 392px;
+    height: 170px;
     background-color: rgba(5, 11, 16, 0.88);
     border-width: 1;
     border-color: #F0C86A;
-    padding: 8px 10px;
+    padding: 10px 12px;
+}
+
+#production-title {
+    color: #FFE08A;
+    font-size: 15;
+    width: 368px;
+    height: 18px;
 }
 
 #queue {
     color: #FFE08A;
     font-size: 12;
-    width: 344px;
+    width: 368px;
     height: 18px;
 }
 
-#build-buttons {
+#build-row-1 {
     display: flex;
     flex-direction: row;
     gap: 8px;
-    width: 344px;
-    height: 30px;
+    width: 368px;
+    height: 46px;
+}
+
+#build-row-2 {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    width: 368px;
+    height: 46px;
 }
 
 #queue-worker-button {
-    width: 168px;
-    height: 28px;
+    width: 178px;
+    height: 40px;
     background-color: rgba(28, 67, 92, 0.88);
     border-width: 1;
     border-color: #7FD8FF;
-    color: #D9F7FF;
-    font-size: 11;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px;
 }
 
 #queue-guard-button {
-    width: 168px;
-    height: 28px;
+    width: 178px;
+    height: 40px;
     background-color: rgba(34, 80, 54, 0.90);
     border-width: 1;
     border-color: #A4FFBC;
-    color: #E7FFE9;
-    font-size: 11;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px;
 }
 
-#rally {
+#queue-building-button {
+    width: 178px;
+    height: 40px;
+    background-color: rgba(86, 58, 36, 0.92);
+    border-width: 1;
+    border-color: #FFD18C;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px;
+}
+
+#queue-tower-button {
+    width: 178px;
+    height: 40px;
+    background-color: rgba(62, 64, 92, 0.92);
+    border-width: 1;
+    border-color: #F6F6B1;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px;
+}
+
+#queue-worker-label {
+    color: #D9F7FF;
+    font-size: 11;
+    width: 166px;
+    height: 16px;
+}
+
+#queue-worker-detail {
+    color: #AEE5FF;
+    font-size: 10;
+    width: 166px;
+    height: 14px;
+}
+
+#queue-guard-label {
+    color: #E7FFE9;
+    font-size: 11;
+    width: 166px;
+    height: 16px;
+}
+
+#queue-guard-detail {
+    color: #C9FFD2;
+    font-size: 10;
+    width: 166px;
+    height: 14px;
+}
+
+#queue-building-label {
+    color: #FFF1D8;
+    font-size: 11;
+    width: 166px;
+    height: 16px;
+}
+
+#queue-building-detail {
+    color: #FFD8A4;
+    font-size: 10;
+    width: 166px;
+    height: 14px;
+}
+
+#queue-tower-label {
+    color: #F9F9E7;
+    font-size: 10;
+    width: 166px;
+    height: 16px;
+}
+
+#queue-tower-detail {
+    color: #F6F6B1;
+    font-size: 10;
+    width: 166px;
+    height: 14px;
+}
+
+#production-mode {
     color: #C2FAFF;
-    font-size: 12;
-    width: 344px;
+    font-size: 11;
+    width: 368px;
     height: 18px;
 }
 
-#map-hint {
-    color: #B9D8EA;
+#production-sites {
+    color: #F7E8B6;
     font-size: 11;
-    width: 344px;
+    width: 368px;
     height: 18px;
 }
 
 #tactical-panel {
     position: absolute;
     right: 20px;
-    top: 326px;
+    top: 74px;
     width: 328px;
-    height: 140px;
+    height: 48px;
     background-color: rgba(5, 11, 16, 0.88);
     border-width: 1;
     border-color: #7FD8FF;
-    padding: 12px 14px;
-}
-
-#camera {
-    color: #C2FAFF;
-    font-size: 13;
-    width: 290px;
-    height: 20px;
+    padding: 10px 14px;
 }
 
 #forces {
     color: #B9FFCF;
-    font-size: 13;
+    font-size: 12;
     width: 290px;
-    height: 20px;
+    height: 18px;
 }
 
 #economy {
     color: #FFE08A;
-    font-size: 13;
-    width: 290px;
-    height: 20px;
-}
-
-#roster-1 {
-    color: #E6F8FF;
-    font-size: 12;
-    width: 290px;
-    height: 18px;
-}
-
-#roster-2 {
-    color: #E6F8FF;
-    font-size: 12;
-    width: 290px;
-    height: 18px;
-}
-
-#roster-3 {
-    color: #9CB3CB;
     font-size: 12;
     width: 290px;
     height: 18px;
