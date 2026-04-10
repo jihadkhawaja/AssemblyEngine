@@ -28,6 +28,8 @@ internal sealed record RtsSessionStartPayload(RtsGameSnapshot Snapshot);
 internal sealed record RtsGameSnapshot(
     int OreStockpile,
     float HeadquartersHealth,
+    int OreStockpileP2,
+    float HeadquartersHealthP2,
     int WaveIndex,
     float NextWaveTimer,
     float MissionTime,
@@ -36,7 +38,9 @@ internal sealed record RtsGameSnapshot(
     string BannerSubtitle,
     bool Victory,
     bool GameOver,
+    int WinnerTeam,
     Vector2 RallyPoint,
+    Vector2 RallyPointP2,
     Vector2 CommandPulsePosition,
     float CommandPulseTimer,
     Vector2 NavigationPulsePosition,
@@ -45,11 +49,13 @@ internal sealed record RtsGameSnapshot(
     RtsStructureSnapshot[] Structures,
     RtsResourceNodeSnapshot[] ResourceNodes,
     RtsProductionOrderSnapshot[] ProductionQueue,
+    RtsProductionOrderSnapshot[] ProductionQueueP2,
     RtsShotEffectSnapshot[] ShotEffects);
 
 internal sealed record RtsUnitSnapshot(
     int Id,
     RtsUnitRole Role,
+    int Team,
     Vector2 Position,
     Vector2 MoveTarget,
     Vector2 AimDirection,
@@ -73,6 +79,7 @@ internal sealed record RtsUnitSnapshot(
 internal sealed record RtsStructureSnapshot(
     int Id,
     RtsStructureType Type,
+    int Team,
     Vector2 Position,
     Vector2 HalfSize,
     float Radius,

@@ -16,6 +16,8 @@ public sealed partial class RtsGameScript
 
     public bool IsMultiplayerMatch => _sessionMode is RtsSessionMode.Host or RtsSessionMode.Client;
 
+    public int LocalTeam => _sessionMode == RtsSessionMode.Client ? 1 : 0;
+
     public void StartSinglePlayerMatch()
     {
         _sessionMode = RtsSessionMode.SinglePlayer;
@@ -44,6 +46,7 @@ public sealed partial class RtsGameScript
         _activePlacementType = null;
         _selectionActive = false;
         ApplySnapshot(payload.Snapshot);
+        _cameraPosition = ClampCamera(HeadquartersPositionP2 - new Vector2(240f, 280f));
     }
 
     public void ReturnToFrontEnd()
@@ -139,20 +142,20 @@ public sealed partial class RtsGameScript
                 case RtsMultiplayerMessageTypes.QueueProduction:
                     var queueCommand = args.DeserializePayload<RtsQueueProductionCommand>();
                     if (queueCommand.ReservedSite is { } reservedSite)
-                        QueueProduction(queueCommand.Type, reservedSite);
+                        QueueProductionForTeam(1, queueCommand.Type, reservedSite);
                     else
-                        QueueProduction(queueCommand.Type);
+                        QueueProductionForTeam(1, queueCommand.Type);
                     break;
 
                 case RtsMultiplayerMessageTypes.IssueOrder:
                     var order = args.DeserializePayload<RtsIssueOrderCommand>();
-                    IssueOrdersByIds(order.UnitIds, order.Target);
+                    IssueOrdersByIds(1, order.UnitIds, order.Target);
                     break;
 
                 case RtsMultiplayerMessageTypes.SetRallyPoint:
                     var rallyPoint = args.DeserializePayload<RtsSetRallyPointCommand>();
-                    _rallyPoint = ClampPointToWorld(rallyPoint.RallyPoint);
-                    SetCommandPulse(_rallyPoint);
+                    _rallyPointP2 = ClampPointToWorld(rallyPoint.RallyPoint);
+                    SetCommandPulse(_rallyPointP2);
                     _audio.PlayRally();
                     break;
 
@@ -217,7 +220,7 @@ public sealed partial class RtsGameScript
             SelectPlayerUnits(unit => unit.Role == RtsUnitRole.Guard);
 
         if (IsKeyPressed(KeyCode.D3))
-            SelectPlayerUnits(unit => unit.IsPlayerControlled);
+            SelectPlayerUnits(unit => unit.IsAllyOf(LocalTeam));
 
         if (IsKeyPressed(KeyCode.D1) || IsKeyPressed(KeyCode.D2) || IsKeyPressed(KeyCode.D3))
             CaptureLocalSelection();
@@ -310,16 +313,16 @@ public sealed partial class RtsGameScript
             1f);
     }
 
-    private void IssueOrdersByIds(IEnumerable<int> unitIds, Vector2 worldPosition)
+    private void IssueOrdersByIds(int team, IEnumerable<int> unitIds, Vector2 worldPosition)
     {
         var unitIdSet = unitIds.ToHashSet();
         var selectedUnits = _units
-            .Where(unit => unit.IsAlive && unit.IsPlayerControlled && unitIdSet.Contains(unit.Id))
+            .Where(unit => unit.IsAlive && unit.IsAllyOf(team) && unitIdSet.Contains(unit.Id))
             .ToList();
         if (selectedUnits.Count == 0)
             return;
 
-        IssueOrders(selectedUnits, worldPosition);
+        IssueOrders(selectedUnits, worldPosition, team);
     }
 
     private void CaptureLocalSelection()
@@ -327,7 +330,7 @@ public sealed partial class RtsGameScript
         _localSelectedUnitIds.Clear();
         foreach (var unit in _units)
         {
-            if (unit.IsAlive && unit.IsPlayerControlled && unit.Selected)
+            if (unit.IsAlive && unit.IsAllyOf(LocalTeam) && unit.Selected)
                 _localSelectedUnitIds.Add(unit.Id);
         }
     }

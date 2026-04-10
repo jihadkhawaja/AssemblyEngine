@@ -34,6 +34,7 @@ public sealed partial class RtsGameScript : GameScript
     private const float CommandPulseDuration = 0.9f;
     private const float NavigationPulseDuration = 0.72f;
     private static readonly Vector2 HeadquartersPosition = new(320f, 1060f);
+    private static readonly Vector2 HeadquartersPositionP2 = new(1880f, 340f);
     private static readonly Vector2 EnemyBeaconPosition = new(1910f, 210f);
     private static readonly Vector2[] EnemySpawnPoints =
     [
@@ -93,10 +94,12 @@ public sealed partial class RtsGameScript : GameScript
     private Vector2 _commandPulsePosition;
     private Vector2 _navigationPulsePosition;
     private Vector2 _rallyPoint;
+    private Vector2 _rallyPointP2;
     private Vector2 _selectionStartScreen;
     private Vector2 _selectionEndScreen;
     private float _commandPulseTimer;
     private float _hqHealth;
+    private float _hqHealthP2;
     private float _navigationPulseTimer;
     private float _nextWaveTimer;
     private float _missionTime;
@@ -109,26 +112,29 @@ public sealed partial class RtsGameScript : GameScript
     private bool _helpVisible;
     private bool _victory;
     private bool _gameOver;
+    private int _winnerTeam;
     private int _oreStockpile;
+    private int _oreStockpileP2;
     private int _waveIndex;
     private string _bannerTitle = string.Empty;
     private string _bannerSubtitle = string.Empty;
+    private readonly List<ProductionOrder> _productionQueueP2 = [];
 
-    public int OreStockpile => _oreStockpile;
+    public int OreStockpile => LocalTeam == 0 ? _oreStockpile : _oreStockpileP2;
 
-    public int OreGoal => VictoryOreGoalValue;
+    public int OreGoal => IsMultiplayerMatch ? 0 : VictoryOreGoalValue;
 
-    public int HeadquartersHealth => (int)MathF.Ceiling(_hqHealth);
+    public int HeadquartersHealth => (int)MathF.Ceiling(LocalTeam == 0 ? _hqHealth : _hqHealthP2);
 
-    public int SupplyTruckCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Worker);
+    public int SupplyTruckCount => _units.Count(unit => unit.IsAlive && unit.IsAllyOf(LocalTeam) && unit.Role == RtsUnitRole.Worker);
 
-    public int RedGuardCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Guard);
+    public int RedGuardCount => _units.Count(unit => unit.IsAlive && unit.IsAllyOf(LocalTeam) && unit.Role == RtsUnitRole.Guard);
 
-    public int TankHunterCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.TankHunter);
+    public int TankHunterCount => _units.Count(unit => unit.IsAlive && unit.IsAllyOf(LocalTeam) && unit.Role == RtsUnitRole.TankHunter);
 
-    public int BattlemasterCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Battlemaster);
+    public int BattlemasterCount => _units.Count(unit => unit.IsAlive && unit.IsAllyOf(LocalTeam) && unit.Role == RtsUnitRole.Battlemaster);
 
-    public int RaiderCount => _units.Count(unit => unit.IsAlive && unit.IsEnemy);
+    public int RaiderCount => _units.Count(unit => unit.IsAlive && unit.IsEnemyOf(LocalTeam));
 
     public string WorkerBuildButtonText => GetProductionButtonText(RtsProductionType.Worker, "Q");
 
@@ -181,7 +187,14 @@ public sealed partial class RtsGameScript : GameScript
                 return "MISSION COMPLETE";
 
             if (_gameOver)
+            {
+                if (IsMultiplayerMatch)
+                    return _winnerTeam == LocalTeam ? "VICTORY" : "DEFEAT";
                 return "BASE DESTROYED";
+            }
+
+            if (IsMultiplayerMatch)
+                return $"PVP | YOUR UNITS {_units.Count(u => u.IsAlive && u.IsAllyOf(LocalTeam))} | ENEMY {_units.Count(u => u.IsAlive && u.IsEnemyOf(LocalTeam))}";
 
             if (RaiderCount > 0)
                 return $"GLA ATTACK | {RaiderCount} HOSTILES";
@@ -198,7 +211,14 @@ public sealed partial class RtsGameScript : GameScript
                 return "VICTORY | PRESS R";
 
             if (_gameOver)
+            {
+                if (IsMultiplayerMatch)
+                    return _winnerTeam == LocalTeam ? "VICTORY | PRESS R" : "DEFEAT | PRESS R";
                 return "DEFEAT | PRESS R";
+            }
+
+            if (IsMultiplayerMatch)
+                return "DESTROY ENEMY HQ";
 
             var remainingFunds = Math.Max(0, VictoryOreGoalValue - _oreStockpile);
             if (RaiderCount > 0)
@@ -281,11 +301,12 @@ public sealed partial class RtsGameScript : GameScript
     {
         get
         {
-            if (_productionQueue.Count == 0)
+            var queue = LocalTeam == 0 ? _productionQueue : _productionQueueP2;
+            if (queue.Count == 0)
                 return $"QUEUE 0/{QueueLimit}";
 
-            var order = _productionQueue[0];
-            return $"BUILDING: {order.Label.ToUpperInvariant()} {order.RemainingTime:0.0}s | {_productionQueue.Count}/{QueueLimit}";
+            var order = queue[0];
+            return $"BUILDING: {order.Label.ToUpperInvariant()} {order.RemainingTime:0.0}s | {queue.Count}/{QueueLimit}";
         }
     }
 
@@ -311,8 +332,9 @@ public sealed partial class RtsGameScript : GameScript
     {
         get
         {
-            var totalFriendly = _units.Count(unit => unit.IsAlive && unit.IsPlayerControlled);
-            return $"UNITS {totalFriendly} | HOSTILES {RaiderCount} | QUEUE {_productionQueue.Count}/{QueueLimit}";
+            var totalFriendly = _units.Count(unit => unit.IsAlive && unit.IsAllyOf(LocalTeam));
+            var queue = LocalTeam == 0 ? _productionQueue : _productionQueueP2;
+            return $"UNITS {totalFriendly} | HOSTILES {RaiderCount} | QUEUE {queue.Count}/{QueueLimit}";
         }
     }
 
@@ -320,10 +342,11 @@ public sealed partial class RtsGameScript : GameScript
     {
         get
         {
+            var ore = LocalTeam == 0 ? _oreStockpile : _oreStockpileP2;
             var activeSupply = _resourceNodes.Count(node => !node.IsDepleted);
             var fieldSupply = _resourceNodes.Sum(node => Math.Max(0, node.RemainingOre));
-            var carriedSupply = _units.Where(unit => unit.IsAlive && unit.Role == RtsUnitRole.Worker).Sum(unit => unit.CarryOre);
-            return $"{_oreStockpile} | SUPPLY {activeSupply}/{_resourceNodes.Count} | CARRY {carriedSupply}";
+            var carriedSupply = _units.Where(unit => unit.IsAlive && unit.IsAllyOf(LocalTeam) && unit.Role == RtsUnitRole.Worker).Sum(unit => unit.CarryOre);
+            return $"{ore} | SUPPLY {activeSupply}/{_resourceNodes.Count} | CARRY {carriedSupply}";
         }
     }
 
@@ -432,15 +455,20 @@ public sealed partial class RtsGameScript : GameScript
         _resourceNodes.Clear();
         _shotEffects.Clear();
         _productionQueue.Clear();
+        _productionQueueP2.Clear();
         _activePlacementType = null;
         _oreStockpile = 2500;
+        _oreStockpileP2 = 2500;
         _hqHealth = HeadquartersMaxHealth;
+        _hqHealthP2 = HeadquartersMaxHealth;
         _waveIndex = 0;
         _missionTime = 0f;
         _nextWaveTimer = 20f;
         _bannerTimer = 4.5f;
-        _bannerTitle = "Command Center Online";
-        _bannerSubtitle = "Deploy supply trucks to harvest resources. Build barracks and war factory to train combat units. Stockpile 10000 to win.";
+        _bannerTitle = IsMultiplayerMatch ? "1v1 Battle Engaged" : "Command Center Online";
+        _bannerSubtitle = IsMultiplayerMatch
+            ? "Destroy the enemy headquarters to win. Build units and structures to overwhelm your opponent."
+            : "Deploy supply trucks to harvest resources. Build barracks and war factory to train combat units. Stockpile 10000 to win.";
         _commandPulsePosition = Vector2.Zero;
         _navigationPulsePosition = Vector2.Zero;
         _commandPulseTimer = 0f;
@@ -448,12 +476,14 @@ public sealed partial class RtsGameScript : GameScript
         _helpVisible = false;
         _victory = false;
         _gameOver = false;
+        _winnerTeam = -1;
         _selectionActive = false;
         _leftMouseWasDown = false;
         _middleMouseWasDown = false;
         _minimapNavigationActive = false;
         _rightMouseWasDown = false;
         _rallyPoint = HeadquartersPosition + new Vector2(220f, -40f);
+        _rallyPointP2 = HeadquartersPositionP2 + new Vector2(-220f, 40f);
         _cameraPosition = ClampCamera(HeadquartersPosition - new Vector2(240f, 280f));
 
         RtsStructure.ResetIds();
@@ -463,10 +493,21 @@ public sealed partial class RtsGameScript : GameScript
         _resourceNodes.Add(new RtsResourceNode("Supply Depot Charlie", new Vector2(1360f, 520f), 5000));
         _resourceNodes.Add(new RtsResourceNode("Supply Depot Delta", new Vector2(1640f, 860f), 3500));
 
-        SpawnPlayerUnit(RtsUnitRole.Worker, HeadquartersPosition + new Vector2(-44f, 24f), sendToRally: false);
-        SpawnPlayerUnit(RtsUnitRole.Worker, HeadquartersPosition + new Vector2(-12f, 54f), sendToRally: false);
-        SpawnPlayerUnit(RtsUnitRole.Guard, HeadquartersPosition + new Vector2(76f, -18f), sendToRally: true);
-        SpawnPlayerUnit(RtsUnitRole.Guard, HeadquartersPosition + new Vector2(100f, 10f), sendToRally: true);
+        // Team 0 (Player 1) starting units - bottom left
+        SpawnPlayerUnit(0, RtsUnitRole.Worker, HeadquartersPosition + new Vector2(-44f, 24f), sendToRally: false);
+        SpawnPlayerUnit(0, RtsUnitRole.Worker, HeadquartersPosition + new Vector2(-12f, 54f), sendToRally: false);
+        SpawnPlayerUnit(0, RtsUnitRole.Guard, HeadquartersPosition + new Vector2(76f, -18f), sendToRally: true);
+        SpawnPlayerUnit(0, RtsUnitRole.Guard, HeadquartersPosition + new Vector2(100f, 10f), sendToRally: true);
+
+        if (IsMultiplayerMatch)
+        {
+            // Team 1 (Player 2) starting units - top right
+            SpawnPlayerUnit(1, RtsUnitRole.Worker, HeadquartersPositionP2 + new Vector2(44f, -24f), sendToRally: false);
+            SpawnPlayerUnit(1, RtsUnitRole.Worker, HeadquartersPositionP2 + new Vector2(12f, -54f), sendToRally: false);
+            SpawnPlayerUnit(1, RtsUnitRole.Guard, HeadquartersPositionP2 + new Vector2(-76f, 18f), sendToRally: true);
+            SpawnPlayerUnit(1, RtsUnitRole.Guard, HeadquartersPositionP2 + new Vector2(-100f, -10f), sendToRally: true);
+        }
+
         SelectPlayerUnits(unit => unit.Role == RtsUnitRole.Worker);
         _audio.PlayMissionStart();
     }
@@ -562,7 +603,7 @@ public sealed partial class RtsGameScript : GameScript
             SelectPlayerUnits(unit => unit.Role == RtsUnitRole.Guard);
 
         if (IsKeyPressed(KeyCode.D3))
-            SelectPlayerUnits(unit => unit.IsPlayerControlled);
+            SelectPlayerUnits(unit => unit.IsAllyOf(LocalTeam));
 
         if (IsKeyPressed(KeyCode.Space))
             FocusCameraOnSelection();
@@ -728,7 +769,7 @@ public sealed partial class RtsGameScript : GameScript
             return;
         }
 
-        IssueOrders(selectedUnits, worldPosition);
+        IssueOrders(selectedUnits, worldPosition, LocalTeam);
     }
 
     private void FinalizeSelection()
@@ -744,7 +785,7 @@ public sealed partial class RtsGameScript : GameScript
             var selectionRect = CreateRectangle(ScreenToWorld(_selectionStartScreen), ScreenToWorld(_selectionEndScreen));
             foreach (var unit in _units)
             {
-                if (unit.IsPlayerControlled && unit.IsAlive && selectionRect.Contains(unit.Position))
+                if (unit.IsAllyOf(LocalTeam) && unit.IsAlive && selectionRect.Contains(unit.Position))
                     unit.Selected = !subtractive;
             }
 
@@ -765,6 +806,47 @@ public sealed partial class RtsGameScript : GameScript
         }
 
         return QueueProduction(productionType, null);
+    }
+
+    private void QueueProductionForTeam(int team, RtsProductionType productionType)
+    {
+        if (IsStructureProduction(productionType))
+            return;
+
+        QueueProductionForTeam(team, productionType, null);
+    }
+
+    private void QueueProductionForTeam(int team, RtsProductionType productionType, Vector2? reservedSite)
+    {
+        var queue = team == 0 ? _productionQueue : _productionQueueP2;
+        ref var stockpile = ref (team == 0 ? ref _oreStockpile : ref _oreStockpileP2);
+
+        if (!IsStructureProduction(productionType) && queue.Count >= QueueLimit)
+            return;
+
+        var cost = GetProductionCost(productionType);
+        if (stockpile < cost)
+            return;
+
+        stockpile -= cost;
+
+        if (reservedSite is { } site && TryMapToStructureType(productionType, out _))
+        {
+            var structure = new RtsStructure(RtsStructureType.Building, site) { Team = team };
+            if (TryMapToStructureType(productionType, out var actualType))
+                structure = new RtsStructure(actualType, site) { Team = team };
+            structure.UnderConstruction = true;
+            structure.ConstructionProgress = 0f;
+            structure.ConstructionTime = GetProductionBuildTime(productionType);
+            structure.Health = 1f;
+            _structures.Add(structure);
+            _audio.PlayQueue(productionType);
+            return;
+        }
+
+        var buildTime = GetProductionBuildTime(productionType);
+        queue.Add(new ProductionOrder(productionType, buildTime, null));
+        _audio.PlayQueue(productionType);
     }
 
     private bool QueueProduction(RtsProductionType productionType, Vector2? reservedSite)
@@ -870,23 +952,35 @@ public sealed partial class RtsGameScript : GameScript
 
     private void UpdateProduction(float deltaTime)
     {
-        if (_productionQueue.Count == 0)
+        UpdateProductionQueue(_productionQueue, 0, deltaTime);
+        if (IsMultiplayerMatch)
+            UpdateProductionQueue(_productionQueueP2, 1, deltaTime);
+    }
+
+    private void UpdateProductionQueue(List<ProductionOrder> queue, int team, float deltaTime)
+    {
+        if (queue.Count == 0)
             return;
 
-        var order = _productionQueue[0];
+        var order = queue[0];
         order.RemainingTime -= deltaTime;
         if (order.RemainingTime > 0f)
             return;
 
-        _productionQueue.RemoveAt(0);
+        queue.RemoveAt(0);
         if (TryMapToUnitRole(order.Type, out var role))
         {
+            var hqPosition = team == 0 ? HeadquartersPosition : HeadquartersPositionP2;
+            var rallyPoint = team == 0 ? _rallyPoint : _rallyPointP2;
             var spawnOffset = new Vector2(84f + (_random.NextSingle() * 26f), -34f + (_random.NextSingle() * 68f));
-            SpawnPlayerUnit(role, HeadquartersPosition + spawnOffset, sendToRally: true);
+            if (team == 1)
+                spawnOffset = new Vector2(-84f - (_random.NextSingle() * 26f), 34f - (_random.NextSingle() * 68f));
+            SpawnPlayerUnit(team, role, hqPosition + spawnOffset, sendToRally: true);
             _audio.PlayUnitReady();
+            var sectorName = DescribeSector(rallyPoint);
             ShowTransientMessage(
                 $"{GetProductionLabel(order.Type)} Ready",
-                $"A new {GetProductionLabel(order.Type).ToLowerInvariant()} is moving toward the {DescribeSector(_rallyPoint)}.",
+                $"A new {GetProductionLabel(order.Type).ToLowerInvariant()} is moving toward the {sectorName}.",
                 1f);
             return;
         }
@@ -969,14 +1063,19 @@ public sealed partial class RtsGameScript : GameScript
 
     private void UpdateWorker(RtsUnit worker, float deltaTime)
     {
+        var workerHq = worker.Team == 0 ? HeadquartersPosition : HeadquartersPositionP2;
+
         if (worker.OrderType == RtsUnitOrderType.Harvest && TryGetResourceNode(worker.AssignedNodeIndex, out var node))
         {
             if ((worker.CarryOre >= worker.CarryCapacity || worker.ReturningToBase || node.IsDepleted) && worker.CarryOre > 0)
             {
                 worker.ReturningToBase = true;
-                if (MoveUnit(worker, HeadquartersPosition, deltaTime, HeadquartersHalfWidth + 12f))
+                if (MoveUnit(worker, workerHq, deltaTime, HeadquartersHalfWidth + 12f))
                 {
-                    _oreStockpile += worker.CarryOre;
+                    if (worker.Team == 0)
+                        _oreStockpile += worker.CarryOre;
+                    else
+                        _oreStockpileP2 += worker.CarryOre;
                     _audio.PlayDeposit();
                     worker.CarryOre = 0;
                     worker.HarvestProgress = 0f;
@@ -1070,7 +1169,7 @@ public sealed partial class RtsGameScript : GameScript
 
     private void UpdateGuard(RtsUnit guard, float deltaTime)
     {
-        var target = FindNearestUnit(guard.Position, unit => unit.IsEnemy && unit.IsAlive, guard.DetectionRange);
+        var target = FindNearestUnit(guard.Position, unit => unit.IsEnemyOf(guard.Team) && unit.IsAlive, guard.DetectionRange);
         if (target is not null)
         {
             var distance = Vector2.Distance(guard.Position, target.Position);
@@ -1095,7 +1194,7 @@ public sealed partial class RtsGameScript : GameScript
         if (tower.UnderConstruction)
             return;
 
-        var target = FindNearestUnit(tower.Position, unit => unit.IsEnemy && unit.IsAlive, tower.DetectionRange);
+        var target = FindNearestUnit(tower.Position, unit => unit.IsEnemyOf(tower.Team) && unit.IsAlive, tower.DetectionRange);
         if (target is null)
             return;
 
@@ -1111,7 +1210,7 @@ public sealed partial class RtsGameScript : GameScript
 
     private void UpdateRaider(RtsUnit raider, float deltaTime)
     {
-        var target = FindNearestUnit(raider.Position, unit => unit.IsPlayerControlled && unit.IsAlive, raider.DetectionRange);
+        var target = FindNearestUnit(raider.Position, unit => unit.IsEnemyOf(raider.Team) && unit.IsAlive, raider.DetectionRange);
         if (target is not null)
         {
             var distance = Vector2.Distance(raider.Position, target.Position);
@@ -1133,7 +1232,7 @@ public sealed partial class RtsGameScript : GameScript
             return;
         }
 
-        var structureTarget = FindNearestStructure(raider.Position, structure => structure.IsAlive, raider.DetectionRange);
+        var structureTarget = FindNearestStructure(raider.Position, structure => structure.IsAlive && structure.Team != raider.Team, raider.DetectionRange);
         if (structureTarget is not null)
         {
             var distance = Vector2.Distance(raider.Position, structureTarget.Position);
@@ -1155,20 +1254,24 @@ public sealed partial class RtsGameScript : GameScript
             return;
         }
 
-        var distanceToHq = Vector2.Distance(raider.Position, HeadquartersPosition);
+        var enemyHqPosition = raider.Team == 0 ? HeadquartersPositionP2 : HeadquartersPosition;
+        var distanceToHq = Vector2.Distance(raider.Position, enemyHqPosition);
         if (distanceToHq <= HeadquartersHalfWidth + raider.AttackRange)
         {
             if (raider.AttackCooldown <= 0f)
             {
                 raider.AttackCooldown = raider.AttackInterval;
-                _hqHealth = Math.Max(0f, _hqHealth - raider.AttackDamage);
-                _shotEffects.Add(new ShotEffect(raider.Position, HeadquartersPosition, new Color(255, 122, 92), 0.12f));
+                if (raider.Team == 0)
+                    _hqHealthP2 = Math.Max(0f, _hqHealthP2 - raider.AttackDamage);
+                else
+                    _hqHealth = Math.Max(0f, _hqHealth - raider.AttackDamage);
+                _shotEffects.Add(new ShotEffect(raider.Position, enemyHqPosition, new Color(255, 122, 92), 0.12f));
                 _audio.PlayUnderAttack();
             }
         }
         else
         {
-            MoveUnit(raider, HeadquartersPosition, deltaTime, HeadquartersHalfWidth + raider.AttackRange - 4f);
+            MoveUnit(raider, enemyHqPosition, deltaTime, HeadquartersHalfWidth + raider.AttackRange - 4f);
         }
     }
 
@@ -1185,7 +1288,7 @@ public sealed partial class RtsGameScript : GameScript
             unit.OrderType = RtsUnitOrderType.Idle;
     }
 
-    private void IssueOrders(IReadOnlyList<RtsUnit> selectedUnits, Vector2 worldPosition)
+    private void IssueOrders(IReadOnlyList<RtsUnit> selectedUnits, Vector2 worldPosition, int team)
     {
         var resourceNodeIndex = FindResourceNodeIndex(worldPosition);
         var buildTarget = FindBlueprintNear(worldPosition);
@@ -1289,21 +1392,26 @@ public sealed partial class RtsGameScript : GameScript
 
     private void CleanupDestroyedUnits()
     {
-        var salvage = 0;
+        var salvageP1 = 0;
+        var salvageP2 = 0;
         for (var index = _units.Count - 1; index >= 0; index--)
         {
             var unit = _units[index];
             if (unit.IsAlive)
                 continue;
 
-            if (unit.IsEnemy)
-                salvage += SalvagePerRaider;
+            if (unit.Team == 1)
+                salvageP1 += SalvagePerRaider;
+            else
+                salvageP2 += SalvagePerRaider;
 
             _units.RemoveAt(index);
         }
 
-        if (salvage > 0)
-            _oreStockpile += salvage;
+        if (salvageP1 > 0)
+            _oreStockpile += salvageP1;
+        if (salvageP2 > 0)
+            _oreStockpileP2 += salvageP2;
     }
 
     private void CleanupDestroyedStructures()
@@ -1317,6 +1425,31 @@ public sealed partial class RtsGameScript : GameScript
 
     private void CheckScenarioState()
     {
+        if (IsMultiplayerMatch)
+        {
+            if (!_gameOver && _hqHealth <= 0f)
+            {
+                _gameOver = true;
+                _winnerTeam = 1;
+                _bannerTitle = "Base Destroyed";
+                _bannerSubtitle = "Player 2 wins. Press R or Enter to restart.";
+                _audio.PlayDefeat();
+                return;
+            }
+
+            if (!_gameOver && _hqHealthP2 <= 0f)
+            {
+                _gameOver = true;
+                _winnerTeam = 0;
+                _bannerTitle = "Enemy Base Destroyed";
+                _bannerSubtitle = "Player 1 wins. Press R or Enter to restart.";
+                _audio.PlayVictory();
+                return;
+            }
+
+            return;
+        }
+
         if (!_gameOver && _hqHealth <= 0f)
         {
             _gameOver = true;
@@ -1359,12 +1492,16 @@ public sealed partial class RtsGameScript : GameScript
             Graphics.DrawLine(0, screenY, Engine.Width, screenY, new Color(50, 42, 30, 100));
         }
 
-        DrawBeaconMarker(EnemyBeaconPosition, 42, new Color(196, 160, 96), new Color(255, 220, 170));
+        if (!IsMultiplayerMatch)
+            DrawBeaconMarker(EnemyBeaconPosition, 42, new Color(196, 160, 96), new Color(255, 220, 170));
         DrawBeaconMarker(_rallyPoint, 18, new Color(204, 51, 51), new Color(255, 120, 120));
+        if (IsMultiplayerMatch)
+            DrawBeaconMarker(_rallyPointP2, 18, new Color(80, 80, 204), new Color(120, 120, 255));
     }
 
     private void DrawStructures()
     {
+        // Player 1 HQ
         var hqTopLeft = WorldToScreen(HeadquartersPosition - new Vector2(HeadquartersHalfWidth, HeadquartersHalfHeight));
         Graphics.DrawFilledRect((int)hqTopLeft.X, (int)hqTopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(80, 60, 40));
         Graphics.DrawRect((int)hqTopLeft.X, (int)hqTopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(200, 160, 100));
@@ -1372,11 +1509,25 @@ public sealed partial class RtsGameScript : GameScript
         Graphics.DrawFilledRect((int)(hqTopLeft.X + 70f), (int)(hqTopLeft.Y + 16f), 26, 50, new Color(120, 100, 70));
         DrawBar(HeadquartersPosition + new Vector2(0f, -66f), 112, 8, _hqHealth / HeadquartersMaxHealth, new Color(51, 204, 51));
 
-        var beaconTopLeft = WorldToScreen(EnemyBeaconPosition - new Vector2(52f, 40f));
-        Graphics.DrawFilledRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(80, 65, 40));
-        Graphics.DrawRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(196, 160, 96));
-        Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
-        Graphics.DrawLine((int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
+        if (IsMultiplayerMatch)
+        {
+            // Player 2 HQ
+            var hq2TopLeft = WorldToScreen(HeadquartersPositionP2 - new Vector2(HeadquartersHalfWidth, HeadquartersHalfHeight));
+            Graphics.DrawFilledRect((int)hq2TopLeft.X, (int)hq2TopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(60, 40, 40));
+            Graphics.DrawRect((int)hq2TopLeft.X, (int)hq2TopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(200, 100, 100));
+            Graphics.DrawFilledRect((int)(hq2TopLeft.X + 16f), (int)(hq2TopLeft.Y + 16f), 44, 24, new Color(139, 26, 26));
+            Graphics.DrawFilledRect((int)(hq2TopLeft.X + 70f), (int)(hq2TopLeft.Y + 16f), 26, 50, new Color(100, 70, 70));
+            DrawBar(HeadquartersPositionP2 + new Vector2(0f, -66f), 112, 8, _hqHealthP2 / HeadquartersMaxHealth, new Color(255, 80, 80));
+        }
+        else
+        {
+            // Enemy beacon (single player only)
+            var beaconTopLeft = WorldToScreen(EnemyBeaconPosition - new Vector2(52f, 40f));
+            Graphics.DrawFilledRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(80, 65, 40));
+            Graphics.DrawRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(196, 160, 96));
+            Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
+            Graphics.DrawLine((int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
+        }
 
         DrawPlacementGhost();
         DrawPlayerStructures();
@@ -1451,8 +1602,8 @@ public sealed partial class RtsGameScript : GameScript
             if (unit.Role == RtsUnitRole.Worker && unit.CarryOre > 0)
                 Graphics.DrawFilledRect(x + size - 4, y - 4, 6, 6, new Color(51, 204, 51));
 
-            if (unit.Health < unit.MaxHealth || unit.IsEnemy)
-                DrawBar(unit.Position + new Vector2(0f, -18f), 30, 4, unit.Health / unit.MaxHealth, new Color(51, 204, 51));
+            if (unit.Health < unit.MaxHealth || unit.IsEnemyOf(LocalTeam))
+                DrawBar(unit.Position + new Vector2(0f, -18f), 30, 4, unit.Health / unit.MaxHealth, unit.IsAllyOf(LocalTeam) ? new Color(51, 204, 51) : new Color(255, 80, 80));
         }
     }
 
@@ -1507,8 +1658,16 @@ public sealed partial class RtsGameScript : GameScript
 
         var hq = WorldToMinimap(HeadquartersPosition, bounds);
         Graphics.DrawFilledRect((int)hq.X - 3, (int)hq.Y - 3, 6, 6, new Color(204, 51, 51));
-        var beacon = WorldToMinimap(EnemyBeaconPosition, bounds);
-        Graphics.DrawFilledRect((int)beacon.X - 3, (int)beacon.Y - 3, 6, 6, new Color(196, 160, 96));
+        if (IsMultiplayerMatch)
+        {
+            var hq2 = WorldToMinimap(HeadquartersPositionP2, bounds);
+            Graphics.DrawFilledRect((int)hq2.X - 3, (int)hq2.Y - 3, 6, 6, new Color(255, 80, 80));
+        }
+        else
+        {
+            var beacon = WorldToMinimap(EnemyBeaconPosition, bounds);
+            Graphics.DrawFilledRect((int)beacon.X - 3, (int)beacon.Y - 3, 6, 6, new Color(196, 160, 96));
+        }
         var rally = WorldToMinimap(_rallyPoint, bounds);
         DrawMinimapMarker(rally, new Color(51, 204, 51), 4);
 
@@ -1535,7 +1694,7 @@ public sealed partial class RtsGameScript : GameScript
                 continue;
 
             var point = WorldToMinimap(unit.Position, bounds);
-            var color = unit.IsEnemy ? new Color(196, 160, 96) : new Color(51, 204, 51);
+            var color = unit.IsEnemyOf(LocalTeam) ? new Color(255, 80, 80) : new Color(51, 204, 51);
             Graphics.DrawFilledRect((int)point.X - 1, (int)point.Y - 1, 3, 3, color);
             if (unit.Selected)
                 Graphics.DrawRect((int)point.X - 3, (int)point.Y - 3, 6, 6, new Color(51, 204, 51));
@@ -1650,14 +1809,14 @@ public sealed partial class RtsGameScript : GameScript
         Graphics.DrawFilledRect(left + 1, top + 1, Math.Max(0, (int)((width - 2) * clampedValue)), Math.Max(1, height - 2), fillColor);
     }
 
-    private RtsUnit SpawnPlayerUnit(RtsUnitRole role, Vector2 position, bool sendToRally)
+    private RtsUnit SpawnPlayerUnit(int team, RtsUnitRole role, Vector2 position, bool sendToRally)
     {
-        var unit = new RtsUnit(role, position);
+        var unit = new RtsUnit(role, position) { Team = team };
         if (sendToRally)
         {
             unit.OrderType = RtsUnitOrderType.Move;
             unit.HasMoveTarget = true;
-            unit.MoveTarget = _rallyPoint;
+            unit.MoveTarget = team == 0 ? _rallyPoint : _rallyPointP2;
         }
 
         _units.Add(unit);
@@ -1669,7 +1828,7 @@ public sealed partial class RtsGameScript : GameScript
         ClearSelection();
         foreach (var unit in _units)
         {
-            if (unit.IsAlive && unit.IsPlayerControlled && predicate(unit))
+            if (unit.IsAlive && unit.IsAllyOf(LocalTeam) && predicate(unit))
                 unit.Selected = true;
         }
     }
@@ -1682,7 +1841,7 @@ public sealed partial class RtsGameScript : GameScript
 
     private List<RtsUnit> GetSelectedUnits()
     {
-        return _units.Where(unit => unit.IsAlive && unit.IsPlayerControlled && unit.Selected).ToList();
+        return _units.Where(unit => unit.IsAlive && unit.IsAllyOf(LocalTeam) && unit.Selected).ToList();
     }
 
     private RtsUnit? FindPlayerUnit(Vector2 worldPosition, float maxDistance)
@@ -1692,7 +1851,7 @@ public sealed partial class RtsGameScript : GameScript
 
         foreach (var unit in _units)
         {
-            if (!unit.IsAlive || !unit.IsPlayerControlled)
+            if (!unit.IsAlive || !unit.IsAllyOf(LocalTeam))
                 continue;
 
             var distance = Vector2.Distance(unit.Position, worldPosition);
@@ -1787,7 +1946,8 @@ public sealed partial class RtsGameScript : GameScript
     {
         if (unit.Role == RtsUnitRole.Worker && unit.OrderType == RtsUnitOrderType.Harvest && TryGetResourceNode(unit.AssignedNodeIndex, out var node))
         {
-            target = unit.ReturningToBase ? HeadquartersPosition : node.Position;
+            var unitHq = unit.Team == 0 ? HeadquartersPosition : HeadquartersPositionP2;
+            target = unit.ReturningToBase ? unitHq : node.Position;
             color = unit.ReturningToBase ? new Color(255, 214, 96) : unit.AccentColor;
             return true;
         }
@@ -1813,7 +1973,8 @@ public sealed partial class RtsGameScript : GameScript
     private void FocusCameraOnSelection()
     {
         var selectedUnits = GetSelectedUnits();
-        var focusPoint = selectedUnits.Count == 0 ? HeadquartersPosition : GetSelectionCenter(selectedUnits);
+        var localHq = LocalTeam == 0 ? HeadquartersPosition : HeadquartersPositionP2;
+        var focusPoint = selectedUnits.Count == 0 ? localHq : GetSelectionCenter(selectedUnits);
         var title = selectedUnits.Count == 0 ? "HQ Focus" : "Squad Focus";
         var subtitle = selectedUnits.Count == 0
             ? $"Camera centered on the foundry in the {DescribeSector(focusPoint)}."

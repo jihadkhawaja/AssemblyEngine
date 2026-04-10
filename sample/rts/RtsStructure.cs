@@ -40,6 +40,8 @@ internal sealed class RtsStructure
 
     public float DetectionRange { get; set; }
 
+    public int Team { get; set; }
+
     public bool UnderConstruction { get; set; }
 
     public float ConstructionProgress { get; set; }

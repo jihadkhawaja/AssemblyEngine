@@ -7,6 +7,8 @@ public sealed partial class RtsGameScript
         return new RtsGameSnapshot(
             _oreStockpile,
             _hqHealth,
+            _oreStockpileP2,
+            _hqHealthP2,
             _waveIndex,
             _nextWaveTimer,
             _missionTime,
@@ -15,7 +17,9 @@ public sealed partial class RtsGameScript
             _bannerSubtitle,
             _victory,
             _gameOver,
+            _winnerTeam,
             _rallyPoint,
+            _rallyPointP2,
             _commandPulsePosition,
             _commandPulseTimer,
             _navigationPulsePosition,
@@ -23,6 +27,7 @@ public sealed partial class RtsGameScript
             _units.Select(unit => new RtsUnitSnapshot(
                 unit.Id,
                 unit.Role,
+                unit.Team,
                 unit.Position,
                 unit.MoveTarget,
                 unit.AimDirection,
@@ -45,6 +50,7 @@ public sealed partial class RtsGameScript
             _structures.Select(structure => new RtsStructureSnapshot(
                 structure.Id,
                 structure.Type,
+                structure.Team,
                 structure.Position,
                 structure.HalfSize,
                 structure.Radius,
@@ -60,6 +66,7 @@ public sealed partial class RtsGameScript
                 structure.ConstructionTime)).ToArray(),
             _resourceNodes.Select(node => new RtsResourceNodeSnapshot(node.Name, node.Position, node.Radius, node.RemainingOre)).ToArray(),
             _productionQueue.Select(order => new RtsProductionOrderSnapshot(order.Type, order.Label, order.ReservedSite, order.RemainingTime)).ToArray(),
+            _productionQueueP2.Select(order => new RtsProductionOrderSnapshot(order.Type, order.Label, order.ReservedSite, order.RemainingTime)).ToArray(),
             _shotEffects.Select(effect => new RtsShotEffectSnapshot(effect.From, effect.To, effect.Color, effect.RemainingTime)).ToArray());
     }
 
@@ -67,6 +74,8 @@ public sealed partial class RtsGameScript
     {
         _oreStockpile = snapshot.OreStockpile;
         _hqHealth = snapshot.HeadquartersHealth;
+        _oreStockpileP2 = snapshot.OreStockpileP2;
+        _hqHealthP2 = snapshot.HeadquartersHealthP2;
         _waveIndex = snapshot.WaveIndex;
         _nextWaveTimer = snapshot.NextWaveTimer;
         _missionTime = snapshot.MissionTime;
@@ -75,7 +84,9 @@ public sealed partial class RtsGameScript
         _bannerSubtitle = snapshot.BannerSubtitle;
         _victory = snapshot.Victory;
         _gameOver = snapshot.GameOver;
+        _winnerTeam = snapshot.WinnerTeam;
         _rallyPoint = snapshot.RallyPoint;
+        _rallyPointP2 = snapshot.RallyPointP2;
         _commandPulsePosition = snapshot.CommandPulsePosition;
         _commandPulseTimer = snapshot.CommandPulseTimer;
         _navigationPulsePosition = snapshot.NavigationPulsePosition;
@@ -86,6 +97,7 @@ public sealed partial class RtsGameScript
         {
             var unit = new RtsUnit(unitSnapshot.Id, unitSnapshot.Role, unitSnapshot.Position)
             {
+                Team = unitSnapshot.Team,
                 MoveTarget = unitSnapshot.MoveTarget,
                 AimDirection = unitSnapshot.AimDirection,
                 HasMoveTarget = unitSnapshot.HasMoveTarget,
@@ -114,6 +126,7 @@ public sealed partial class RtsGameScript
         {
             var structure = new RtsStructure(structureSnapshot.Id, structureSnapshot.Type, structureSnapshot.Position)
             {
+                Team = structureSnapshot.Team,
                 MaxHealth = structureSnapshot.MaxHealth,
                 Health = structureSnapshot.Health,
                 AttackRange = structureSnapshot.AttackRange,
@@ -140,6 +153,16 @@ public sealed partial class RtsGameScript
                 RemainingTime = order.RemainingTime
             };
             _productionQueue.Add(productionOrder);
+        }
+
+        _productionQueueP2.Clear();
+        foreach (var order in snapshot.ProductionQueueP2)
+        {
+            var productionOrder = new ProductionOrder(order.Type, Math.Max(order.RemainingTime, 0.01f), order.ReservedSite)
+            {
+                RemainingTime = order.RemainingTime
+            };
+            _productionQueueP2.Add(productionOrder);
         }
 
         _shotEffects.Clear();

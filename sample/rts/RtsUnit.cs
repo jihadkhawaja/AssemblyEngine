@@ -39,6 +39,8 @@ internal sealed class RtsUnit
 
     public bool Selected { get; set; }
 
+    public int Team { get; set; }
+
     public float Radius { get; set; }
 
     public float Speed { get; set; }
@@ -71,9 +73,13 @@ internal sealed class RtsUnit
 
     public RtsUnitOrderType OrderType { get; set; }
 
-    public bool IsEnemy => Role == RtsUnitRole.Raider;
+    public bool IsTeam0 => Team == 0;
 
-    public bool IsPlayerControlled => !IsEnemy;
+    public bool IsTeam1 => Team == 1;
+
+    public bool IsEnemyOf(int team) => Team != team;
+
+    public bool IsAllyOf(int team) => Team == team;
 
     public bool IsAlive => Health > 0f;
 
