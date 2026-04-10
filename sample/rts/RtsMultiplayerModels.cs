@@ -82,7 +82,10 @@ internal sealed record RtsStructureSnapshot(
     float AttackDamage,
     float AttackInterval,
     float AttackCooldown,
-    float DetectionRange);
+    float DetectionRange,
+    bool UnderConstruction,
+    float ConstructionProgress,
+    float ConstructionTime);
 
 internal sealed record RtsResourceNodeSnapshot(string Name, Vector2 Position, float Radius, int RemainingOre);
 

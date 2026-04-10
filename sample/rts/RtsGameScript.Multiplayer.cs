@@ -250,10 +250,10 @@ public sealed partial class RtsGameScript
         if (!leftMouseDown || _leftMouseWasDown || IsPointInsideMinimap(MousePosition) || IsPointerInsideBlockingHud(MousePosition))
             return false;
 
-        if (!TryGetSelectableStructurePad(productionType, MousePosition, out var reservedSite))
-            return true;
+        var worldPosition = ScreenToWorld(MousePosition);
+        worldPosition = ClampPointToWorld(worldPosition);
 
-        _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(productionType, reservedSite));
+        _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(productionType, worldPosition));
         _activePlacementType = null;
         return true;
     }
@@ -293,7 +293,7 @@ public sealed partial class RtsGameScript
         _minimapNavigationActive = false;
         ShowTransientMessage(
             $"Place {GetProductionLabel(productionType)}",
-            $"Click an open {GetPlacementLabel(productionType).ToLowerInvariant()} pad to queue the build.",
+            $"Click anywhere on the map to place the blueprint. Right click or Esc cancels.",
             1f);
     }
 

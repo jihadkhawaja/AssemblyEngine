@@ -54,7 +54,10 @@ public sealed partial class RtsGameScript
                 structure.AttackDamage,
                 structure.AttackInterval,
                 structure.AttackCooldown,
-                structure.DetectionRange)).ToArray(),
+                structure.DetectionRange,
+                structure.UnderConstruction,
+                structure.ConstructionProgress,
+                structure.ConstructionTime)).ToArray(),
             _resourceNodes.Select(node => new RtsResourceNodeSnapshot(node.Name, node.Position, node.Radius, node.RemainingOre)).ToArray(),
             _productionQueue.Select(order => new RtsProductionOrderSnapshot(order.Type, order.Label, order.ReservedSite, order.RemainingTime)).ToArray(),
             _shotEffects.Select(effect => new RtsShotEffectSnapshot(effect.From, effect.To, effect.Color, effect.RemainingTime)).ToArray());
@@ -117,7 +120,10 @@ public sealed partial class RtsGameScript
                 AttackDamage = structureSnapshot.AttackDamage,
                 AttackInterval = structureSnapshot.AttackInterval,
                 AttackCooldown = structureSnapshot.AttackCooldown,
-                DetectionRange = structureSnapshot.DetectionRange
+                DetectionRange = structureSnapshot.DetectionRange,
+                UnderConstruction = structureSnapshot.UnderConstruction,
+                ConstructionProgress = structureSnapshot.ConstructionProgress,
+                ConstructionTime = structureSnapshot.ConstructionTime
             };
             _structures.Add(structure);
         }

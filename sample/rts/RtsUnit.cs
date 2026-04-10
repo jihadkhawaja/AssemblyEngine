@@ -15,7 +15,8 @@ internal enum RtsUnitOrderType
 {
     Idle,
     Move,
-    Harvest
+    Harvest,
+    Build
 }
 
 internal sealed class RtsUnit
@@ -63,6 +64,8 @@ internal sealed class RtsUnit
     public float HarvestProgress { get; set; }
 
     public int AssignedNodeIndex { get; set; } = -1;
+
+    public int AssignedStructureId { get; set; } = -1;
 
     public bool ReturningToBase { get; set; }
 

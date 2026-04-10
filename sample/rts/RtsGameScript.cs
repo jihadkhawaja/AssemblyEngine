@@ -290,10 +290,10 @@ public sealed partial class RtsGameScript : GameScript
     }
 
     public string ProductionModeText => _activePlacementType is { } productionType
-        ? $"PLACE {GetPlacementLabel(productionType).ToUpperInvariant()} | CLICK PAD | RMB CANCEL"
+        ? $"PLACE {GetPlacementLabel(productionType).ToUpperInvariant()} | CLICK MAP | RMB CANCEL"
         : "SELECT BUILD OPTION";
 
-    public string ProductionSitesSummary => $"PADS | BARRACKS {GetOpenSiteCount(RtsProductionType.Building)}/{BuildingSitePositions.Length} | DEFENSE {GetOpenSiteCount(RtsProductionType.DefenseTower)}/{DefenseTowerSitePositions.Length} | FACTORY {GetOpenSiteCount(RtsProductionType.WarFactory)}/{WarFactorySitePositions.Length} | REACTOR {GetOpenSiteCount(RtsProductionType.Reactor)}/{ReactorSitePositions.Length}";
+    public string ProductionSitesSummary => $"STRUCTURES | Send a Supply Truck to build blueprints";
 
     public string RallySummary => $"RALLY {DescribeSector(_rallyPoint).ToUpperInvariant()}";
 
@@ -632,17 +632,10 @@ public sealed partial class RtsGameScript : GameScript
         if (!leftMouseDown || _leftMouseWasDown || IsPointInsideMinimap(MousePosition) || IsPointerInsideBlockingHud(MousePosition))
             return false;
 
-        if (!TryGetSelectableStructurePad(productionType, MousePosition, out var reservedSite))
-        {
-            _audio.PlayDenied();
-            ShowTransientMessage(
-                "Select Pad",
-                $"Click a highlighted {GetPlacementLabel(productionType).ToLowerInvariant()} pad to queue this build.",
-                1f);
-            return true;
-        }
+        var worldPosition = ScreenToWorld(MousePosition);
+        worldPosition = ClampPointToWorld(worldPosition);
 
-        if (QueueProduction(productionType, reservedSite))
+        if (QueueProduction(productionType, worldPosition))
             _activePlacementType = null;
 
         return true;
@@ -764,7 +757,7 @@ public sealed partial class RtsGameScript : GameScript
 
     private bool QueueProduction(RtsProductionType productionType)
     {
-        if (UsesStructurePad(productionType))
+        if (IsStructureProduction(productionType))
         {
             BeginStructurePlacement(productionType);
             return false;
@@ -782,40 +775,39 @@ public sealed partial class RtsGameScript : GameScript
             return false;
         }
 
-        if (reservedSite is { } site && !IsStructurePadAvailable(productionType, site))
-        {
-            _audio.PlayDenied();
-            ShowTransientMessage(
-                "Pad Taken",
-                $"That {GetPlacementLabel(productionType).ToLowerInvariant()} pad is no longer open.",
-                1f);
-            return false;
-        }
-
         var cost = GetProductionCost(productionType);
         _oreStockpile -= cost;
+
+        if (reservedSite is { } site && TryMapToStructureType(productionType, out var structureType))
+        {
+            var structure = new RtsStructure(structureType, site);
+            structure.UnderConstruction = true;
+            structure.ConstructionProgress = 0f;
+            structure.ConstructionTime = GetProductionBuildTime(productionType);
+            structure.Health = 1f;
+            _structures.Add(structure);
+            _audio.PlayQueue(productionType);
+            ShowTransientMessage(
+                $"{GetProductionLabel(productionType)} Blueprint",
+                $"{GetProductionLabel(productionType)} placed in {DescribeSector(site)}. Send a supply truck to build it.",
+                1f);
+            return true;
+        }
+
         var buildTime = GetProductionBuildTime(productionType);
-        _productionQueue.Add(new ProductionOrder(productionType, buildTime, reservedSite));
+        _productionQueue.Add(new ProductionOrder(productionType, buildTime, null));
         _audio.PlayQueue(productionType);
-
-        var subtitle = reservedSite is { } placementSite
-            ? $"{GetProductionLabel(productionType)} reserved for the {DescribeSector(placementSite)} pad. Cost {cost} ore."
-            : $"{GetProductionLabel(productionType)} fabrication started. Cost {cost} ore.";
-
         ShowTransientMessage(
             $"{GetProductionLabel(productionType)} Queued",
-            subtitle,
+            $"{GetProductionLabel(productionType)} fabrication started. Cost {cost}.",
             0.9f);
         return true;
     }
 
     private ProductionAvailability GetProductionAvailability(RtsProductionType productionType)
     {
-        if (_productionQueue.Count >= QueueLimit)
+        if (!IsStructureProduction(productionType) && _productionQueue.Count >= QueueLimit)
             return ProductionAvailability.QueueFull;
-
-        if (UsesStructurePad(productionType) && GetReservedSiteCount(productionType) >= GetProductionSiteCapacity(productionType))
-            return ProductionAvailability.SiteFull;
 
         return _oreStockpile >= GetProductionCost(productionType)
             ? ProductionAvailability.Ready
@@ -836,7 +828,7 @@ public sealed partial class RtsGameScript : GameScript
         _minimapNavigationActive = false;
         ShowTransientMessage(
             $"Place {GetProductionLabel(productionType)}",
-            $"Click an open {GetPlacementLabel(productionType).ToLowerInvariant()} pad to queue the build. Right click or Esc cancels.",
+            $"Click anywhere on the map to place the blueprint. Right click or Esc cancels.",
             1.15f);
     }
 
@@ -897,23 +889,6 @@ public sealed partial class RtsGameScript : GameScript
                 1f);
             return;
         }
-
-        if (!TryDeployStructure(order.Type, order.ReservedSite, out var structure))
-        {
-            _oreStockpile += GetProductionCost(order.Type);
-            _audio.PlayDenied();
-            ShowTransientMessage(
-                "Pad Lost",
-                $"{GetProductionLabel(order.Type)} fabrication completed but its reserved pad was no longer available. Ore refunded.",
-                1.2f);
-            return;
-        }
-
-        _audio.PlayUnitReady();
-        ShowTransientMessage(
-            $"{GetProductionLabel(order.Type)} Online",
-            $"{GetProductionLabel(order.Type)} deployed in the {DescribeSector(structure.Position)}.",
-            1f);
     }
 
     private void UpdateEnemyWaves(float deltaTime)
@@ -1046,7 +1021,47 @@ public sealed partial class RtsGameScript : GameScript
             return;
         }
 
+        if (worker.OrderType == RtsUnitOrderType.Build)
+        {
+            var buildTarget = FindStructureById(worker.AssignedStructureId);
+            if (buildTarget is null || !buildTarget.IsAlive || !buildTarget.UnderConstruction)
+            {
+                worker.OrderType = RtsUnitOrderType.Idle;
+                worker.AssignedStructureId = -1;
+                worker.HasMoveTarget = false;
+                UpdateMoveOrder(worker, deltaTime);
+                return;
+            }
+
+            if (MoveUnit(worker, buildTarget.Position, deltaTime, buildTarget.Radius + worker.Radius + 8f))
+            {
+                buildTarget.ConstructionProgress += deltaTime;
+                if (buildTarget.ConstructionProgress >= buildTarget.ConstructionTime)
+                {
+                    buildTarget.UnderConstruction = false;
+                    buildTarget.ConstructionProgress = buildTarget.ConstructionTime;
+                    buildTarget.Health = buildTarget.MaxHealth;
+                    worker.OrderType = RtsUnitOrderType.Idle;
+                    worker.AssignedStructureId = -1;
+                    worker.HasMoveTarget = false;
+                    _audio.PlayUnitReady();
+                    ShowTransientMessage(
+                        $"{buildTarget.Label} Online",
+                        $"{buildTarget.Label} construction complete in the {DescribeSector(buildTarget.Position)}.",
+                        1f);
+                }
+                else
+                {
+                    var progress = buildTarget.ConstructionProgress / buildTarget.ConstructionTime;
+                    buildTarget.Health = Math.Max(1f, progress * buildTarget.MaxHealth);
+                }
+            }
+
+            return;
+        }
+
         worker.AssignedNodeIndex = -1;
+        worker.AssignedStructureId = -1;
         worker.ReturningToBase = false;
         worker.HarvestProgress = 0f;
         UpdateMoveOrder(worker, deltaTime);
@@ -1169,6 +1184,7 @@ public sealed partial class RtsGameScript : GameScript
     private void IssueOrders(IReadOnlyList<RtsUnit> selectedUnits, Vector2 worldPosition)
     {
         var resourceNodeIndex = FindResourceNodeIndex(worldPosition);
+        var buildTarget = FindBlueprintNear(worldPosition);
         var columns = (int)MathF.Ceiling(MathF.Sqrt(selectedUnits.Count));
         var issuedHarvestOrder = false;
         for (var index = 0; index < selectedUnits.Count; index++)
@@ -1176,6 +1192,17 @@ public sealed partial class RtsGameScript : GameScript
             var unit = selectedUnits[index];
             if (!unit.IsAlive)
                 continue;
+
+            if (buildTarget is not null && unit.Role == RtsUnitRole.Worker)
+            {
+                unit.OrderType = RtsUnitOrderType.Build;
+                unit.AssignedStructureId = buildTarget.Id;
+                unit.AssignedNodeIndex = -1;
+                unit.ReturningToBase = false;
+                unit.HasMoveTarget = true;
+                unit.MoveTarget = buildTarget.Position;
+                continue;
+            }
 
             if (resourceNodeIndex >= 0 && unit.Role == RtsUnitRole.Worker)
             {
@@ -1190,13 +1217,14 @@ public sealed partial class RtsGameScript : GameScript
 
             unit.OrderType = RtsUnitOrderType.Move;
             unit.AssignedNodeIndex = -1;
+            unit.AssignedStructureId = -1;
             unit.ReturningToBase = false;
             unit.HasMoveTarget = true;
             unit.MoveTarget = ClampPointToWorld(worldPosition + ComputeFormationOffset(index, columns, 24f));
         }
 
-        SetCommandPulse(resourceNodeIndex >= 0 ? _resourceNodes[resourceNodeIndex].Position : worldPosition);
-        _audio.PlayOrder(issuedHarvestOrder);
+        SetCommandPulse(buildTarget?.Position ?? (resourceNodeIndex >= 0 ? _resourceNodes[resourceNodeIndex].Position : worldPosition));
+        _audio.PlayOrder(issuedHarvestOrder || buildTarget is not null);
     }
 
     private bool MoveUnit(RtsUnit unit, Vector2 target, float deltaTime, float stopDistance)
@@ -1346,7 +1374,7 @@ public sealed partial class RtsGameScript : GameScript
         Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
         Graphics.DrawLine((int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
 
-        DrawStructurePads();
+        DrawPlacementGhost();
         DrawPlayerStructures();
     }
 
@@ -1950,81 +1978,31 @@ public sealed partial class RtsGameScript : GameScript
         return true;
     }
 
-    private void DrawStructurePads()
+    private void DrawPlacementGhost()
     {
-        DrawStructurePads(BuildingSitePositions, RtsStructureType.Building);
-        DrawStructurePads(DefenseTowerSitePositions, RtsStructureType.DefenseTower);
-        DrawStructurePads(WarFactorySitePositions, RtsStructureType.WarFactory);
-        DrawStructurePads(ReactorSitePositions, RtsStructureType.Reactor);
-    }
+        if (_activePlacementType is not { } productionType)
+            return;
 
-    private void DrawStructurePads(Vector2[] pads, RtsStructureType structureType)
-    {
-        var placementActiveForType = false;
-        var hoveredPad = Vector2.Zero;
-        if (_activePlacementType is { } activeProductionType
-            && TryMapToStructureType(activeProductionType, out var activeStructureType)
-            && activeStructureType == structureType)
+        if (!TryMapToStructureType(productionType, out var structureType))
+            return;
+
+        if (IsPointInsideMinimap(MousePosition) || IsPointerInsideBlockingHud(MousePosition))
+            return;
+
+        var worldPosition = ScreenToWorld(MousePosition);
+        worldPosition = ClampPointToWorld(worldPosition);
+        var screen = WorldToScreen(worldPosition);
+
+        var (halfW, halfH) = structureType switch
         {
-            placementActiveForType = true;
-            if (TryGetSelectableStructurePad(activeProductionType, MousePosition, out var activePad))
-                hoveredPad = activePad;
-        }
+            RtsStructureType.Building => (32, 24),
+            RtsStructureType.WarFactory => (40, 30),
+            RtsStructureType.Reactor => (24, 24),
+            _ => (18, 18)
+        };
 
-        for (var index = 0; index < pads.Length; index++)
-        {
-            var pad = pads[index];
-            if (IsStructurePadOccupied(structureType, pad))
-                continue;
-
-            var screen = WorldToScreen(pad);
-            var padMargin = structureType switch
-            {
-                RtsStructureType.WarFactory => 48f,
-                RtsStructureType.Building or RtsStructureType.Reactor => 42f,
-                _ => 32f
-            };
-            if (!IsOnScreen(screen, padMargin))
-                continue;
-
-            var reserved = IsStructurePadQueued(structureType, pad);
-            var hovered = placementActiveForType && Vector2.Distance(hoveredPad, pad) <= 1f;
-
-            var outline = hovered
-                ? new Color(51, 204, 51)
-                : placementActiveForType
-                    ? new Color(51, 204, 51, 140)
-                    : reserved
-                        ? new Color(139, 115, 69, 150)
-                        : new Color(139, 115, 69, 90);
-            var fill = hovered
-                ? new Color(51, 204, 51, 50)
-                : placementActiveForType
-                    ? new Color(51, 204, 51, 24)
-                    : reserved
-                        ? new Color(100, 80, 50, 40)
-                        : Color.Transparent;
-
-            var halfW = structureType switch
-            {
-                RtsStructureType.WarFactory => 40,
-                RtsStructureType.DefenseTower => 18,
-                RtsStructureType.Reactor => 24,
-                _ => 32
-            };
-            var halfH = structureType switch
-            {
-                RtsStructureType.WarFactory => 30,
-                RtsStructureType.DefenseTower => 18,
-                RtsStructureType.Reactor => 24,
-                _ => 24
-            };
-
-            if (fill.A > 0)
-                Graphics.DrawFilledRect((int)screen.X - halfW, (int)screen.Y - halfH, halfW * 2, halfH * 2, fill);
-
-            Graphics.DrawRect((int)screen.X - halfW, (int)screen.Y - halfH, halfW * 2, halfH * 2, outline);
-        }
+        Graphics.DrawFilledRect((int)screen.X - halfW, (int)screen.Y - halfH, halfW * 2, halfH * 2, new Color(51, 204, 51, 40));
+        Graphics.DrawRect((int)screen.X - halfW, (int)screen.Y - halfH, halfW * 2, halfH * 2, new Color(51, 204, 51, 180));
     }
 
     private void DrawPlayerStructures()
@@ -2045,6 +2023,21 @@ public sealed partial class RtsGameScript : GameScript
             var height = (int)(structure.HalfSize.Y * 2f);
             var left = (int)topLeft.X;
             var top = (int)topLeft.Y;
+
+            if (structure.UnderConstruction)
+            {
+                // Blueprint ghost: dashed outline and translucent fill
+                Graphics.DrawFilledRect(left, top, width, height, new Color(51, 204, 51, 30));
+                Graphics.DrawRect(left, top, width, height, new Color(51, 204, 51, 140));
+                // Dashed cross pattern to indicate blueprint
+                Graphics.DrawLine(left, top, left + width, top + height, new Color(51, 204, 51, 60));
+                Graphics.DrawLine(left + width, top, left, top + height, new Color(51, 204, 51, 60));
+                // Construction progress bar
+                var progress = structure.ConstructionTime > 0f ? structure.ConstructionProgress / structure.ConstructionTime : 0f;
+                DrawBar(structure.Position + new Vector2(0f, -structure.HalfSize.Y - 16f), width + 12, 5, progress, new Color(255, 200, 50));
+                continue;
+            }
+
             Graphics.DrawFilledRect(left, top, width, height, structure.FillColor);
             Graphics.DrawRect(left, top, width, height, structure.AccentColor);
 
@@ -2198,6 +2191,9 @@ public sealed partial class RtsGameScript : GameScript
 
     private string DescribeWorkerDirective(RtsUnit unit)
     {
+        if (unit.OrderType == RtsUnitOrderType.Build)
+            return "Constructing";
+
         if (unit.OrderType == RtsUnitOrderType.Harvest && TryGetResourceNode(unit.AssignedNodeIndex, out var node))
             return unit.ReturningToBase ? "Returning HQ" : $"Mining {node.Name}";
 
@@ -2295,6 +2291,46 @@ public sealed partial class RtsGameScript : GameScript
             or RtsProductionType.DefenseTower
             or RtsProductionType.WarFactory
             or RtsProductionType.Reactor;
+    }
+
+    private static bool IsStructureProduction(RtsProductionType productionType)
+    {
+        return productionType is RtsProductionType.Building
+            or RtsProductionType.DefenseTower
+            or RtsProductionType.WarFactory
+            or RtsProductionType.Reactor;
+    }
+
+    private RtsStructure? FindStructureById(int id)
+    {
+        for (var index = 0; index < _structures.Count; index++)
+        {
+            if (_structures[index].Id == id && _structures[index].IsAlive)
+                return _structures[index];
+        }
+
+        return null;
+    }
+
+    private RtsStructure? FindBlueprintNear(Vector2 worldPosition)
+    {
+        RtsStructure? best = null;
+        var bestDistance = 60f;
+        for (var index = 0; index < _structures.Count; index++)
+        {
+            var structure = _structures[index];
+            if (!structure.IsAlive || !structure.UnderConstruction)
+                continue;
+
+            var distance = Vector2.Distance(structure.Position, worldPosition);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                best = structure;
+            }
+        }
+
+        return best;
     }
 
     private static int GetProductionCost(RtsProductionType productionType)

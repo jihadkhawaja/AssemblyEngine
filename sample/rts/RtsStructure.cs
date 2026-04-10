@@ -40,6 +40,12 @@ internal sealed class RtsStructure
 
     public float DetectionRange { get; set; }
 
+    public bool UnderConstruction { get; set; }
+
+    public float ConstructionProgress { get; set; }
+
+    public float ConstructionTime { get; set; }
+
     public bool IsAlive => Health > 0f;
 
     public string Label => Type switch
