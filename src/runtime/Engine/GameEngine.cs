@@ -1,6 +1,7 @@
 using AssemblyEngine.Core;
 using AssemblyEngine.Diagnostics;
 using AssemblyEngine.Interop;
+using AssemblyEngine.Networking;
 using AssemblyEngine.Platform;
 using AssemblyEngine.Scripting;
 using AssemblyEngine.UI;
@@ -36,6 +37,7 @@ public sealed class GameEngine
 
     public SceneManager Scenes { get; } = new();
     public ScriptManager Scripts { get; }
+    public MultiplayerManager Multiplayer { get; } = new();
     public UIDocument? UI { get; private set; }
 
     public float UiScale
@@ -181,6 +183,7 @@ public sealed class GameEngine
             {
                 SyncWindowState();
                 RuntimeDiagnosticsBridge.Current.ProcessFrameStart(this);
+                Multiplayer.Pump();
                 float dt = Time.DeltaTime;
 
                 Scenes.Update(dt);
@@ -217,6 +220,7 @@ public sealed class GameEngine
             {
                 try
                 {
+                    Multiplayer.StopAsync().GetAwaiter().GetResult();
                     Graphics.Shutdown();
                     NativeCore.Shutdown();
                 }

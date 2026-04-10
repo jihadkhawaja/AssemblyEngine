@@ -16,6 +16,7 @@ AssemblyEngine is a Windows game engine with a native core and a C# runtime for 
 - Native core: NASM x64 backend, NativeAOT ARM64 backend, shared Win32 window/input/audio contract with software presentation fallback
 - Managed runtime: .NET 10
 - Rendering: unified managed 2D/3D color + depth surface, opt-in Vulkan swapchain presentation, native framebuffer upload fallback
+- Multiplayer: managed direct peer-to-peer and localhost sessions over the runtime multiplayer service
 - Sample games: Dash Harvest in `sample/basic`, Citadel Breach in `sample/fps`, Frontier Foundry in `sample/rts`, Lantern Letters in `sample/visual-novel`
 - UI system: runtime HTML/CSS parsing with a built-in text renderer
 
@@ -42,6 +43,7 @@ The game project uses the managed runtime, the runtime bridges to the native cor
 - WAV audio playback
 - Scene-based games with entities, components, and scripts
 - HTML/CSS HUD overlays updated from C# scripts
+- Direct host or join multiplayer flows from managed scripts through `GameEngine.Multiplayer`
 - Vulkan swapchain presentation when `GameEngine.PresentationBackend` is set to `GraphicsBackend.Vulkan`, with native software blitting as fallback
 
 If Vulkan is explicitly requested but the runtime cannot load the required swapchain entry points from the active driver stack, AssemblyEngine logs a warning and continues on the unified software path instead of failing startup.
@@ -174,6 +176,8 @@ Citadel Breach controls:
 
 Frontier Foundry controls:
 
+- The sample now opens on a main menu with single-player, direct peer host/join, and localhost host/join options
+- Click the callsign, IPv4, or port fields to edit them, then use the lobby to mark ready and start the mission
 - Left drag selects units; hold Shift to add or Ctrl to remove
 - Right click issues move or harvest orders
 - Right click with no selection moves the HQ rally point
@@ -184,7 +188,7 @@ Frontier Foundry controls:
 - Arrow keys or moving the cursor to the screen edge pans the camera
 - `F1` toggles the command brief and `R` or `Enter` restarts after victory or defeat
 
-The sample persists display preferences in `sample-settings.json`. `Window mode`, `Resolution`, `VSync`, and `UI scale` all apply from the in-game settings panel, and maximize or restore events now resize the engine surface dynamically.
+The sample persists display and lobby preferences in `sample-settings.json`. `Window mode`, `Resolution`, `VSync`, `UI scale`, `playerName`, `peerAddress`, and `multiplayerPort` all survive restarts, and maximize or restore events now resize the engine surface dynamically.
 
 If you want to inspect or drive a running game from an AI agent, the repo also includes a stdio MCP server in `src/tools/AssemblyEngine.RuntimeMcpServer`. It can launch a game, tail structured runtime logs, return live runtime state, capture the current game framebuffer, and inject keyboard or mouse input. The checked-in `.vscode/mcp.json` file includes an `assemblyengine-runtime` server entry so current VS Code builds can auto-discover it from the workspace. See [Runtime MCP server](docs/runtime-mcp.md).
 

@@ -27,4 +27,7 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AssemblyEngine.Runtime.Tests/AssemblyEngine.Runtime.Tests.csproj" />
+  </Folder>
 </Solution>

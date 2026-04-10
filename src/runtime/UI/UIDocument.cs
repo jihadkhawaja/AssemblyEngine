@@ -102,33 +102,7 @@ public sealed class UIDocument
 
     private static void MergeStyle(UIStyle target, UIStyle source)
     {
-        target.Position = source.Position;
-        target.Display = source.Display;
-        if (!source.Left.IsAuto) target.Left = source.Left;
-        if (!source.Top.IsAuto) target.Top = source.Top;
-        if (!source.Right.IsAuto) target.Right = source.Right;
-        if (!source.Bottom.IsAuto) target.Bottom = source.Bottom;
-        if (!source.Width.IsAuto) target.Width = source.Width;
-        if (!source.Height.IsAuto) target.Height = source.Height;
-        target.MarginTop = source.MarginTop;
-        target.MarginRight = source.MarginRight;
-        target.MarginBottom = source.MarginBottom;
-        target.MarginLeft = source.MarginLeft;
-        target.PaddingTop = source.PaddingTop;
-        target.PaddingRight = source.PaddingRight;
-        target.PaddingBottom = source.PaddingBottom;
-        target.PaddingLeft = source.PaddingLeft;
-        if (source.BackgroundColor.A > 0) target.BackgroundColor = source.BackgroundColor;
-        if (source.BorderColor.A > 0) target.BorderColor = source.BorderColor;
-        if (source.BorderWidth > 0) target.BorderWidth = source.BorderWidth;
-        if (source.TextColor.A > 0) target.TextColor = source.TextColor;
-        if (source.FontSize != 16) target.FontSize = source.FontSize;
-        target.Opacity = source.Opacity;
-        target.Visible = source.Visible;
-        target.FlexDirection = source.FlexDirection;
-        target.AlignItems = source.AlignItems;
-        target.JustifyContent = source.JustifyContent;
-        target.Gap = source.Gap;
+        target.MergeFrom(source);
     }
 
     private void EnsureLayout(int viewportWidth, int viewportHeight)

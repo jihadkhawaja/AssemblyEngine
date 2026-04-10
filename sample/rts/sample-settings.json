@@ -4,5 +4,8 @@
   "windowMode": "windowed",
   "vSyncEnabled": true,
   "uiScale": 1.0,
-  "presentationBackend": "vulkan"
+  "presentationBackend": "vulkan",
+  "playerName": "Commander",
+  "peerAddress": "127.0.0.1",
+  "multiplayerPort": 40444
 }

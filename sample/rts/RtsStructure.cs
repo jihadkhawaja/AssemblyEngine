@@ -14,7 +14,7 @@ internal sealed class RtsStructure
 
     public static void ResetIds() => Interlocked.Exchange(ref _nextId, 0);
 
-    public int Id { get; } = Interlocked.Increment(ref _nextId);
+    public int Id { get; }
 
     public RtsStructureType Type { get; }
 
@@ -51,7 +51,13 @@ internal sealed class RtsStructure
         : new Color(246, 246, 177);
 
     public RtsStructure(RtsStructureType type, Vector2 position)
+        : this(ClaimNextId(), type, position)
     {
+    }
+
+    internal RtsStructure(int id, RtsStructureType type, Vector2 position)
+    {
+        Id = ClaimId(id);
         Type = type;
         Position = position;
 
@@ -79,5 +85,20 @@ internal sealed class RtsStructure
         }
 
         Health = MaxHealth;
+    }
+
+    private static int ClaimNextId() => Interlocked.Increment(ref _nextId);
+
+    private static int ClaimId(int id)
+    {
+        while (true)
+        {
+            var current = Volatile.Read(ref _nextId);
+            if (id <= current)
+                return id;
+
+            if (Interlocked.CompareExchange(ref _nextId, id, current) == current)
+                return id;
+        }
     }
 }

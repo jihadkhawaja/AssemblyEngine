@@ -3,7 +3,7 @@ using AssemblyEngine.Scripting;
 
 namespace RtsSample;
 
-public sealed class RtsGameScript : GameScript
+public sealed partial class RtsGameScript : GameScript
 {
     private const float WorldWidth = 2200f;
     private const float WorldHeight = 1400f;
@@ -297,21 +297,39 @@ public sealed class RtsGameScript : GameScript
         _audio = Engine.Scripts.GetScript<RtsAudioScript>()
             ?? throw new InvalidOperationException("RtsAudioScript must be registered before RtsGameScript loads.");
 
+        OnMultiplayerLoaded();
         ResetScenario();
     }
 
     public override void OnUpdate(float deltaTime)
     {
+        var leftMouseDown = IsMouseDown(MouseButton.Left);
+        var middleMouseDown = IsMouseDown(MouseButton.Middle);
+        var rightMouseDown = IsMouseDown(MouseButton.Right);
+
+        if (!_matchRunning)
+        {
+            _leftMouseWasDown = leftMouseDown;
+            _middleMouseWasDown = middleMouseDown;
+            _rightMouseWasDown = rightMouseDown;
+            return;
+        }
+
+        if (_sessionMode == RtsSessionMode.Client)
+        {
+            UpdateClientReplica(deltaTime, leftMouseDown, middleMouseDown, rightMouseDown);
+            _leftMouseWasDown = leftMouseDown;
+            _middleMouseWasDown = middleMouseDown;
+            _rightMouseWasDown = rightMouseDown;
+            return;
+        }
+
         if (IsKeyPressed(KeyCode.F1))
             _helpVisible = !_helpVisible;
 
         UpdateBanner(deltaTime);
         UpdateShotEffects(deltaTime);
         UpdateTacticalSignals(deltaTime);
-
-        var leftMouseDown = IsMouseDown(MouseButton.Left);
-        var middleMouseDown = IsMouseDown(MouseButton.Middle);
-        var rightMouseDown = IsMouseDown(MouseButton.Right);
 
         if (_victory || _gameOver)
         {
@@ -340,6 +358,7 @@ public sealed class RtsGameScript : GameScript
         CleanupDestroyedUnits();
         CleanupDestroyedStructures();
         CheckScenarioState();
+        UpdateHostedSnapshot(deltaTime);
 
         _leftMouseWasDown = leftMouseDown;
         _middleMouseWasDown = middleMouseDown;

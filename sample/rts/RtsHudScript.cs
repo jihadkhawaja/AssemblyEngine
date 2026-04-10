@@ -10,6 +10,14 @@ public sealed class RtsHudScript : GameScript
         if (game is null || Engine.UI is null)
             return;
 
+        Engine.UI.SetVisible("hud-root", game.MatchRunning);
+        if (!game.MatchRunning)
+        {
+            Engine.UI.SetVisible("center-message", false);
+            Engine.UI.SetVisible("help-panel", false);
+            return;
+        }
+
         Engine.UI.UpdateText("fps-counter", $"FPS {Fps} | {game.BackendLabel}");
         Engine.UI.UpdateText("ore", $"Ore {game.OreStockpile}/{game.OreGoal}");
         Engine.UI.UpdateText("hq", $"HQ {game.HeadquartersHealth}");

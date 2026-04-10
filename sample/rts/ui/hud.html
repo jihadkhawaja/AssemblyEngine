@@ -1,71 +1,147 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Frontier Foundry HUD</title>
+    <title>Frontier Foundry</title>
 </head>
 <body>
-    <div id="top-bar">
-        <div id="fps-counter">FPS 0 | Software</div>
-        <div id="ore">Ore 0/320</div>
-        <div id="hq">HQ 420</div>
-        <div id="workers">Workers 0</div>
-        <div id="guards">Guards 0</div>
-        <div id="wave">Raid 1 in 12.0s</div>
-    </div>
-
-    <div id="center-message">
-        <div id="message-title">Frontier Foundry</div>
-        <div id="message-subtitle">Select the starting workers, right click cobalt veins, and hold the HQ until the stockpile reaches 320 ore.</div>
-    </div>
-
-    <div id="intel-panel">
-        <div id="objective">MINE | ORE LEFT 230</div>
-        <div id="selection">NO SELECTION | RMB SETS RALLY</div>
-    </div>
-
-    <div id="production-panel">
-        <div id="production-title">PRODUCTION</div>
-        <div id="queue">QUEUE 0/4</div>
-        <div id="build-row-1">
-            <div id="queue-worker-button">
-                <div id="queue-worker-label">RECRUIT WORKER</div>
-                <div id="queue-worker-detail">Q | 45 ORE | READY</div>
+    <div id="front-end-root">
+        <div id="menu-shell">
+            <div id="menu-hero-panel">
+                <div id="menu-kicker">DEPLOYMENT GRID</div>
+                <div id="menu-title">FRONTIER</div>
+                <div id="menu-title-secondary">FOUNDRY</div>
+                <div id="menu-subtitle-1">HOLD THE RIDGE SOLO OR SYNC A SECOND COMMANDER.</div>
+                <div id="menu-subtitle-2">LOCALHOST IS FOR SAME-MACHINE TESTING. PEER MODE IS FOR DIRECT PLAY.</div>
             </div>
-            <div id="queue-guard-button">
-                <div id="queue-guard-label">RECRUIT GUARD</div>
-                <div id="queue-guard-detail">E | 70 ORE | READY</div>
+
+            <div id="menu-brief-panel">
+                <div id="menu-brief-title">MISSION NOTES</div>
+                <div id="menu-brief-line-1">MINE 320 ORE BEFORE THE REFINERY FALLS.</div>
+                <div id="menu-brief-line-2">HOST AUTHORITY KEEPS BOTH PLAYERS ON ONE CANONICAL MATCH.</div>
+                <div id="menu-brief-line-3">CLICK A FIELD, TYPE A VALUE, THEN CHOOSE A DEPLOYMENT MODE.</div>
+            </div>
+
+            <div id="menu-config-panel">
+                <div id="menu-config-title">SIGNAL SETUP</div>
+                <div id="menu-player-label">CALLSIGN</div>
+                <div id="menu-player-value">  Commander</div>
+                <div id="menu-address-label">HOST IPv4</div>
+                <div id="menu-address-1">127</div>
+                <div id="menu-address-2">0</div>
+                <div id="menu-address-3">0</div>
+                <div id="menu-address-4">1</div>
+                <div id="menu-port-label">PORT</div>
+                <div id="menu-port-value"> 40444</div>
+            </div>
+
+            <div id="menu-action-panel">
+                <div id="menu-action-title">DEPLOYMENT MODES</div>
+                <div id="menu-action-line-1">SOLO STARTS IMMEDIATELY.</div>
+                <div id="menu-action-line-2">HOST OPENS THE LOBBY. JOIN CONNECTS TO IT.</div>
+                <div id="menu-solo-button">START SOLO</div>
+                <div id="menu-host-peer-button">HOST PEER SESSION</div>
+                <div id="menu-join-peer-button">JOIN PEER SESSION</div>
+                <div id="menu-host-local-button">HOST LOCALHOST SESSION</div>
+                <div id="menu-join-local-button">JOIN LOCALHOST SESSION</div>
+            </div>
+
+            <div id="menu-status-rail">
+                <div id="menu-status">Choose a deployment mode.</div>
+                <div id="menu-footer">JOIN PEER USES THE IPv4 ADDRESS AND PORT SHOWN IN SIGNAL SETUP.</div>
             </div>
         </div>
-        <div id="build-row-2">
-            <div id="queue-building-button">
-                <div id="queue-building-label">BUILD STRUCTURE</div>
-                <div id="queue-building-detail">R | 85 ORE | PICK PAD</div>
+
+        <div id="lobby-shell">
+            <div id="lobby-kicker">COMMAND NET</div>
+            <div id="lobby-title">WAITING ROOM</div>
+            <div id="lobby-mode">DIRECT HOST | SHARE YOUR IPv4 ADDRESS</div>
+            <div id="lobby-endpoint">JOIN TARGET | 127.0.0.1 | PORT 40444</div>
+
+            <div id="lobby-roster-panel">
+                <div id="lobby-roster-title">PEERS</div>
+                <div id="lobby-peer-1">COMMANDER | LOCAL | WAITING</div>
+                <div id="lobby-peer-2">OPEN SLOT</div>
+                <div id="lobby-peer-3">OPEN SLOT</div>
+                <div id="lobby-peer-4">OPEN SLOT</div>
             </div>
-            <div id="queue-tower-button">
-                <div id="queue-tower-label">BUILD DEFENSE TOWER</div>
-                <div id="queue-tower-detail">T | 95 ORE | PICK PAD</div>
+
+            <div id="lobby-controls-panel">
+                <div id="lobby-controls-title">SESSION CONTROL</div>
+                <div id="lobby-ready-button">SET READY</div>
+                <div id="lobby-start-button">START MISSION</div>
+                <div id="lobby-back-button">BACK</div>
+            </div>
+
+            <div id="lobby-status-rail">
+                <div id="lobby-status">Opening lobby...</div>
             </div>
         </div>
-        <div id="production-mode">Q/E RECRUIT NOW | R/T PICK A BUILD PAD</div>
-        <div id="production-sites">OPEN PADS | STRUCTURE 3/3 | TOWER 4/4</div>
     </div>
 
-    <div id="tactical-panel">
-        <div id="forces">UNITS 4 | RAIDERS 0 | DMG 0 | Q 0/4</div>
-        <div id="economy">ORE 770 | VEINS 4/4 | CARRY 0</div>
-    </div>
+    <div id="hud-root">
+        <div id="top-bar">
+            <div id="fps-counter">FPS 0 | Software</div>
+            <div id="ore">Ore 0/320</div>
+            <div id="hq">HQ 420</div>
+            <div id="workers">Workers 0</div>
+            <div id="guards">Guards 0</div>
+            <div id="wave">Raid 1 in 12.0s</div>
+        </div>
 
-    <div id="help-panel">
-        <div id="help-title">Command Brief</div>
-        <div id="help-row-1">Drag a box to select workers or guards.</div>
-        <div id="help-row-2">Hold Shift to add squads, or hold Ctrl to remove them.</div>
-        <div id="help-row-3">Right click a cobalt vein to start harvesting.</div>
-        <div id="help-row-4">Right click terrain to reposition selected units.</div>
-        <div id="help-row-5">Right click with no selection to move the rally point.</div>
-        <div id="help-row-6">Left click the minimap to instantly recenter the camera.</div>
-        <div id="help-row-7">Middle click anywhere to snap the camera to that world position.</div>
-        <div id="help-row-8">Recruit workers and guards with Q / E. For structures, press R / T or click the build card, then click a highlighted pad. Right click or Esc cancels placement.</div>
-        <div id="help-footer">Mine 320 ore before the HQ is destroyed. F1 hides this panel and R or Enter restarts.</div>
+        <div id="center-message">
+            <div id="message-title">Frontier Foundry</div>
+            <div id="message-subtitle">Select the starting workers, right click cobalt veins, and hold the HQ until the stockpile reaches 320 ore.</div>
+        </div>
+
+        <div id="intel-panel">
+            <div id="objective">MINE | ORE LEFT 230</div>
+            <div id="selection">NO SELECTION | RMB SETS RALLY</div>
+        </div>
+
+        <div id="production-panel">
+            <div id="production-title">PRODUCTION</div>
+            <div id="queue">QUEUE 0/4</div>
+            <div id="build-row-1">
+                <div id="queue-worker-button">
+                    <div id="queue-worker-label">RECRUIT WORKER</div>
+                    <div id="queue-worker-detail">Q | 45 ORE | READY</div>
+                </div>
+                <div id="queue-guard-button">
+                    <div id="queue-guard-label">RECRUIT GUARD</div>
+                    <div id="queue-guard-detail">E | 70 ORE | READY</div>
+                </div>
+            </div>
+            <div id="build-row-2">
+                <div id="queue-building-button">
+                    <div id="queue-building-label">BUILD STRUCTURE</div>
+                    <div id="queue-building-detail">R | 85 ORE | PICK PAD</div>
+                </div>
+                <div id="queue-tower-button">
+                    <div id="queue-tower-label">BUILD DEFENSE TOWER</div>
+                    <div id="queue-tower-detail">T | 95 ORE | PICK PAD</div>
+                </div>
+            </div>
+            <div id="production-mode">Q/E RECRUIT NOW | R/T PICK A BUILD PAD</div>
+            <div id="production-sites">OPEN PADS | STRUCTURE 3/3 | TOWER 4/4</div>
+        </div>
+
+        <div id="tactical-panel">
+            <div id="forces">UNITS 4 | RAIDERS 0 | DMG 0 | Q 0/4</div>
+            <div id="economy">ORE 770 | VEINS 4/4 | CARRY 0</div>
+        </div>
+
+        <div id="help-panel">
+            <div id="help-title">Command Brief</div>
+            <div id="help-row-1">Drag a box to select workers or guards.</div>
+            <div id="help-row-2">Hold Shift to add squads, or hold Ctrl to remove them.</div>
+            <div id="help-row-3">Right click a cobalt vein to start harvesting.</div>
+            <div id="help-row-4">Right click terrain to reposition selected units.</div>
+            <div id="help-row-5">Right click with no selection to move the rally point.</div>
+            <div id="help-row-6">Left click the minimap to instantly recenter the camera.</div>
+            <div id="help-row-7">Middle click anywhere to snap the camera to that world position.</div>
+            <div id="help-row-8">Recruit workers and guards with Q / E. For structures, press R / T or click the build card, then click a highlighted pad. Right click or Esc cancels placement.</div>
+            <div id="help-footer">Mine 320 ore before the HQ is destroyed. F1 hides this panel and R or Enter restarts.</div>
+        </div>
     </div>
 </body>
 </html>

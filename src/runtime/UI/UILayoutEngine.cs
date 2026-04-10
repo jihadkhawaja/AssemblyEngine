@@ -28,6 +28,9 @@ public static class UILayoutEngine
                 mx = maxW - w - style.Right.Resolve(maxW);
             if (!style.Bottom.IsAuto && style.Top.IsAuto)
                 my = maxH - h - style.Bottom.Resolve(maxH);
+
+            mx += x;
+            my += y;
         }
 
         element.LayoutX = mx;

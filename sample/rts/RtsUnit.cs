@@ -22,7 +22,7 @@ internal sealed class RtsUnit
 
     public static void ResetIds() => Interlocked.Exchange(ref _nextId, 0);
 
-    public int Id { get; } = Interlocked.Increment(ref _nextId);
+    public int Id { get; }
 
     public RtsUnitRole Role { get; }
 
@@ -101,7 +101,13 @@ internal sealed class RtsUnit
     };
 
     public RtsUnit(RtsUnitRole role, Vector2 position)
+        : this(ClaimNextId(), role, position)
     {
+    }
+
+    internal RtsUnit(int id, RtsUnitRole role, Vector2 position)
+    {
+        Id = ClaimId(id);
         Role = role;
         Position = position;
         MoveTarget = position;
@@ -143,5 +149,20 @@ internal sealed class RtsUnit
         }
 
         Health = MaxHealth;
+    }
+
+    private static int ClaimNextId() => Interlocked.Increment(ref _nextId);
+
+    private static int ClaimId(int id)
+    {
+        while (true)
+        {
+            var current = Volatile.Read(ref _nextId);
+            if (id <= current)
+                return id;
+
+            if (Interlocked.CompareExchange(ref _nextId, id, current) == current)
+                return id;
+        }
     }
 }

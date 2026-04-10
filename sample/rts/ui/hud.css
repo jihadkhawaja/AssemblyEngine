@@ -6,6 +6,558 @@ body {
     height: 100%;
 }
 
+#front-end-root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(2, 7, 12, 0.92);
+}
+
+#menu-shell {
+    position: absolute;
+    left: 80px;
+    top: 50px;
+    width: 1120px;
+    height: 620px;
+    background-color: rgba(6, 13, 20, 0.96);
+    border-width: 2;
+    border-color: #9BE7FF;
+}
+
+#menu-hero-panel,
+#menu-brief-panel,
+#menu-config-panel,
+#menu-action-panel,
+#menu-status-rail,
+#lobby-roster-panel,
+#lobby-controls-panel,
+#lobby-status-rail {
+    position: absolute;
+    background-color: rgba(10, 21, 30, 0.94);
+    border-width: 1;
+}
+
+#menu-hero-panel {
+    left: 32px;
+    top: 30px;
+    width: 454px;
+    height: 162px;
+    border-color: #4AA8C6;
+}
+
+#menu-kicker,
+#menu-title,
+#menu-title-secondary,
+#menu-subtitle-1,
+#menu-subtitle-2,
+#menu-brief-title,
+#menu-brief-line-1,
+#menu-brief-line-2,
+#menu-brief-line-3,
+#menu-config-title,
+#menu-action-title,
+#menu-action-line-1,
+#menu-action-line-2,
+#lobby-kicker,
+#lobby-title,
+#lobby-controls-title,
+#lobby-roster-title {
+    position: absolute;
+}
+
+#menu-kicker {
+    left: 18px;
+    top: 14px;
+    color: #8FE8FF;
+    font-size: 13;
+    width: 180px;
+    height: 18px;
+}
+
+#menu-title {
+    left: 18px;
+    top: 42px;
+    color: #FFF2B7;
+    font-size: 32;
+    width: 260px;
+    height: 38px;
+}
+
+#menu-title-secondary {
+    left: 18px;
+    top: 84px;
+    color: #8FE8FF;
+    font-size: 32;
+    width: 260px;
+    height: 38px;
+}
+
+#menu-subtitle-1,
+#menu-subtitle-2,
+#menu-action-line-1,
+#menu-action-line-2,
+#menu-footer,
+#lobby-mode,
+#lobby-endpoint,
+#lobby-status {
+    color: #E4F7FF;
+    font-size: 12;
+}
+
+#menu-subtitle-1 {
+    left: 18px;
+    top: 126px;
+    width: 405px;
+    height: 16px;
+}
+
+#menu-subtitle-2 {
+    left: 18px;
+    top: 144px;
+    width: 418px;
+    height: 16px;
+}
+
+#menu-brief-panel {
+    left: 32px;
+    top: 214px;
+    width: 454px;
+    height: 126px;
+    border-color: #FFD18C;
+}
+
+#menu-brief-title,
+#menu-config-title,
+#menu-action-title,
+#lobby-controls-title,
+#lobby-roster-title {
+    color: #FFF2B7;
+    font-size: 16;
+    width: 240px;
+    height: 20px;
+}
+
+#menu-brief-title {
+    left: 18px;
+    top: 14px;
+}
+
+#menu-brief-line-1,
+#menu-brief-line-2,
+#menu-brief-line-3 {
+    left: 18px;
+    color: #E4F7FF;
+    font-size: 12;
+    width: 406px;
+    height: 16px;
+}
+
+#menu-brief-line-1 {
+    top: 44px;
+}
+
+#menu-brief-line-2 {
+    top: 66px;
+}
+
+#menu-brief-line-3 {
+    top: 88px;
+}
+
+#menu-config-panel {
+    left: 32px;
+    top: 358px;
+    width: 454px;
+    height: 186px;
+    border-color: #79CCE6;
+}
+
+#menu-config-title {
+    left: 18px;
+    top: 14px;
+}
+
+#menu-player-label,
+#menu-address-label,
+#menu-port-label,
+#lobby-kicker {
+    position: absolute;
+    color: #8FE8FF;
+    font-size: 12;
+    width: 240px;
+    height: 16px;
+}
+
+#menu-player-label {
+    left: 18px;
+    top: 48px;
+}
+
+#menu-player-value {
+    position: absolute;
+    left: 18px;
+    top: 68px;
+    width: 180px;
+    height: 24px;
+    background-color: rgba(22, 42, 58, 0.94);
+    border-width: 1;
+    border-color: #9BE7FF;
+    color: #E4F7FF;
+    font-size: 14;
+    padding: 6px 8px;
+}
+
+#menu-address-label {
+    left: 18px;
+    top: 106px;
+}
+
+#menu-address-1,
+#menu-address-2,
+#menu-address-3,
+#menu-address-4,
+#menu-port-value {
+    background-color: rgba(22, 42, 58, 0.94);
+    border-width: 1;
+    border-color: #9BE7FF;
+    color: #E4F7FF;
+    font-size: 16;
+}
+
+#menu-address-1,
+#menu-address-2,
+#menu-address-3,
+#menu-address-4 {
+    position: absolute;
+    top: 126px;
+    width: 48px;
+    height: 22px;
+    padding: 6px 6px;
+}
+
+#menu-address-1 {
+    left: 18px;
+}
+
+#menu-address-2 {
+    left: 84px;
+}
+
+#menu-address-3 {
+    left: 150px;
+}
+
+#menu-address-4 {
+    left: 216px;
+}
+
+#menu-port-label {
+    left: 296px;
+    top: 48px;
+}
+
+#menu-port-value {
+    position: absolute;
+    left: 296px;
+    top: 68px;
+    width: 110px;
+    height: 24px;
+    padding: 6px 8px;
+}
+
+#menu-action-panel {
+    left: 520px;
+    top: 30px;
+    width: 566px;
+    height: 514px;
+    border-color: #F0C86A;
+}
+
+#menu-action-title {
+    left: 18px;
+    top: 14px;
+}
+
+#menu-action-line-1,
+#menu-action-line-2 {
+    left: 18px;
+    width: 520px;
+    height: 16px;
+}
+
+#menu-action-line-1 {
+    top: 42px;
+}
+
+#menu-action-line-2 {
+    top: 60px;
+}
+
+#menu-solo-button,
+#menu-host-peer-button,
+#menu-join-peer-button,
+#menu-host-local-button,
+#menu-join-local-button,
+#lobby-ready-button,
+#lobby-start-button,
+#lobby-back-button {
+    height: 34px;
+    border-width: 1;
+    color: #08121A;
+    font-size: 16;
+    padding: 10px 14px;
+    width: 500px;
+}
+
+#menu-solo-button {
+    position: absolute;
+    left: 18px;
+    top: 104px;
+}
+
+#menu-host-peer-button {
+    position: absolute;
+    left: 18px;
+    top: 170px;
+}
+
+#menu-join-peer-button {
+    position: absolute;
+    left: 18px;
+    top: 236px;
+}
+
+#menu-host-local-button {
+    position: absolute;
+    left: 18px;
+    top: 302px;
+}
+
+#menu-join-local-button {
+    position: absolute;
+    left: 18px;
+    top: 368px;
+}
+
+#menu-solo-button {
+    background-color: #FFE08A;
+    border-color: #FFF2B7;
+}
+
+#menu-host-peer-button,
+#lobby-start-button {
+    background-color: #8FE8FF;
+    border-color: #D4F8FF;
+}
+
+#menu-join-peer-button,
+#lobby-ready-button {
+    background-color: #B8FFD0;
+    border-color: #E2FFEA;
+}
+
+#menu-host-local-button {
+    background-color: #FFD4A7;
+    border-color: #FFF0D3;
+}
+
+#menu-join-local-button,
+#lobby-back-button {
+    background-color: #F4F4BF;
+    border-color: #FFFDE8;
+}
+
+#menu-status,
+#lobby-peer-1,
+#lobby-peer-2,
+#lobby-peer-3,
+#lobby-peer-4 {
+    color: #E4F7FF;
+}
+
+#menu-status-rail {
+    position: absolute;
+    left: 32px;
+    top: 566px;
+    width: 1054px;
+    height: 30px;
+    border-color: #4AA8C6;
+}
+
+#menu-status,
+#menu-footer {
+    position: absolute;
+    left: 16px;
+    width: 1000px;
+    height: 14px;
+}
+
+#menu-status {
+    top: 6px;
+    font-size: 13;
+}
+
+#menu-footer {
+    top: 18px;
+    font-size: 12;
+}
+
+#lobby-shell {
+    position: absolute;
+    left: 182px;
+    top: 88px;
+    width: 916px;
+    height: 544px;
+    background-color: rgba(7, 15, 22, 0.97);
+    border-width: 2;
+    border-color: #FFE08A;
+}
+
+#lobby-kicker {
+    left: 26px;
+    top: 18px;
+}
+
+#lobby-title {
+    left: 26px;
+    top: 40px;
+    color: #FFF2B7;
+    font-size: 30;
+    width: 360px;
+    height: 40px;
+}
+
+#lobby-mode {
+    position: absolute;
+    left: 26px;
+    top: 82px;
+    font-size: 16;
+    width: 760px;
+    height: 24px;
+}
+
+#lobby-endpoint {
+    position: absolute;
+    left: 26px;
+    top: 106px;
+    font-size: 14;
+    width: 760px;
+    height: 22px;
+}
+
+#lobby-roster-panel {
+    position: absolute;
+    left: 26px;
+    top: 146px;
+    width: 550px;
+    height: 286px;
+    border-color: #79CCE6;
+}
+
+#lobby-roster-title {
+    left: 18px;
+    top: 14px;
+}
+
+#lobby-peer-1,
+#lobby-peer-2,
+#lobby-peer-3,
+#lobby-peer-4 {
+    width: 520px;
+    height: 24px;
+    background-color: rgba(16, 30, 41, 0.94);
+    border-width: 1;
+    border-color: #79CCE6;
+    font-size: 15;
+    padding: 8px 10px;
+}
+
+#lobby-peer-1 {
+    position: absolute;
+    left: 18px;
+    top: 48px;
+}
+
+#lobby-peer-2 {
+    position: absolute;
+    left: 18px;
+    top: 94px;
+}
+
+#lobby-peer-3 {
+    position: absolute;
+    left: 18px;
+    top: 140px;
+}
+
+#lobby-peer-4 {
+    position: absolute;
+    left: 18px;
+    top: 186px;
+}
+
+#lobby-controls-panel {
+    position: absolute;
+    left: 610px;
+    top: 146px;
+    width: 280px;
+    height: 286px;
+    border-color: #F0C86A;
+}
+
+#lobby-controls-title {
+    left: 18px;
+    top: 14px;
+}
+
+#lobby-ready-button,
+#lobby-start-button,
+#lobby-back-button {
+    position: absolute;
+    left: 18px;
+    width: 214px;
+}
+
+#lobby-ready-button {
+    top: 58px;
+}
+
+#lobby-start-button {
+    top: 124px;
+}
+
+#lobby-back-button {
+    top: 190px;
+}
+
+#lobby-status-rail {
+    position: absolute;
+    left: 26px;
+    top: 460px;
+    width: 864px;
+    height: 34px;
+    border-color: #4AA8C6;
+}
+
+#lobby-status {
+    position: absolute;
+    left: 16px;
+    top: 10px;
+    width: 830px;
+    height: 16px;
+    font-size: 15;
+}
+
+#hud-root {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+}
+
 #top-bar {
     position: absolute;
     left: 18px;

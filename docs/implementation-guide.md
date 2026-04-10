@@ -35,6 +35,7 @@ That sequence keeps the engine understandable. Avoid adding a native feature wit
 - Coordinate scenes and scripts
 - Define entities and components
 - Parse HTML and CSS for UI overlays
+- Host direct peer-to-peer or localhost multiplayer sessions through `GameEngine.Multiplayer`
 - Render UI with the same graphics surface used by gameplay code
 
 ## Unified Rendering Pipeline
@@ -231,6 +232,17 @@ public sealed class CubeScript : GameScript
 ```
 
 If you add a new 3D primitive or camera helper, keep it on the same `Graphics` surface instead of introducing a separate 3D-specific frame loop.
+
+## Adding Multiplayer Features
+
+The managed runtime now exposes a direct session layer at `GameEngine.Multiplayer`.
+
+- `HostAsync` opens a direct host on either a peer-facing socket or loopback-only localhost.
+- `JoinAsync` connects a client directly to the host with no relay service in between.
+- `SetReadyAsync`, `StartGameAsync`, `SendToHostAsync`, and `BroadcastAsync` move typed JSON payloads between peers.
+- `Pump()` is called from the engine loop so multiplayer events are dispatched on the same frame-driven path as scripts and UI updates.
+
+That means lobby flow and game-specific replication stay in managed scripts. The engine owns connection lifecycle, peer state, and message framing; the sample owns what a gameplay message means.
 
 ## Adding a UI Overlay
 

@@ -24,6 +24,7 @@ public static class Program
         engine.Scenes.Register("frontier", new RtsScene());
         engine.Scripts.RegisterScript(new RtsAudioScript(audioDir));
         engine.Scripts.RegisterScript(new RtsGameScript());
+        engine.Scripts.RegisterScript(new RtsMenuScript(settings, settingsPath));
         engine.Scripts.RegisterScript(new RtsHudScript());
 
         var uiDir = Path.Combine(AppContext.BaseDirectory, "ui");

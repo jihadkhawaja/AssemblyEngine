@@ -37,7 +37,12 @@ public static class CssParser
             {
                 var s = sel.Trim();
                 if (s.Length > 0)
-                    styles[s] = style;
+                {
+                    if (styles.TryGetValue(s, out var existing))
+                        existing.MergeFrom(style);
+                    else
+                        styles[s] = style.Clone();
+                }
             }
         }
 
@@ -71,69 +76,91 @@ public static class CssParser
         {
             case "display":
                 style.Display = value;
+                style.MarkSet(prop);
                 break;
             case "position":
                 style.Position = value;
+                style.MarkSet(prop);
                 break;
             case "left":
                 style.Left = ParseCssValue(value);
+                style.MarkSet(prop);
                 break;
             case "top":
                 style.Top = ParseCssValue(value);
+                style.MarkSet(prop);
                 break;
             case "right":
                 style.Right = ParseCssValue(value);
+                style.MarkSet(prop);
                 break;
             case "bottom":
                 style.Bottom = ParseCssValue(value);
+                style.MarkSet(prop);
                 break;
             case "width":
                 style.Width = ParseCssValue(value);
+                style.MarkSet(prop);
                 break;
             case "height":
                 style.Height = ParseCssValue(value);
+                style.MarkSet(prop);
                 break;
             case "background-color" or "background":
                 style.BackgroundColor = ParseColor(value);
+                style.MarkSet(prop);
                 break;
             case "color":
                 style.TextColor = ParseColor(value);
+                style.MarkSet(prop);
                 break;
             case "border-color":
                 style.BorderColor = ParseColor(value);
+                style.MarkSet(prop);
                 break;
             case "border-width":
                 style.BorderWidth = ParseInt(value);
+                style.MarkSet(prop);
                 break;
             case "font-size":
                 style.FontSize = ParseInt(value);
+                style.MarkSet(prop);
                 break;
             case "opacity":
                 if (float.TryParse(value, out var op))
                     style.Opacity = op;
+                style.MarkSet(prop);
                 break;
             case "margin":
                 ParseFourSides(value,
                     v => style.MarginTop = v, v => style.MarginRight = v,
                     v => style.MarginBottom = v, v => style.MarginLeft = v);
+                style.MarkSet("margin-top");
+                style.MarkSet("margin-right");
+                style.MarkSet("margin-bottom");
+                style.MarkSet("margin-left");
                 break;
-            case "margin-top": style.MarginTop = ParseInt(value); break;
-            case "margin-right": style.MarginRight = ParseInt(value); break;
-            case "margin-bottom": style.MarginBottom = ParseInt(value); break;
-            case "margin-left": style.MarginLeft = ParseInt(value); break;
+            case "margin-top": style.MarginTop = ParseInt(value); style.MarkSet(prop); break;
+            case "margin-right": style.MarginRight = ParseInt(value); style.MarkSet(prop); break;
+            case "margin-bottom": style.MarginBottom = ParseInt(value); style.MarkSet(prop); break;
+            case "margin-left": style.MarginLeft = ParseInt(value); style.MarkSet(prop); break;
             case "padding":
                 ParseFourSides(value,
                     v => style.PaddingTop = v, v => style.PaddingRight = v,
                     v => style.PaddingBottom = v, v => style.PaddingLeft = v);
+                style.MarkSet("padding-top");
+                style.MarkSet("padding-right");
+                style.MarkSet("padding-bottom");
+                style.MarkSet("padding-left");
                 break;
-            case "padding-top": style.PaddingTop = ParseInt(value); break;
-            case "padding-right": style.PaddingRight = ParseInt(value); break;
-            case "padding-bottom": style.PaddingBottom = ParseInt(value); break;
-            case "padding-left": style.PaddingLeft = ParseInt(value); break;
-            case "flex-direction": style.FlexDirection = value; break;
-            case "align-items": style.AlignItems = value; break;
-            case "justify-content": style.JustifyContent = value; break;
-            case "gap": style.Gap = ParseInt(value); break;
+            case "padding-top": style.PaddingTop = ParseInt(value); style.MarkSet(prop); break;
+            case "padding-right": style.PaddingRight = ParseInt(value); style.MarkSet(prop); break;
+            case "padding-bottom": style.PaddingBottom = ParseInt(value); style.MarkSet(prop); break;
+            case "padding-left": style.PaddingLeft = ParseInt(value); style.MarkSet(prop); break;
+            case "flex-direction": style.FlexDirection = value; style.MarkSet(prop); break;
+            case "align-items": style.AlignItems = value; style.MarkSet(prop); break;
+            case "justify-content": style.JustifyContent = value; style.MarkSet(prop); break;
+            case "gap": style.Gap = ParseInt(value); style.MarkSet(prop); break;
         }
     }
 

@@ -44,6 +44,96 @@ public sealed class UIStyle
     // Visibility
     public bool Visible { get; set; } = true;
     public float Opacity { get; set; } = 1f;
+
+    // Tracks which properties were explicitly set by a CSS rule.
+    internal HashSet<string>? _setProps;
+
+    internal void MarkSet(string prop)
+    {
+        _setProps ??= [];
+        _setProps.Add(prop);
+    }
+
+    /// <summary>
+    /// Copies only explicitly-set properties from <paramref name="source"/> into this style.
+    /// </summary>
+    internal void MergeFrom(UIStyle source)
+    {
+        if (source._setProps is null) return;
+
+        foreach (var prop in source._setProps)
+        {
+            switch (prop)
+            {
+                case "position": Position = source.Position; break;
+                case "display": Display = source.Display; break;
+                case "left": Left = source.Left; break;
+                case "top": Top = source.Top; break;
+                case "right": Right = source.Right; break;
+                case "bottom": Bottom = source.Bottom; break;
+                case "width": Width = source.Width; break;
+                case "height": Height = source.Height; break;
+                case "margin-top": MarginTop = source.MarginTop; break;
+                case "margin-right": MarginRight = source.MarginRight; break;
+                case "margin-bottom": MarginBottom = source.MarginBottom; break;
+                case "margin-left": MarginLeft = source.MarginLeft; break;
+                case "padding-top": PaddingTop = source.PaddingTop; break;
+                case "padding-right": PaddingRight = source.PaddingRight; break;
+                case "padding-bottom": PaddingBottom = source.PaddingBottom; break;
+                case "padding-left": PaddingLeft = source.PaddingLeft; break;
+                case "background-color" or "background": BackgroundColor = source.BackgroundColor; break;
+                case "border-color": BorderColor = source.BorderColor; break;
+                case "border-width": BorderWidth = source.BorderWidth; break;
+                case "color": TextColor = source.TextColor; break;
+                case "font-size": FontSize = source.FontSize; break;
+                case "flex-direction": FlexDirection = source.FlexDirection; break;
+                case "align-items": AlignItems = source.AlignItems; break;
+                case "justify-content": JustifyContent = source.JustifyContent; break;
+                case "gap": Gap = source.Gap; break;
+                case "opacity": Opacity = source.Opacity; break;
+                case "visible": Visible = source.Visible; break;
+            }
+            MarkSet(prop);
+        }
+    }
+
+    /// <summary>Creates an independent copy of this style.</summary>
+    internal UIStyle Clone()
+    {
+        var c = new UIStyle
+        {
+            Position = Position,
+            Display = Display,
+            Left = Left,
+            Top = Top,
+            Right = Right,
+            Bottom = Bottom,
+            Width = Width,
+            Height = Height,
+            MarginTop = MarginTop,
+            MarginRight = MarginRight,
+            MarginBottom = MarginBottom,
+            MarginLeft = MarginLeft,
+            PaddingTop = PaddingTop,
+            PaddingRight = PaddingRight,
+            PaddingBottom = PaddingBottom,
+            PaddingLeft = PaddingLeft,
+            BackgroundColor = BackgroundColor,
+            BorderColor = BorderColor,
+            BorderWidth = BorderWidth,
+            TextColor = TextColor,
+            FontSize = FontSize,
+            FlexDirection = FlexDirection,
+            AlignItems = AlignItems,
+            JustifyContent = JustifyContent,
+            Gap = Gap,
+            Visible = Visible,
+            Opacity = Opacity,
+        };
+        if (_setProps is not null)
+            c._setProps = new HashSet<string>(_setProps);
+        return c;
+    }
 }
 
 /// <summary>
