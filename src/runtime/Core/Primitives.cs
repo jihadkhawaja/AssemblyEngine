@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace AssemblyEngine.Core;
 
 /// <summary>
@@ -50,10 +52,10 @@ public record struct Vector2(float X, float Y)
     public static readonly Vector2 Left = new(-1, 0);
     public static readonly Vector2 Right = new(1, 0);
 
-    public readonly float LengthSquared => X * X + Y * Y;
-    public readonly float Length => MathF.Sqrt(LengthSquared);
+    [JsonIgnore] public readonly float LengthSquared => X * X + Y * Y;
+    [JsonIgnore] public readonly float Length => MathF.Sqrt(LengthSquared);
 
-    public readonly Vector2 Normalized
+    [JsonIgnore] public readonly Vector2 Normalized
     {
         get
         {
@@ -79,9 +81,9 @@ public record struct Vector2(float X, float Y)
 /// </summary>
 public record struct Rectangle(float X, float Y, float Width, float Height)
 {
-    public readonly float Right => X + Width;
-    public readonly float Bottom => Y + Height;
-    public readonly Vector2 Center => new(X + Width / 2, Y + Height / 2);
+    [JsonIgnore] public readonly float Right => X + Width;
+    [JsonIgnore] public readonly float Bottom => Y + Height;
+    [JsonIgnore] public readonly Vector2 Center => new(X + Width / 2, Y + Height / 2);
 
     public readonly bool Contains(Vector2 point) =>
         point.X >= X && point.X < Right && point.Y >= Y && point.Y < Bottom;
