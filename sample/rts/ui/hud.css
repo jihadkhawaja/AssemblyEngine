@@ -550,6 +550,10 @@ body {
     font-size: 15;
 }
 
+/* =============================================
+   C&C GENERALS: ZERO HOUR STYLE HUD
+   ============================================= */
+
 #hud-root {
     position: absolute;
     left: 0px;
@@ -558,375 +562,337 @@ body {
     height: 100%;
 }
 
+/* --- Top notification bar --- */
 #top-bar {
     position: absolute;
-    left: 18px;
-    top: 16px;
-    width: 900px;
-    height: 36px;
-    background-color: rgba(6, 11, 16, 0.84);
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 28px;
+    background-color: rgba(12, 10, 8, 0.82);
     display: flex;
     flex-direction: row;
-    padding: 8px 12px;
-    gap: 18px;
+    padding: 6px 16px;
+    gap: 24px;
     border-width: 1;
-    border-color: #8FE8FF;
+    border-color: #5a4a2e;
 }
 
 #fps-counter {
-    color: #C2FAFF;
-    font-size: 14;
-    width: 152px;
-    height: 24px;
-}
-
-#ore {
-    color: #FFE08A;
-    font-size: 14;
-    width: 116px;
-    height: 24px;
-}
-
-#hq {
-    color: #FFC0B3;
-    font-size: 14;
-    width: 94px;
-    height: 24px;
-}
-
-#workers {
-    color: #AEE5FF;
-    font-size: 14;
-    width: 110px;
-    height: 24px;
-}
-
-#guards {
-    color: #B9FFCF;
-    font-size: 14;
-    width: 108px;
-    height: 24px;
+    color: #8b8070;
+    font-size: 12;
+    width: 160px;
+    height: 18px;
 }
 
 #wave {
-    color: #F7FF9A;
-    font-size: 14;
-    width: 190px;
-    height: 24px;
+    color: #cc3333;
+    font-size: 13;
+    width: 280px;
+    height: 18px;
 }
 
+/* --- General rank indicator (top right) --- */
+#general-rank {
+    position: absolute;
+    right: 16px;
+    top: 6px;
+    width: 120px;
+    height: 22px;
+}
+
+#rank-stars {
+    color: #cc3333;
+    font-size: 14;
+    width: 120px;
+    height: 22px;
+}
+
+/* --- Center message overlay --- */
 #center-message {
     position: absolute;
-    left: 292px;
-    top: 88px;
-    width: 600px;
-    height: 112px;
-    background-color: rgba(6, 13, 19, 0.90);
+    left: 280px;
+    top: 80px;
+    width: 620px;
+    height: 110px;
+    background-color: rgba(18, 14, 10, 0.94);
     border-width: 2;
-    border-color: #FFE08A;
-    padding: 14px 18px;
+    border-color: #8b6914;
+    padding: 14px 20px;
 }
 
 #message-title {
-    color: #F7FF9A;
-    font-size: 28;
-    width: 540px;
-    height: 34px;
+    color: #cc3333;
+    font-size: 26;
+    width: 580px;
+    height: 32px;
 }
 
 #message-subtitle {
-    color: #E6F8FF;
-    font-size: 16;
-    width: 560px;
+    color: #d4c4a0;
+    font-size: 14;
+    width: 580px;
     height: 52px;
 }
 
-#intel-panel {
+/* =============================================
+   BOTTOM COMMAND BAR (C&C signature layout)
+   ============================================= */
+#command-bar {
     position: absolute;
-    left: 20px;
-    bottom: 20px;
-    width: 360px;
-    height: 56px;
-    background-color: rgba(5, 11, 16, 0.86);
-    border-width: 1;
-    border-color: #4AA8C6;
-    padding: 10px 12px;
+    left: 192px;
+    bottom: 0px;
+    width: 100%;
+    height: 194px;
+    background-color: rgba(16, 14, 12, 0.96);
+    border-width: 2;
+    border-color: #6b5535;
 }
 
-#objective {
-    color: #FFFFFF;
-    font-size: 14;
-    width: 330px;
-    height: 18px;
-}
-
-#selection {
-    color: #B9FFCF;
-    font-size: 14;
-    width: 330px;
-    height: 18px;
-}
-
-#production-panel {
+/* --- Center: Build panel --- */
+#build-panel {
     position: absolute;
-    right: 20px;
-    bottom: 12px;
-    width: 392px;
-    height: 170px;
-    background-color: rgba(5, 11, 16, 0.88);
+    left: 6px;
+    top: 6px;
+    width: 560px;
+    height: 182px;
+}
+
+/* --- Resource strip (money + power) --- */
+#resource-strip {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    width: 540px;
+    height: 26px;
+    padding: 2px 4px;
+}
+
+#funds-display {
+    color: #33cc33;
+    font-size: 18;
+    width: 160px;
+    height: 24px;
+}
+
+#power-display {
+    color: #cccc33;
+    font-size: 14;
+    width: 160px;
+    height: 24px;
+}
+
+/* --- Build grid rows --- */
+#build-grid-row-1,
+#build-grid-row-2 {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    width: 540px;
+    height: 50px;
+}
+
+/* --- Build slots (greyscale C&C icon style) --- */
+#build-slot-1,
+#build-slot-2,
+#build-slot-3,
+#build-slot-4,
+#build-slot-5,
+#build-slot-6,
+#build-slot-7,
+#build-slot-8 {
+    width: 128px;
+    height: 44px;
+    background-color: rgba(32, 28, 22, 0.94);
     border-width: 1;
-    border-color: #F0C86A;
-    padding: 10px 12px;
+    border-color: #5a4a2e;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px;
 }
 
-#production-title {
-    color: #FFE08A;
-    font-size: 15;
-    width: 368px;
-    height: 18px;
+/* Unit build slots (row 1) - military olive */
+#build-slot-1 {
+    border-color: #6b8040;
 }
 
-#queue {
-    color: #FFE08A;
+#build-slot-2 {
+    border-color: #cc3333;
+}
+
+#build-slot-3 {
+    border-color: #cc6633;
+}
+
+#build-slot-4 {
+    border-color: #668844;
+}
+
+/* Structure build slots (row 2) - industrial grey/gold */
+#build-slot-5 {
+    border-color: #8b7345;
+}
+
+#build-slot-6 {
+    border-color: #7a7a8a;
+}
+
+#build-slot-7 {
+    border-color: #ccaa33;
+}
+
+#build-slot-8 {
+    border-color: #8b4444;
+}
+
+/* Build slot text */
+#slot-1-name,
+#slot-2-name,
+#slot-3-name,
+#slot-4-name,
+#slot-5-name,
+#slot-6-name,
+#slot-7-name,
+#slot-8-name {
+    color: #d4c4a0;
+    font-size: 11;
+    width: 116px;
+    height: 16px;
+}
+
+#slot-1-cost,
+#slot-2-cost,
+#slot-3-cost,
+#slot-4-cost,
+#slot-5-cost,
+#slot-6-cost,
+#slot-7-cost,
+#slot-8-cost {
+    color: #33cc33;
+    font-size: 10;
+    width: 116px;
+    height: 14px;
+}
+
+/* --- Queue strip --- */
+#queue-strip {
+    width: 540px;
+    height: 22px;
+    padding: 2px 4px;
+}
+
+#queue-status {
+    color: #8b7345;
     font-size: 12;
-    width: 368px;
+    width: 530px;
     height: 18px;
 }
 
-#build-row-1 {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    width: 368px;
-    height: 46px;
-}
-
-#build-row-2 {
-    display: flex;
-    flex-direction: row;
-    gap: 8px;
-    width: 368px;
-    height: 46px;
-}
-
-#queue-worker-button {
-    width: 178px;
-    height: 40px;
-    background-color: rgba(28, 67, 92, 0.88);
-    border-width: 1;
-    border-color: #7FD8FF;
-    display: flex;
-    flex-direction: column;
-    padding: 4px 6px;
-}
-
-#queue-guard-button {
-    width: 178px;
-    height: 40px;
-    background-color: rgba(34, 80, 54, 0.90);
-    border-width: 1;
-    border-color: #A4FFBC;
-    display: flex;
-    flex-direction: column;
-    padding: 4px 6px;
-}
-
-#queue-building-button {
-    width: 178px;
-    height: 40px;
-    background-color: rgba(86, 58, 36, 0.92);
-    border-width: 1;
-    border-color: #FFD18C;
-    display: flex;
-    flex-direction: column;
-    padding: 4px 6px;
-}
-
-#queue-tower-button {
-    width: 178px;
-    height: 40px;
-    background-color: rgba(62, 64, 92, 0.92);
-    border-width: 1;
-    border-color: #F6F6B1;
-    display: flex;
-    flex-direction: column;
-    padding: 4px 6px;
-}
-
-#queue-worker-label {
-    color: #D9F7FF;
-    font-size: 11;
-    width: 166px;
-    height: 16px;
-}
-
-#queue-worker-detail {
-    color: #AEE5FF;
-    font-size: 10;
-    width: 166px;
-    height: 14px;
-}
-
-#queue-guard-label {
-    color: #E7FFE9;
-    font-size: 11;
-    width: 166px;
-    height: 16px;
-}
-
-#queue-guard-detail {
-    color: #C9FFD2;
-    font-size: 10;
-    width: 166px;
-    height: 14px;
-}
-
-#queue-building-label {
-    color: #FFF1D8;
-    font-size: 11;
-    width: 166px;
-    height: 16px;
-}
-
-#queue-building-detail {
-    color: #FFD8A4;
-    font-size: 10;
-    width: 166px;
-    height: 14px;
-}
-
-#queue-tower-label {
-    color: #F9F9E7;
-    font-size: 10;
-    width: 166px;
-    height: 16px;
-}
-
-#queue-tower-detail {
-    color: #F6F6B1;
-    font-size: 10;
-    width: 166px;
-    height: 14px;
-}
-
-#production-mode {
-    color: #C2FAFF;
-    font-size: 11;
-    width: 368px;
-    height: 18px;
-}
-
-#production-sites {
-    color: #F7E8B6;
-    font-size: 11;
-    width: 368px;
-    height: 18px;
-}
-
-#tactical-panel {
+/* --- Right: Unit info panel --- */
+#unit-panel {
     position: absolute;
-    right: 20px;
-    top: 74px;
-    width: 328px;
-    height: 48px;
-    background-color: rgba(5, 11, 16, 0.88);
+    right: 10px;
+    top: 10px;
+    width: 200px;
+    height: 172px;
+    background-color: rgba(22, 18, 14, 0.94);
+    border-width: 2;
+    border-color: #5a4a2e;
+    padding: 10px 12px;
+}
+
+#unit-name {
+    color: #d4c4a0;
+    font-size: 16;
+    width: 176px;
+    height: 24px;
+}
+
+#unit-health {
+    color: #33cc33;
+    font-size: 13;
+    width: 176px;
+    height: 20px;
+}
+
+#unit-stats {
+    color: #c8b898;
+    font-size: 12;
+    width: 176px;
+    height: 50px;
+}
+
+#unit-orders {
+    color: #8b7345;
+    font-size: 10;
+    width: 176px;
+    height: 40px;
+}
+
+/* --- Tactical strip (above command bar) --- */
+#tactical-strip {
+    position: absolute;
+    left: 200px;
+    bottom: 198px;
+    width: 440px;
+    height: 36px;
+    background-color: rgba(14, 12, 10, 0.86);
     border-width: 1;
-    border-color: #7FD8FF;
-    padding: 10px 14px;
+    border-color: #5a4a2e;
+    padding: 4px 12px;
 }
 
 #forces {
-    color: #B9FFCF;
-    font-size: 12;
-    width: 290px;
-    height: 18px;
+    color: #cc3333;
+    font-size: 11;
+    width: 420px;
+    height: 16px;
 }
 
 #economy {
-    color: #FFE08A;
-    font-size: 12;
-    width: 290px;
-    height: 18px;
+    color: #33cc33;
+    font-size: 11;
+    width: 420px;
+    height: 16px;
 }
 
+/* --- Help panel --- */
 #help-panel {
     position: absolute;
-    right: 20px;
-    top: 74px;
-    width: 328px;
-    height: 236px;
-    background-color: rgba(5, 11, 16, 0.88);
-    border-width: 1;
-    border-color: #FFE08A;
+    right: 14px;
+    top: 42px;
+    width: 370px;
+    height: 264px;
+    background-color: rgba(14, 12, 10, 0.94);
+    border-width: 2;
+    border-color: #8b6914;
     padding: 12px 14px;
 }
 
 #help-title {
-    color: #FFE08A;
-    font-size: 22;
-    width: 286px;
+    color: #cc3333;
+    font-size: 20;
+    width: 340px;
     height: 28px;
 }
 
-#help-row-1 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
-    height: 22px;
-}
-
-#help-row-2 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
-    height: 22px;
-}
-
-#help-row-3 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
-    height: 22px;
-}
-
-#help-row-4 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
-    height: 22px;
-}
-
-#help-row-5 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
-    height: 22px;
-}
-
-#help-row-6 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
-    height: 22px;
-}
-
-#help-row-7 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
-    height: 22px;
-}
-
+#help-row-1,
+#help-row-2,
+#help-row-3,
+#help-row-4,
+#help-row-5,
+#help-row-6,
+#help-row-7,
 #help-row-8 {
-    color: #E6F8FF;
-    font-size: 14;
-    width: 290px;
+    color: #d4c4a0;
+    font-size: 12;
+    width: 340px;
     height: 22px;
 }
 
 #help-footer {
-    color: #9CB3CB;
-    font-size: 12;
-    width: 290px;
+    color: #8b7345;
+    font-size: 11;
+    width: 340px;
     height: 28px;
 }

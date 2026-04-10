@@ -4,6 +4,10 @@ internal enum RtsProductionType
 {
     Worker,
     Guard,
+    TankHunter,
+    Battlemaster,
     Building,
-    DefenseTower
+    DefenseTower,
+    WarFactory,
+    Reactor
 }

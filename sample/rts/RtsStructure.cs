@@ -5,7 +5,9 @@ namespace RtsSample;
 internal enum RtsStructureType
 {
     Building,
-    DefenseTower
+    DefenseTower,
+    WarFactory,
+    Reactor
 }
 
 internal sealed class RtsStructure
@@ -40,15 +42,29 @@ internal sealed class RtsStructure
 
     public bool IsAlive => Health > 0f;
 
-    public string Label => Type == RtsStructureType.Building ? "Structure" : "Defense Tower";
+    public string Label => Type switch
+    {
+        RtsStructureType.Building => "Barracks",
+        RtsStructureType.WarFactory => "War Factory",
+        RtsStructureType.Reactor => "Nuclear Reactor",
+        _ => "Gattling Cannon"
+    };
 
-    public Color FillColor => Type == RtsStructureType.Building
-        ? new Color(124, 98, 76)
-        : new Color(104, 110, 138);
+    public Color FillColor => Type switch
+    {
+        RtsStructureType.Building => new Color(139, 26, 26),
+        RtsStructureType.WarFactory => new Color(90, 90, 105),
+        RtsStructureType.Reactor => new Color(180, 160, 50),
+        _ => new Color(100, 60, 60)
+    };
 
-    public Color AccentColor => Type == RtsStructureType.Building
-        ? new Color(255, 220, 156)
-        : new Color(246, 246, 177);
+    public Color AccentColor => Type switch
+    {
+        RtsStructureType.Building => new Color(255, 80, 80),
+        RtsStructureType.WarFactory => new Color(180, 180, 200),
+        RtsStructureType.Reactor => new Color(255, 220, 80),
+        _ => new Color(255, 120, 100)
+    };
 
     public RtsStructure(RtsStructureType type, Vector2 position)
         : this(ClaimNextId(), type, position)
@@ -64,9 +80,29 @@ internal sealed class RtsStructure
         switch (type)
         {
             case RtsStructureType.Building:
-                HalfSize = new Vector2(28f, 22f);
-                Radius = 34f;
-                MaxHealth = 240f;
+                HalfSize = new Vector2(32f, 24f);
+                Radius = 38f;
+                MaxHealth = 300f;
+                AttackRange = 0f;
+                AttackDamage = 0f;
+                AttackInterval = 0f;
+                DetectionRange = 0f;
+                break;
+
+            case RtsStructureType.WarFactory:
+                HalfSize = new Vector2(40f, 30f);
+                Radius = 46f;
+                MaxHealth = 400f;
+                AttackRange = 0f;
+                AttackDamage = 0f;
+                AttackInterval = 0f;
+                DetectionRange = 0f;
+                break;
+
+            case RtsStructureType.Reactor:
+                HalfSize = new Vector2(24f, 24f);
+                Radius = 32f;
+                MaxHealth = 200f;
                 AttackRange = 0f;
                 AttackDamage = 0f;
                 AttackInterval = 0f;
@@ -76,11 +112,11 @@ internal sealed class RtsStructure
             default:
                 HalfSize = new Vector2(18f, 18f);
                 Radius = 26f;
-                MaxHealth = 160f;
-                AttackRange = 182f;
-                AttackDamage = 13f;
-                AttackInterval = 0.86f;
-                DetectionRange = 214f;
+                MaxHealth = 200f;
+                AttackRange = 200f;
+                AttackDamage = 18f;
+                AttackInterval = 0.45f;
+                DetectionRange = 240f;
                 break;
         }
 

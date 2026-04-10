@@ -9,24 +9,28 @@ public sealed partial class RtsGameScript : GameScript
     private const float WorldHeight = 1400f;
     private const float HeadquartersHalfWidth = 58f;
     private const float HeadquartersHalfHeight = 46f;
-    private const float HeadquartersMaxHealth = 420f;
-    private const int VictoryOreGoalValue = 320;
-    private const int WorkerCost = 45;
-    private const int GuardCost = 70;
-    private const int BuildingCost = 85;
-    private const int DefenseTowerCost = 95;
-    private const int QueueLimit = 4;
-    private const int SalvagePerRaider = 8;
-    private const int HarvestAmount = 10;
+    private const float HeadquartersMaxHealth = 1000f;
+    private const int VictoryOreGoalValue = 10000;
+    private const int WorkerCost = 600;
+    private const int GuardCost = 300;
+    private const int TankHunterCost = 400;
+    private const int BattlemasterCost = 800;
+    private const int BuildingCost = 500;
+    private const int DefenseTowerCost = 1200;
+    private const int WarFactoryCost = 2000;
+    private const int ReactorCost = 1000;
+    private const int QueueLimit = 6;
+    private const int SalvagePerRaider = 50;
+    private const int HarvestAmount = 60;
     private const float HarvestInterval = 0.78f;
     private const float CameraPanSpeed = 540f;
     private const float EdgeScrollMargin = 18f;
     private const float WaveInterval = 18f;
     private const float SelectionThreshold = 8f;
-    private const float MinimapWidth = 198f;
-    private const float MinimapHeight = 126f;
-    private const float MinimapMargin = 18f;
-    private const float MinimapBottomOffset = 200f;
+    private const float MinimapWidth = 160f;
+    private const float MinimapHeight = 160f;
+    private const float MinimapMargin = 16f;
+    private const float MinimapBottomOffset = 16f;
     private const float CommandPulseDuration = 0.9f;
     private const float NavigationPulseDuration = 0.72f;
     private static readonly Vector2 HeadquartersPosition = new(320f, 1060f);
@@ -42,22 +46,38 @@ public sealed partial class RtsGameScript : GameScript
     [
         new Vector2(550f, 1180f),
         new Vector2(980f, 1080f),
-        new Vector2(1410f, 1150f)
+        new Vector2(1410f, 1150f),
+        new Vector2(420f, 940f),
+        new Vector2(780f, 850f),
+        new Vector2(1200f, 950f)
     ];
     private static readonly Vector2[] DefenseTowerSitePositions =
     [
         new Vector2(760f, 1030f),
         new Vector2(1090f, 820f),
         new Vector2(1460f, 610f),
-        new Vector2(1740f, 900f)
+        new Vector2(1740f, 900f),
+        new Vector2(580f, 780f),
+        new Vector2(1300f, 720f)
+    ];
+    private static readonly Vector2[] WarFactorySitePositions =
+    [
+        new Vector2(650f, 1100f),
+        new Vector2(1100f, 1000f),
+        new Vector2(850f, 920f)
+    ];
+    private static readonly Vector2[] ReactorSitePositions =
+    [
+        new Vector2(480f, 1060f),
+        new Vector2(900f, 960f),
+        new Vector2(1300f, 1050f),
+        new Vector2(700f, 820f)
     ];
     private static readonly string[] BlockingHudElementIds =
     [
         "top-bar",
         "center-message",
-        "intel-panel",
-        "production-panel",
-        "tactical-panel",
+        "command-bar",
         "help-panel"
     ];
 
@@ -100,13 +120,13 @@ public sealed partial class RtsGameScript : GameScript
 
     public int HeadquartersHealth => (int)MathF.Ceiling(_hqHealth);
 
-    public int WorkerCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Worker);
+    public int SupplyTruckCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Worker);
 
-    public int GuardCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Guard);
+    public int RedGuardCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Guard);
 
-    public int BuildingCount => _structures.Count(structure => structure.IsAlive && structure.Type == RtsStructureType.Building);
+    public int TankHunterCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.TankHunter);
 
-    public int DefenseTowerCount => _structures.Count(structure => structure.IsAlive && structure.Type == RtsStructureType.DefenseTower);
+    public int BattlemasterCount => _units.Count(unit => unit.IsAlive && unit.Role == RtsUnitRole.Battlemaster);
 
     public int RaiderCount => _units.Count(unit => unit.IsAlive && unit.IsEnemy);
 
@@ -114,9 +134,34 @@ public sealed partial class RtsGameScript : GameScript
 
     public string GuardBuildButtonText => GetProductionButtonText(RtsProductionType.Guard, "E");
 
+    public string TankHunterBuildButtonText => GetProductionButtonText(RtsProductionType.TankHunter, "W");
+
+    public string BattlemasterBuildButtonText => GetProductionButtonText(RtsProductionType.Battlemaster, "D");
+
     public string BuildingBuildButtonText => GetProductionButtonText(RtsProductionType.Building, "R");
 
-    public string DefenseTowerBuildButtonText => GetProductionButtonText(RtsProductionType.DefenseTower, "T");
+    public string DefenseTowerBuildButtonText => GetProductionButtonText(RtsProductionType.DefenseTower, "U");
+
+    public string WarFactoryBuildButtonText => GetProductionButtonText(RtsProductionType.WarFactory, "T");
+
+    public string ReactorBuildButtonText => GetProductionButtonText(RtsProductionType.Reactor, "Y");
+
+    public string Slot1NameText => GetProductionLabel(RtsProductionType.Worker);
+    public string Slot1CostText => GetSlotCostText(RtsProductionType.Worker, "Q");
+    public string Slot2NameText => GetProductionLabel(RtsProductionType.Guard);
+    public string Slot2CostText => GetSlotCostText(RtsProductionType.Guard, "E");
+    public string Slot3NameText => GetProductionLabel(RtsProductionType.TankHunter);
+    public string Slot3CostText => GetSlotCostText(RtsProductionType.TankHunter, "W");
+    public string Slot4NameText => GetProductionLabel(RtsProductionType.Battlemaster);
+    public string Slot4CostText => GetSlotCostText(RtsProductionType.Battlemaster, "D");
+    public string Slot5NameText => GetProductionLabel(RtsProductionType.Building);
+    public string Slot5CostText => GetSlotCostText(RtsProductionType.Building, "R");
+    public string Slot6NameText => GetProductionLabel(RtsProductionType.WarFactory);
+    public string Slot6CostText => GetSlotCostText(RtsProductionType.WarFactory, "T");
+    public string Slot7NameText => GetProductionLabel(RtsProductionType.Reactor);
+    public string Slot7CostText => GetSlotCostText(RtsProductionType.Reactor, "Y");
+    public string Slot8NameText => GetProductionLabel(RtsProductionType.DefenseTower);
+    public string Slot8CostText => GetSlotCostText(RtsProductionType.DefenseTower, "U");
 
     public string BackendLabel => Graphics.Backend == GraphicsBackend.Vulkan ? "Vulkan" : "Software";
 
@@ -133,15 +178,15 @@ public sealed partial class RtsGameScript : GameScript
         get
         {
             if (_victory)
-                return "Stockpile secured";
+                return "MISSION COMPLETE";
 
             if (_gameOver)
-                return "Outpost lost";
+                return "BASE DESTROYED";
 
             if (RaiderCount > 0)
-                return $"Raid {_waveIndex} | Hostiles {RaiderCount}";
+                return $"GLA ATTACK | {RaiderCount} HOSTILES";
 
-            return $"Raid {_waveIndex + 1} in {_nextWaveTimer:0.0}s";
+            return $"WAVE {_waveIndex + 1} IN {_nextWaveTimer:0.0}s";
         }
     }
 
@@ -153,13 +198,13 @@ public sealed partial class RtsGameScript : GameScript
                 return "VICTORY | PRESS R";
 
             if (_gameOver)
-                return "HQ LOST | PRESS R";
+                return "DEFEAT | PRESS R";
 
-            var remainingOre = Math.Max(0, VictoryOreGoalValue - _oreStockpile);
+            var remainingFunds = Math.Max(0, VictoryOreGoalValue - _oreStockpile);
             if (RaiderCount > 0)
-                return $"RAID {RaiderCount} | ORE LEFT {remainingOre}";
+                return $"GLA ATTACK | {remainingFunds} TO GO";
 
-            return $"MINE | ORE LEFT {remainingOre}";
+            return $"HARVEST | {remainingFunds} TO GO";
         }
     }
 
@@ -169,7 +214,7 @@ public sealed partial class RtsGameScript : GameScript
         {
             var selectedUnits = GetSelectedUnits();
             if (selectedUnits.Count == 0)
-                return "NO SELECTION | RMB SETS RALLY";
+                return "NO SELECTION";
 
             if (selectedUnits.Count == 1)
             {
@@ -178,19 +223,20 @@ public sealed partial class RtsGameScript : GameScript
                 {
                     if (unit.OrderType == RtsUnitOrderType.Harvest && TryGetResourceNode(unit.AssignedNodeIndex, out var node))
                     {
-                        var state = unit.ReturningToBase ? "Returning to HQ" : $"Mining {node.Name}";
-                        return $"WORKER | {unit.CarryOre}/{unit.CarryCapacity} | {state.ToUpperInvariant()}";
+                        var state = unit.ReturningToBase ? "Returning" : $"Harvesting {node.Name}";
+                        return $"SUPPLY TRUCK | {unit.CarryOre} | {state.ToUpperInvariant()}";
                     }
 
-                    return $"WORKER | {unit.CarryOre}/{unit.CarryCapacity} | RMB VEIN";
+                    return $"SUPPLY TRUCK | {unit.CarryOre} | IDLE";
                 }
 
-                return "GUARD | AUTO DEFEND | RMB HOLD";
+                return $"{unit.Label.ToUpperInvariant()} | HP {(int)MathF.Ceiling(unit.Health)}/{(int)MathF.Ceiling(unit.MaxHealth)}";
             }
 
-            var workers = selectedUnits.Count(unit => unit.Role == RtsUnitRole.Worker);
-            var guards = selectedUnits.Count(unit => unit.Role == RtsUnitRole.Guard);
-            return $"SEL {selectedUnits.Count} | WRK {workers} | GRD {guards}";
+            var trucks = selectedUnits.Count(unit => unit.Role == RtsUnitRole.Worker);
+            var infantry = selectedUnits.Count(unit => unit.Role == RtsUnitRole.Guard || unit.Role == RtsUnitRole.TankHunter);
+            var armor = selectedUnits.Count(unit => unit.Role == RtsUnitRole.Battlemaster);
+            return $"SELECTED {selectedUnits.Count} | INF {infantry} | ARM {armor} | TRK {trucks}";
         }
     }
 
@@ -239,15 +285,15 @@ public sealed partial class RtsGameScript : GameScript
                 return $"QUEUE 0/{QueueLimit}";
 
             var order = _productionQueue[0];
-            return $"QUEUE {_productionQueue.Count}/{QueueLimit} | {order.Label.ToUpperInvariant()} {order.RemainingTime:0.0}s";
+            return $"BUILDING: {order.Label.ToUpperInvariant()} {order.RemainingTime:0.0}s | {_productionQueue.Count}/{QueueLimit}";
         }
     }
 
     public string ProductionModeText => _activePlacementType is { } productionType
-        ? $"PLACE {GetPlacementLabel(productionType).ToUpperInvariant()} | CLICK OPEN PAD | RMB/ESC CANCEL"
-        : "Q/E RECRUIT NOW | R/T PICK A BUILD PAD";
+        ? $"PLACE {GetPlacementLabel(productionType).ToUpperInvariant()} | CLICK PAD | RMB CANCEL"
+        : "SELECT BUILD OPTION";
 
-    public string ProductionSitesSummary => $"OPEN PADS | STRUCTURE {GetOpenSiteCount(RtsProductionType.Building)}/{BuildingSitePositions.Length} | TOWER {GetOpenSiteCount(RtsProductionType.DefenseTower)}/{DefenseTowerSitePositions.Length}";
+    public string ProductionSitesSummary => $"PADS | BARRACKS {GetOpenSiteCount(RtsProductionType.Building)}/{BuildingSitePositions.Length} | DEFENSE {GetOpenSiteCount(RtsProductionType.DefenseTower)}/{DefenseTowerSitePositions.Length} | FACTORY {GetOpenSiteCount(RtsProductionType.WarFactory)}/{WarFactorySitePositions.Length} | REACTOR {GetOpenSiteCount(RtsProductionType.Reactor)}/{ReactorSitePositions.Length}";
 
     public string RallySummary => $"RALLY {DescribeSector(_rallyPoint).ToUpperInvariant()}";
 
@@ -265,8 +311,8 @@ public sealed partial class RtsGameScript : GameScript
     {
         get
         {
-            var injured = _units.Count(unit => unit.IsAlive && unit.IsPlayerControlled && unit.Health < unit.MaxHealth);
-            return $"UNITS {WorkerCount + GuardCount} | RAIDERS {RaiderCount} | DMG {injured} | Q {_productionQueue.Count}/{QueueLimit}";
+            var totalFriendly = _units.Count(unit => unit.IsAlive && unit.IsPlayerControlled);
+            return $"UNITS {totalFriendly} | HOSTILES {RaiderCount} | QUEUE {_productionQueue.Count}/{QueueLimit}";
         }
     }
 
@@ -274,10 +320,10 @@ public sealed partial class RtsGameScript : GameScript
     {
         get
         {
-            var activeVeins = _resourceNodes.Count(node => !node.IsDepleted);
-            var fieldOre = _resourceNodes.Sum(node => Math.Max(0, node.RemainingOre));
-            var carriedOre = _units.Where(unit => unit.IsAlive && unit.Role == RtsUnitRole.Worker).Sum(unit => unit.CarryOre);
-            return $"ORE {fieldOre} | VEINS {activeVeins}/{_resourceNodes.Count} | CARRY {carriedOre}";
+            var activeSupply = _resourceNodes.Count(node => !node.IsDepleted);
+            var fieldSupply = _resourceNodes.Sum(node => Math.Max(0, node.RemainingOre));
+            var carriedSupply = _units.Where(unit => unit.IsAlive && unit.Role == RtsUnitRole.Worker).Sum(unit => unit.CarryOre);
+            return $"{_oreStockpile} | SUPPLY {activeSupply}/{_resourceNodes.Count} | CARRY {carriedSupply}";
         }
     }
 
@@ -386,14 +432,14 @@ public sealed partial class RtsGameScript : GameScript
         _shotEffects.Clear();
         _productionQueue.Clear();
         _activePlacementType = null;
-        _oreStockpile = 90;
+        _oreStockpile = 2500;
         _hqHealth = HeadquartersMaxHealth;
         _waveIndex = 0;
         _missionTime = 0f;
-        _nextWaveTimer = 12f;
+        _nextWaveTimer = 20f;
         _bannerTimer = 4.5f;
-        _bannerTitle = "Frontier Foundry";
-        _bannerSubtitle = "Select the starting workers, right click cobalt veins, and hold the HQ until the stockpile reaches 320 ore.";
+        _bannerTitle = "Command Center Online";
+        _bannerSubtitle = "Deploy supply trucks to harvest resources. Build barracks and war factory to train combat units. Stockpile 10000 to win.";
         _commandPulsePosition = Vector2.Zero;
         _navigationPulsePosition = Vector2.Zero;
         _commandPulseTimer = 0f;
@@ -411,15 +457,15 @@ public sealed partial class RtsGameScript : GameScript
 
         RtsStructure.ResetIds();
         RtsUnit.ResetIds();
-        _resourceNodes.Add(new RtsResourceNode("West Vein", new Vector2(670f, 930f), 180));
-        _resourceNodes.Add(new RtsResourceNode("Central Vein", new Vector2(1020f, 760f), 210));
-        _resourceNodes.Add(new RtsResourceNode("North Vein", new Vector2(1360f, 520f), 210));
-        _resourceNodes.Add(new RtsResourceNode("East Vein", new Vector2(1640f, 860f), 170));
+        _resourceNodes.Add(new RtsResourceNode("Supply Depot Alpha", new Vector2(670f, 930f), 4000));
+        _resourceNodes.Add(new RtsResourceNode("Supply Depot Bravo", new Vector2(1020f, 760f), 5000));
+        _resourceNodes.Add(new RtsResourceNode("Supply Depot Charlie", new Vector2(1360f, 520f), 5000));
+        _resourceNodes.Add(new RtsResourceNode("Supply Depot Delta", new Vector2(1640f, 860f), 3500));
 
         SpawnPlayerUnit(RtsUnitRole.Worker, HeadquartersPosition + new Vector2(-44f, 24f), sendToRally: false);
         SpawnPlayerUnit(RtsUnitRole.Worker, HeadquartersPosition + new Vector2(-12f, 54f), sendToRally: false);
-        SpawnPlayerUnit(RtsUnitRole.Worker, HeadquartersPosition + new Vector2(30f, 16f), sendToRally: false);
         SpawnPlayerUnit(RtsUnitRole.Guard, HeadquartersPosition + new Vector2(76f, -18f), sendToRally: true);
+        SpawnPlayerUnit(RtsUnitRole.Guard, HeadquartersPosition + new Vector2(100f, 10f), sendToRally: true);
         SelectPlayerUnits(unit => unit.Role == RtsUnitRole.Worker);
         _audio.PlayMissionStart();
     }
@@ -490,10 +536,22 @@ public sealed partial class RtsGameScript : GameScript
         if (IsKeyPressed(KeyCode.E))
             QueueProduction(RtsProductionType.Guard);
 
+        if (IsKeyPressed(KeyCode.W))
+            QueueProduction(RtsProductionType.TankHunter);
+
+        if (IsKeyPressed(KeyCode.D))
+            QueueProduction(RtsProductionType.Battlemaster);
+
         if (IsKeyPressed(KeyCode.R))
             QueueProduction(RtsProductionType.Building);
 
         if (IsKeyPressed(KeyCode.T))
+            QueueProduction(RtsProductionType.WarFactory);
+
+        if (IsKeyPressed(KeyCode.Y))
+            QueueProduction(RtsProductionType.Reactor);
+
+        if (IsKeyPressed(KeyCode.U))
             QueueProduction(RtsProductionType.DefenseTower);
 
         if (IsKeyPressed(KeyCode.D1))
@@ -514,25 +572,49 @@ public sealed partial class RtsGameScript : GameScript
         if (!leftMouseDown || _leftMouseWasDown)
             return;
 
-        if (IsPointInsideUiElement(MousePosition, "queue-worker-button"))
+        if (IsPointInsideUiElement(MousePosition, "build-slot-1"))
         {
             QueueProduction(RtsProductionType.Worker);
             return;
         }
 
-        if (IsPointInsideUiElement(MousePosition, "queue-guard-button"))
+        if (IsPointInsideUiElement(MousePosition, "build-slot-2"))
         {
             QueueProduction(RtsProductionType.Guard);
             return;
         }
 
-        if (IsPointInsideUiElement(MousePosition, "queue-building-button"))
+        if (IsPointInsideUiElement(MousePosition, "build-slot-3"))
+        {
+            QueueProduction(RtsProductionType.TankHunter);
+            return;
+        }
+
+        if (IsPointInsideUiElement(MousePosition, "build-slot-4"))
+        {
+            QueueProduction(RtsProductionType.Battlemaster);
+            return;
+        }
+
+        if (IsPointInsideUiElement(MousePosition, "build-slot-5"))
         {
             QueueProduction(RtsProductionType.Building);
             return;
         }
 
-        if (IsPointInsideUiElement(MousePosition, "queue-tower-button"))
+        if (IsPointInsideUiElement(MousePosition, "build-slot-6"))
+        {
+            QueueProduction(RtsProductionType.WarFactory);
+            return;
+        }
+
+        if (IsPointInsideUiElement(MousePosition, "build-slot-7"))
+        {
+            QueueProduction(RtsProductionType.Reactor);
+            return;
+        }
+
+        if (IsPointInsideUiElement(MousePosition, "build-slot-8"))
             QueueProduction(RtsProductionType.DefenseTower);
     }
 
@@ -883,6 +965,8 @@ public sealed partial class RtsGameScript : GameScript
                     break;
 
                 case RtsUnitRole.Guard:
+                case RtsUnitRole.TankHunter:
+                case RtsUnitRole.Battlemaster:
                     UpdateGuard(unit, deltaTime);
                     break;
 
@@ -1204,8 +1288,8 @@ public sealed partial class RtsGameScript : GameScript
         if (!_gameOver && _hqHealth <= 0f)
         {
             _gameOver = true;
-            _bannerTitle = "Outpost Lost";
-            _bannerSubtitle = "The refinery collapsed under the raid. Press R or Enter to restart the mission.";
+            _bannerTitle = "Command Center Destroyed";
+            _bannerSubtitle = "The GLA has overrun your base. Press R or Enter to restart the mission.";
             _audio.PlayDefeat();
             return;
         }
@@ -1213,18 +1297,18 @@ public sealed partial class RtsGameScript : GameScript
         if (!_victory && _oreStockpile >= VictoryOreGoalValue)
         {
             _victory = true;
-            _bannerTitle = "Stockpile Secure";
-            _bannerSubtitle = $"{_oreStockpile} ore banked in {_missionTime:0.0}s. Press R or Enter to run the scenario again.";
+            _bannerTitle = "Mission Accomplished";
+            _bannerSubtitle = $"{_oreStockpile} secured in {_missionTime:0.0}s. The General will be pleased. Press R or Enter to play again.";
             _audio.PlayVictory();
         }
     }
 
     private void DrawBattlefield()
     {
-        Graphics.DrawFilledRect(0, 0, Engine.Width, Engine.Height, new Color(9, 14, 20));
-        FillWorldRect(new Rectangle(0f, 0f, WorldWidth, 340f), new Color(36, 18, 20));
-        FillWorldRect(new Rectangle(0f, 340f, WorldWidth, 440f), new Color(18, 28, 24));
-        FillWorldRect(new Rectangle(0f, 780f, WorldWidth, WorldHeight - 780f), new Color(12, 22, 28));
+        Graphics.DrawFilledRect(0, 0, Engine.Width, Engine.Height, new Color(24, 20, 14));
+        FillWorldRect(new Rectangle(0f, 0f, WorldWidth, 340f), new Color(60, 45, 30));
+        FillWorldRect(new Rectangle(0f, 340f, WorldWidth, 440f), new Color(50, 42, 28));
+        FillWorldRect(new Rectangle(0f, 780f, WorldWidth, WorldHeight - 780f), new Color(42, 36, 24));
 
         var visibleLeft = (int)(_cameraPosition.X / 80f) * 80;
         var visibleTop = (int)(_cameraPosition.Y / 80f) * 80;
@@ -1234,33 +1318,33 @@ public sealed partial class RtsGameScript : GameScript
         for (var x = visibleLeft; x <= visibleRight; x += 80)
         {
             var screenX = (int)(x - _cameraPosition.X);
-            Graphics.DrawLine(screenX, 0, screenX, Engine.Height, new Color(22, 34, 42, 160));
+            Graphics.DrawLine(screenX, 0, screenX, Engine.Height, new Color(50, 42, 30, 100));
         }
 
         for (var y = visibleTop; y <= visibleBottom; y += 80)
         {
             var screenY = (int)(y - _cameraPosition.Y);
-            Graphics.DrawLine(0, screenY, Engine.Width, screenY, new Color(22, 34, 42, 160));
+            Graphics.DrawLine(0, screenY, Engine.Width, screenY, new Color(50, 42, 30, 100));
         }
 
-        DrawBeaconMarker(EnemyBeaconPosition, 42, new Color(255, 98, 90), new Color(255, 199, 165));
-        DrawBeaconMarker(_rallyPoint, 18, new Color(111, 210, 255), new Color(221, 245, 255));
+        DrawBeaconMarker(EnemyBeaconPosition, 42, new Color(196, 160, 96), new Color(255, 220, 170));
+        DrawBeaconMarker(_rallyPoint, 18, new Color(204, 51, 51), new Color(255, 120, 120));
     }
 
     private void DrawStructures()
     {
         var hqTopLeft = WorldToScreen(HeadquartersPosition - new Vector2(HeadquartersHalfWidth, HeadquartersHalfHeight));
-        Graphics.DrawFilledRect((int)hqTopLeft.X, (int)hqTopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(42, 78, 96));
-        Graphics.DrawRect((int)hqTopLeft.X, (int)hqTopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(167, 235, 255));
-        Graphics.DrawFilledRect((int)(hqTopLeft.X + 16f), (int)(hqTopLeft.Y + 16f), 44, 24, new Color(255, 210, 108));
-        Graphics.DrawFilledRect((int)(hqTopLeft.X + 70f), (int)(hqTopLeft.Y + 16f), 26, 50, new Color(86, 168, 196));
-        DrawBar(HeadquartersPosition + new Vector2(0f, -66f), 112, 8, _hqHealth / HeadquartersMaxHealth, new Color(120, 255, 172));
+        Graphics.DrawFilledRect((int)hqTopLeft.X, (int)hqTopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(80, 60, 40));
+        Graphics.DrawRect((int)hqTopLeft.X, (int)hqTopLeft.Y, (int)(HeadquartersHalfWidth * 2f), (int)(HeadquartersHalfHeight * 2f), new Color(200, 160, 100));
+        Graphics.DrawFilledRect((int)(hqTopLeft.X + 16f), (int)(hqTopLeft.Y + 16f), 44, 24, new Color(139, 26, 26));
+        Graphics.DrawFilledRect((int)(hqTopLeft.X + 70f), (int)(hqTopLeft.Y + 16f), 26, 50, new Color(120, 100, 70));
+        DrawBar(HeadquartersPosition + new Vector2(0f, -66f), 112, 8, _hqHealth / HeadquartersMaxHealth, new Color(51, 204, 51));
 
         var beaconTopLeft = WorldToScreen(EnemyBeaconPosition - new Vector2(52f, 40f));
-        Graphics.DrawFilledRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(64, 22, 20));
-        Graphics.DrawRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(255, 130, 112));
-        Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 70f), new Color(255, 180, 142));
-        Graphics.DrawLine((int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 70f), new Color(255, 180, 142));
+        Graphics.DrawFilledRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(80, 65, 40));
+        Graphics.DrawRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(196, 160, 96));
+        Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
+        Graphics.DrawLine((int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
 
         DrawStructurePads();
         DrawPlayerStructures();
@@ -1274,10 +1358,10 @@ public sealed partial class RtsGameScript : GameScript
             if (!IsOnScreen(screen, 48f))
                 continue;
 
-            var baseColor = node.IsDepleted ? new Color(70, 74, 78) : new Color(97, 203, 255);
-            var glowColor = node.IsDepleted ? new Color(102, 106, 112) : new Color(225, 244, 255);
+            var baseColor = node.IsDepleted ? new Color(70, 60, 45) : new Color(180, 140, 60);
+            var glowColor = node.IsDepleted ? new Color(100, 85, 65) : new Color(255, 220, 120);
             DrawDiamond(screen, 26, baseColor, glowColor);
-            DrawBar(node.Position + new Vector2(0f, 40f), 48, 5, node.RemainingOre / 210f, new Color(250, 215, 116));
+            DrawBar(node.Position + new Vector2(0f, 40f), 48, 5, node.RemainingOre / 5000f, new Color(51, 204, 51));
         }
     }
 
@@ -1330,13 +1414,13 @@ public sealed partial class RtsGameScript : GameScript
             Graphics.DrawLine((int)screen.X, (int)screen.Y, (int)aimEnd.X, (int)aimEnd.Y, unit.AccentColor);
 
             if (unit.Selected)
-                Graphics.DrawCircle((int)screen.X, (int)screen.Y, (int)(unit.Radius + 7f), new Color(248, 249, 153));
+                Graphics.DrawCircle((int)screen.X, (int)screen.Y, (int)(unit.Radius + 7f), new Color(51, 204, 51));
 
             if (unit.Role == RtsUnitRole.Worker && unit.CarryOre > 0)
-                Graphics.DrawFilledRect(x + size - 4, y - 4, 6, 6, new Color(255, 214, 92));
+                Graphics.DrawFilledRect(x + size - 4, y - 4, 6, 6, new Color(51, 204, 51));
 
             if (unit.Health < unit.MaxHealth || unit.IsEnemy)
-                DrawBar(unit.Position + new Vector2(0f, -18f), 30, 4, unit.Health / unit.MaxHealth, new Color(124, 255, 170));
+                DrawBar(unit.Position + new Vector2(0f, -18f), 30, 4, unit.Health / unit.MaxHealth, new Color(51, 204, 51));
         }
     }
 
@@ -1350,16 +1434,16 @@ public sealed partial class RtsGameScript : GameScript
         var width = Math.Max(1, (int)Math.Abs(_selectionStartScreen.X - _selectionEndScreen.X));
         var height = Math.Max(1, (int)Math.Abs(_selectionStartScreen.Y - _selectionEndScreen.Y));
         Graphics.DrawFilledRect(left, top, width, height, new Color(113, 193, 255, 26));
-        Graphics.DrawRect(left, top, width, height, new Color(160, 223, 255));
+        Graphics.DrawRect(left, top, width, height, new Color(51, 204, 51));
     }
 
     private void DrawTacticalSignals()
     {
         if (_commandPulseTimer > 0f)
-            DrawPulse(_commandPulsePosition, _commandPulseTimer / CommandPulseDuration, new Color(255, 214, 96));
+            DrawPulse(_commandPulsePosition, _commandPulseTimer / CommandPulseDuration, new Color(51, 204, 51));
 
         if (_navigationPulseTimer > 0f)
-            DrawPulse(_navigationPulsePosition, _navigationPulseTimer / NavigationPulseDuration, new Color(111, 210, 255));
+            DrawPulse(_navigationPulsePosition, _navigationPulseTimer / NavigationPulseDuration, new Color(204, 51, 51));
     }
 
     private void DrawMinimap()
@@ -1372,29 +1456,29 @@ public sealed partial class RtsGameScript : GameScript
         var horizontalThird = width / 3;
         var verticalThird = height / 3;
 
-        Graphics.DrawFilledRect(left, top, width, height, new Color(5, 10, 15, 210));
-        Graphics.DrawFilledRect(left, top, width, verticalThird, new Color(36, 18, 20, 220));
-        Graphics.DrawFilledRect(left, top + verticalThird, width, verticalThird, new Color(18, 28, 24, 220));
-        Graphics.DrawFilledRect(left, top + (verticalThird * 2), width, height - (verticalThird * 2), new Color(12, 22, 28, 220));
-        Graphics.DrawRect(left, top, width, height, new Color(118, 203, 236));
-        Graphics.DrawLine(left + horizontalThird, top, left + horizontalThird, top + height, new Color(67, 103, 119, 160));
-        Graphics.DrawLine(left + (horizontalThird * 2), top, left + (horizontalThird * 2), top + height, new Color(67, 103, 119, 160));
-        Graphics.DrawLine(left, top + verticalThird, left + width, top + verticalThird, new Color(67, 103, 119, 160));
-        Graphics.DrawLine(left, top + (verticalThird * 2), left + width, top + (verticalThird * 2), new Color(67, 103, 119, 160));
+        Graphics.DrawFilledRect(left, top, width, height, new Color(40, 32, 20, 210));
+        Graphics.DrawFilledRect(left, top, width, verticalThird, new Color(50, 38, 22, 220));
+        Graphics.DrawFilledRect(left, top + verticalThird, width, verticalThird, new Color(42, 34, 20, 220));
+        Graphics.DrawFilledRect(left, top + (verticalThird * 2), width, height - (verticalThird * 2), new Color(36, 28, 18, 220));
+        Graphics.DrawRect(left, top, width, height, new Color(139, 115, 69));
+        Graphics.DrawLine(left + horizontalThird, top, left + horizontalThird, top + height, new Color(100, 80, 50, 120));
+        Graphics.DrawLine(left + (horizontalThird * 2), top, left + (horizontalThird * 2), top + height, new Color(100, 80, 50, 120));
+        Graphics.DrawLine(left, top + verticalThird, left + width, top + verticalThird, new Color(100, 80, 50, 120));
+        Graphics.DrawLine(left, top + (verticalThird * 2), left + width, top + (verticalThird * 2), new Color(100, 80, 50, 120));
 
         foreach (var node in _resourceNodes)
         {
             var position = WorldToMinimap(node.Position, bounds);
-            var color = node.IsDepleted ? new Color(82, 88, 96) : new Color(106, 211, 255);
+            var color = node.IsDepleted ? new Color(82, 70, 50) : new Color(204, 170, 50);
             Graphics.DrawFilledRect((int)position.X - 2, (int)position.Y - 2, 4, 4, color);
         }
 
         var hq = WorldToMinimap(HeadquartersPosition, bounds);
-        Graphics.DrawFilledRect((int)hq.X - 3, (int)hq.Y - 3, 6, 6, new Color(255, 214, 96));
+        Graphics.DrawFilledRect((int)hq.X - 3, (int)hq.Y - 3, 6, 6, new Color(204, 51, 51));
         var beacon = WorldToMinimap(EnemyBeaconPosition, bounds);
-        Graphics.DrawFilledRect((int)beacon.X - 3, (int)beacon.Y - 3, 6, 6, new Color(255, 120, 105));
+        Graphics.DrawFilledRect((int)beacon.X - 3, (int)beacon.Y - 3, 6, 6, new Color(196, 160, 96));
         var rally = WorldToMinimap(_rallyPoint, bounds);
-        DrawMinimapMarker(rally, new Color(111, 210, 255), 4);
+        DrawMinimapMarker(rally, new Color(51, 204, 51), 4);
 
         foreach (var structure in _structures)
         {
@@ -1402,8 +1486,14 @@ public sealed partial class RtsGameScript : GameScript
                 continue;
 
             var point = WorldToMinimap(structure.Position, bounds);
-            var color = structure.Type == RtsStructureType.Building ? new Color(255, 210, 146) : new Color(246, 246, 177);
-            var size = structure.Type == RtsStructureType.Building ? 4 : 5;
+            var color = structure.Type switch
+            {
+                RtsStructureType.Building => new Color(139, 26, 26),
+                RtsStructureType.WarFactory => new Color(90, 90, 105),
+                RtsStructureType.Reactor => new Color(180, 160, 50),
+                _ => new Color(100, 60, 60)
+            };
+            var size = structure.Type == RtsStructureType.WarFactory ? 5 : 4;
             Graphics.DrawFilledRect((int)point.X - (size / 2), (int)point.Y - (size / 2), size, size, color);
         }
 
@@ -1413,29 +1503,29 @@ public sealed partial class RtsGameScript : GameScript
                 continue;
 
             var point = WorldToMinimap(unit.Position, bounds);
-            var color = unit.IsEnemy ? new Color(255, 120, 105) : unit.Role == RtsUnitRole.Worker ? new Color(111, 210, 255) : new Color(140, 255, 179);
+            var color = unit.IsEnemy ? new Color(196, 160, 96) : new Color(51, 204, 51);
             Graphics.DrawFilledRect((int)point.X - 1, (int)point.Y - 1, 3, 3, color);
             if (unit.Selected)
-                Graphics.DrawRect((int)point.X - 3, (int)point.Y - 3, 6, 6, new Color(248, 249, 153));
+                Graphics.DrawRect((int)point.X - 3, (int)point.Y - 3, 6, 6, new Color(51, 204, 51));
         }
 
         if (_commandPulseTimer > 0f)
-            DrawMinimapPulse(_commandPulsePosition, _commandPulseTimer / CommandPulseDuration, bounds, new Color(255, 214, 96));
+            DrawMinimapPulse(_commandPulsePosition, _commandPulseTimer / CommandPulseDuration, bounds, new Color(51, 204, 51));
 
         if (_navigationPulseTimer > 0f)
-            DrawMinimapPulse(_navigationPulsePosition, _navigationPulseTimer / NavigationPulseDuration, bounds, new Color(111, 210, 255));
+            DrawMinimapPulse(_navigationPulsePosition, _navigationPulseTimer / NavigationPulseDuration, bounds, new Color(204, 51, 51));
 
         if (IsPointInsideMinimap(MousePosition))
         {
             var cursorPoint = WorldToMinimap(MinimapToWorld(MousePosition), bounds);
-            Graphics.DrawRect((int)cursorPoint.X - 3, (int)cursorPoint.Y - 3, 6, 6, new Color(248, 249, 153));
+            Graphics.DrawRect((int)cursorPoint.X - 3, (int)cursorPoint.Y - 3, 6, 6, new Color(51, 204, 51));
         }
 
         var cameraLeft = left + (int)((_cameraPosition.X / WorldWidth) * width);
         var cameraTop = top + (int)((_cameraPosition.Y / WorldHeight) * height);
         var cameraWidth = Math.Max(12, (int)((Engine.Width / WorldWidth) * width));
         var cameraHeight = Math.Max(12, (int)((Engine.Height / WorldHeight) * height));
-        Graphics.DrawRect(cameraLeft, cameraTop, cameraWidth, cameraHeight, new Color(248, 249, 153));
+        Graphics.DrawRect(cameraLeft, cameraTop, cameraWidth, cameraHeight, new Color(51, 204, 51));
     }
 
     private void FillWorldRect(Rectangle worldRect, Color color)
@@ -1737,8 +1827,8 @@ public sealed partial class RtsGameScript : GameScript
     private Rectangle GetMinimapBounds()
     {
         return new Rectangle(
-            Engine.Width - MinimapWidth - MinimapMargin,
-            Engine.Height - MinimapHeight - MinimapBottomOffset,
+            MinimapMargin,
+            Engine.Height - MinimapHeight - MinimapMargin,
             MinimapWidth,
             MinimapHeight);
     }
@@ -1827,6 +1917,22 @@ public sealed partial class RtsGameScript : GameScript
         return $"{hotkey} | {GetProductionCost(productionType)} ORE | {status}";
     }
 
+    private string GetSlotCostText(RtsProductionType productionType, string hotkey)
+    {
+        if (_activePlacementType == productionType)
+            return $"{hotkey} - PLACE";
+
+        var status = GetProductionAvailability(productionType) switch
+        {
+            ProductionAvailability.Ready => $"{GetProductionCost(productionType)}",
+            ProductionAvailability.InsufficientOre => "LOW",
+            ProductionAvailability.SiteFull => "FULL",
+            _ => "BUSY"
+        };
+
+        return $"{hotkey} - {status}";
+    }
+
     private bool TryDeployStructure(RtsProductionType productionType, Vector2? reservedSite, out RtsStructure structure)
     {
         if (!TryMapToStructureType(productionType, out var structureType)
@@ -1848,6 +1954,8 @@ public sealed partial class RtsGameScript : GameScript
     {
         DrawStructurePads(BuildingSitePositions, RtsStructureType.Building);
         DrawStructurePads(DefenseTowerSitePositions, RtsStructureType.DefenseTower);
+        DrawStructurePads(WarFactorySitePositions, RtsStructureType.WarFactory);
+        DrawStructurePads(ReactorSitePositions, RtsStructureType.Reactor);
     }
 
     private void DrawStructurePads(Vector2[] pads, RtsStructureType structureType)
@@ -1870,58 +1978,52 @@ public sealed partial class RtsGameScript : GameScript
                 continue;
 
             var screen = WorldToScreen(pad);
-            if (!IsOnScreen(screen, structureType == RtsStructureType.Building ? 42f : 32f))
+            var padMargin = structureType switch
+            {
+                RtsStructureType.WarFactory => 48f,
+                RtsStructureType.Building or RtsStructureType.Reactor => 42f,
+                _ => 32f
+            };
+            if (!IsOnScreen(screen, padMargin))
                 continue;
 
             var reserved = IsStructurePadQueued(structureType, pad);
             var hovered = placementActiveForType && Vector2.Distance(hoveredPad, pad) <= 1f;
 
-            if (structureType == RtsStructureType.Building)
+            var outline = hovered
+                ? new Color(51, 204, 51)
+                : placementActiveForType
+                    ? new Color(51, 204, 51, 140)
+                    : reserved
+                        ? new Color(139, 115, 69, 150)
+                        : new Color(139, 115, 69, 90);
+            var fill = hovered
+                ? new Color(51, 204, 51, 50)
+                : placementActiveForType
+                    ? new Color(51, 204, 51, 24)
+                    : reserved
+                        ? new Color(100, 80, 50, 40)
+                        : Color.Transparent;
+
+            var halfW = structureType switch
             {
-                var outline = hovered
-                    ? new Color(255, 232, 150)
-                    : placementActiveForType
-                        ? new Color(228, 192, 128, 170)
-                        : reserved
-                            ? new Color(138, 116, 92, 150)
-                            : new Color(188, 155, 119, 110);
-                var fill = hovered
-                    ? new Color(255, 220, 140, 62)
-                    : placementActiveForType
-                        ? new Color(220, 188, 126, 34)
-                        : reserved
-                            ? new Color(120, 96, 70, 44)
-                            : Color.Transparent;
-
-                if (fill.A > 0)
-                    Graphics.DrawFilledRect((int)screen.X - 32, (int)screen.Y - 24, 64, 48, fill);
-
-                Graphics.DrawRect((int)screen.X - 32, (int)screen.Y - 24, 64, 48, outline);
-                Graphics.DrawLine((int)screen.X - 26, (int)screen.Y + 16, (int)screen.X + 26, (int)screen.Y + 16, outline);
-            }
-            else
+                RtsStructureType.WarFactory => 40,
+                RtsStructureType.DefenseTower => 18,
+                RtsStructureType.Reactor => 24,
+                _ => 32
+            };
+            var halfH = structureType switch
             {
-                var outline = hovered
-                    ? new Color(255, 244, 170)
-                    : placementActiveForType
-                        ? new Color(246, 246, 177, 180)
-                        : reserved
-                            ? new Color(134, 136, 116, 150)
-                            : new Color(246, 246, 177, 120);
-                var fill = hovered
-                    ? new Color(246, 246, 177, 56)
-                    : placementActiveForType
-                        ? new Color(246, 246, 177, 30)
-                        : reserved
-                            ? new Color(118, 122, 142, 40)
-                            : Color.Transparent;
+                RtsStructureType.WarFactory => 30,
+                RtsStructureType.DefenseTower => 18,
+                RtsStructureType.Reactor => 24,
+                _ => 24
+            };
 
-                if (fill.A > 0)
-                    Graphics.DrawFilledRect((int)screen.X - 11, (int)screen.Y - 11, 22, 22, fill);
+            if (fill.A > 0)
+                Graphics.DrawFilledRect((int)screen.X - halfW, (int)screen.Y - halfH, halfW * 2, halfH * 2, fill);
 
-                Graphics.DrawCircle((int)screen.X, (int)screen.Y, 20, outline);
-                Graphics.DrawRect((int)screen.X - 11, (int)screen.Y - 11, 22, 22, outline);
-            }
+            Graphics.DrawRect((int)screen.X - halfW, (int)screen.Y - halfH, halfW * 2, halfH * 2, outline);
         }
     }
 
@@ -1948,19 +2050,31 @@ public sealed partial class RtsGameScript : GameScript
 
             if (structure.Type == RtsStructureType.Building)
             {
-                Graphics.DrawFilledRect(left + 8, top + 10, width - 16, 12, new Color(68, 44, 34));
-                Graphics.DrawFilledRect(left + 10, top + 26, 12, 10, new Color(255, 210, 108));
-                Graphics.DrawFilledRect(left + width - 22, top + 26, 12, 10, new Color(255, 210, 108));
+                Graphics.DrawFilledRect(left + 8, top + 10, width - 16, 12, new Color(100, 40, 40));
+                Graphics.DrawFilledRect(left + 10, top + 26, 12, 10, new Color(204, 51, 51));
+                Graphics.DrawFilledRect(left + width - 22, top + 26, 12, 10, new Color(204, 51, 51));
+            }
+            else if (structure.Type == RtsStructureType.WarFactory)
+            {
+                Graphics.DrawFilledRect(left + 6, top + 6, width - 12, height - 12, new Color(70, 70, 85));
+                Graphics.DrawFilledRect(left + 10, top + height - 14, width - 20, 8, new Color(120, 120, 140));
+                Graphics.DrawLine(left + width / 2, top + 4, left + width / 2, top + height - 4, structure.AccentColor);
+            }
+            else if (structure.Type == RtsStructureType.Reactor)
+            {
+                Graphics.DrawFilledRect(left + 6, top + 6, width - 12, height - 12, new Color(160, 140, 40));
+                Graphics.DrawCircle((int)screen.X, (int)screen.Y, 10, new Color(204, 180, 50));
+                Graphics.DrawRect(left + 4, top + 4, width - 8, height - 8, new Color(204, 180, 50));
             }
             else
             {
-                Graphics.DrawFilledRect(left + 4, top + 4, width - 8, height - 8, new Color(70, 74, 92));
+                Graphics.DrawFilledRect(left + 4, top + 4, width - 8, height - 8, new Color(80, 50, 50));
                 Graphics.DrawLine((int)screen.X, top - 8, (int)screen.X, top + 14, structure.AccentColor);
                 Graphics.DrawLine((int)screen.X, top + 6, left + width + 10, top - 2, structure.AccentColor);
             }
 
             if (structure.Health < structure.MaxHealth)
-                DrawBar(structure.Position + new Vector2(0f, -structure.HalfSize.Y - 16f), width + 12, 5, structure.Health / structure.MaxHealth, new Color(124, 255, 170));
+                DrawBar(structure.Position + new Vector2(0f, -structure.HalfSize.Y - 16f), width + 12, 5, structure.Health / structure.MaxHealth, new Color(51, 204, 51));
         }
     }
 
@@ -2034,13 +2148,16 @@ public sealed partial class RtsGameScript : GameScript
 
     private static bool IsPointInsideStructurePad(RtsStructureType structureType, Vector2 worldPosition, Vector2 pad)
     {
-        if (structureType == RtsStructureType.Building)
+        var (halfW, halfH) = structureType switch
         {
-            var bounds = new Rectangle(pad.X - 34f, pad.Y - 26f, 68f, 52f);
-            return bounds.Contains(worldPosition);
-        }
+            RtsStructureType.Building => (34f, 26f),
+            RtsStructureType.WarFactory => (42f, 32f),
+            RtsStructureType.Reactor => (26f, 26f),
+            _ => (20f, 20f)
+        };
 
-        return Vector2.Distance(worldPosition, pad) <= 24f;
+        var bounds = new Rectangle(pad.X - halfW, pad.Y - halfH, halfW * 2f, halfH * 2f);
+        return bounds.Contains(worldPosition);
     }
 
     private static bool IsKnownStructurePad(RtsStructureType structureType, Vector2 pad)
@@ -2131,9 +2248,11 @@ public sealed partial class RtsGameScript : GameScript
     {
         return role switch
         {
-            RtsUnitRole.Worker => "Worker",
-            RtsUnitRole.Guard => "Guard",
-            _ => "Raider"
+            RtsUnitRole.Worker => "Supply Truck",
+            RtsUnitRole.Guard => "Red Guard",
+            RtsUnitRole.TankHunter => "Tank Hunter",
+            RtsUnitRole.Battlemaster => "Battlemaster",
+            _ => "GLA Fighter"
         };
     }
 
@@ -2172,7 +2291,10 @@ public sealed partial class RtsGameScript : GameScript
 
     private static bool UsesStructurePad(RtsProductionType productionType)
     {
-        return productionType == RtsProductionType.Building || productionType == RtsProductionType.DefenseTower;
+        return productionType is RtsProductionType.Building
+            or RtsProductionType.DefenseTower
+            or RtsProductionType.WarFactory
+            or RtsProductionType.Reactor;
     }
 
     private static int GetProductionCost(RtsProductionType productionType)
@@ -2181,8 +2303,12 @@ public sealed partial class RtsGameScript : GameScript
         {
             RtsProductionType.Worker => WorkerCost,
             RtsProductionType.Guard => GuardCost,
+            RtsProductionType.TankHunter => TankHunterCost,
+            RtsProductionType.Battlemaster => BattlemasterCost,
             RtsProductionType.Building => BuildingCost,
-            _ => DefenseTowerCost
+            RtsProductionType.DefenseTower => DefenseTowerCost,
+            RtsProductionType.WarFactory => WarFactoryCost,
+            _ => ReactorCost
         };
     }
 
@@ -2192,6 +2318,8 @@ public sealed partial class RtsGameScript : GameScript
         {
             RtsProductionType.Building => BuildingSitePositions.Length,
             RtsProductionType.DefenseTower => DefenseTowerSitePositions.Length,
+            RtsProductionType.WarFactory => WarFactorySitePositions.Length,
+            RtsProductionType.Reactor => ReactorSitePositions.Length,
             _ => 0
         };
     }
@@ -2200,10 +2328,14 @@ public sealed partial class RtsGameScript : GameScript
     {
         return productionType switch
         {
-            RtsProductionType.Worker => 2.5f,
-            RtsProductionType.Guard => 4.1f,
-            RtsProductionType.Building => 5.4f,
-            _ => 4.8f
+            RtsProductionType.Worker => 3.5f,
+            RtsProductionType.Guard => 2.0f,
+            RtsProductionType.TankHunter => 2.5f,
+            RtsProductionType.Battlemaster => 5.0f,
+            RtsProductionType.Building => 6.0f,
+            RtsProductionType.DefenseTower => 5.0f,
+            RtsProductionType.WarFactory => 8.0f,
+            _ => 5.0f
         };
     }
 
@@ -2211,10 +2343,14 @@ public sealed partial class RtsGameScript : GameScript
     {
         return productionType switch
         {
-            RtsProductionType.Worker => "Worker",
-            RtsProductionType.Guard => "Guard",
-            RtsProductionType.Building => "Structure",
-            _ => "Defense Tower"
+            RtsProductionType.Worker => "Supply Truck",
+            RtsProductionType.Guard => "Red Guard",
+            RtsProductionType.TankHunter => "Tank Hunter",
+            RtsProductionType.Battlemaster => "Battlemaster",
+            RtsProductionType.Building => "Barracks",
+            RtsProductionType.DefenseTower => "Gattling Cannon",
+            RtsProductionType.WarFactory => "War Factory",
+            _ => "Nuclear Reactor"
         };
     }
 
@@ -2222,8 +2358,10 @@ public sealed partial class RtsGameScript : GameScript
     {
         return productionType switch
         {
-            RtsProductionType.Building => "Structure",
-            RtsProductionType.DefenseTower => "Tower",
+            RtsProductionType.Building => "Barracks",
+            RtsProductionType.DefenseTower => "Gattling Cannon",
+            RtsProductionType.WarFactory => "War Factory",
+            RtsProductionType.Reactor => "Reactor",
             _ => GetProductionLabel(productionType)
         };
     }
@@ -2232,10 +2370,14 @@ public sealed partial class RtsGameScript : GameScript
     {
         return productionType switch
         {
-            RtsProductionType.Worker => "Worker",
-            RtsProductionType.Guard => "Guard",
-            RtsProductionType.Building => "Structure",
-            _ => "Defense Tower"
+            RtsProductionType.Worker => "Supply Truck",
+            RtsProductionType.Guard => "Red Guard",
+            RtsProductionType.TankHunter => "Tank Hunter",
+            RtsProductionType.Battlemaster => "Battlemaster",
+            RtsProductionType.Building => "Barracks",
+            RtsProductionType.DefenseTower => "Gattling Cannon",
+            RtsProductionType.WarFactory => "War Factory",
+            _ => "Nuclear Reactor"
         };
     }
 
@@ -2249,6 +2391,14 @@ public sealed partial class RtsGameScript : GameScript
 
             case RtsProductionType.Guard:
                 role = RtsUnitRole.Guard;
+                return true;
+
+            case RtsProductionType.TankHunter:
+                role = RtsUnitRole.TankHunter;
+                return true;
+
+            case RtsProductionType.Battlemaster:
+                role = RtsUnitRole.Battlemaster;
                 return true;
 
             default:
@@ -2269,6 +2419,14 @@ public sealed partial class RtsGameScript : GameScript
                 structureType = RtsStructureType.DefenseTower;
                 return true;
 
+            case RtsProductionType.WarFactory:
+                structureType = RtsStructureType.WarFactory;
+                return true;
+
+            case RtsProductionType.Reactor:
+                structureType = RtsStructureType.Reactor;
+                return true;
+
             default:
                 structureType = default;
                 return false;
@@ -2277,7 +2435,13 @@ public sealed partial class RtsGameScript : GameScript
 
     private static Vector2[] GetStructurePadPositions(RtsStructureType structureType)
     {
-        return structureType == RtsStructureType.Building ? BuildingSitePositions : DefenseTowerSitePositions;
+        return structureType switch
+        {
+            RtsStructureType.Building => BuildingSitePositions,
+            RtsStructureType.DefenseTower => DefenseTowerSitePositions,
+            RtsStructureType.WarFactory => WarFactorySitePositions,
+            _ => ReactorSitePositions
+        };
     }
 
     private void ShowTransientMessage(string title, string subtitle, float duration)

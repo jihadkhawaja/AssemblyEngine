@@ -81,66 +81,92 @@
     <div id="hud-root">
         <div id="top-bar">
             <div id="fps-counter">FPS 0 | Software</div>
-            <div id="ore">Ore 0/320</div>
-            <div id="hq">HQ 420</div>
-            <div id="workers">Workers 0</div>
-            <div id="guards">Guards 0</div>
-            <div id="wave">Raid 1 in 12.0s</div>
+            <div id="wave">THREAT CLEAR</div>
+        </div>
+
+        <div id="general-rank">
+            <div id="rank-stars">GENERAL</div>
         </div>
 
         <div id="center-message">
-            <div id="message-title">Frontier Foundry</div>
-            <div id="message-subtitle">Select the starting workers, right click cobalt veins, and hold the HQ until the stockpile reaches 320 ore.</div>
+            <div id="message-title">COMMAND CENTER ONLINE</div>
+            <div id="message-subtitle">Build your base and defend against GLA attacks. Stockpile 10000 to secure victory.</div>
         </div>
 
-        <div id="intel-panel">
-            <div id="objective">MINE | ORE LEFT 230</div>
-            <div id="selection">NO SELECTION | RMB SETS RALLY</div>
-        </div>
-
-        <div id="production-panel">
-            <div id="production-title">PRODUCTION</div>
-            <div id="queue">QUEUE 0/4</div>
-            <div id="build-row-1">
-                <div id="queue-worker-button">
-                    <div id="queue-worker-label">RECRUIT WORKER</div>
-                    <div id="queue-worker-detail">Q | 45 ORE | READY</div>
+        <div id="command-bar">
+            <div id="build-panel">
+                <div id="resource-strip">
+                    <div id="funds-display">FUNDS 2500</div>
+                    <div id="power-display">POWER 100%</div>
                 </div>
-                <div id="queue-guard-button">
-                    <div id="queue-guard-label">RECRUIT GUARD</div>
-                    <div id="queue-guard-detail">E | 70 ORE | READY</div>
+
+                <div id="build-grid-row-1">
+                    <div id="build-slot-1">
+                        <div id="slot-1-name">SUPPLY TRUCK</div>
+                        <div id="slot-1-cost">Q - 600</div>
+                    </div>
+                    <div id="build-slot-2">
+                        <div id="slot-2-name">RED GUARD</div>
+                        <div id="slot-2-cost">E - 300</div>
+                    </div>
+                    <div id="build-slot-3">
+                        <div id="slot-3-name">TANK HUNTER</div>
+                        <div id="slot-3-cost">W - 400</div>
+                    </div>
+                    <div id="build-slot-4">
+                        <div id="slot-4-name">BATTLEMASTER</div>
+                        <div id="slot-4-cost">D - 800</div>
+                    </div>
+                </div>
+
+                <div id="build-grid-row-2">
+                    <div id="build-slot-5">
+                        <div id="slot-5-name">BARRACKS</div>
+                        <div id="slot-5-cost">R - 500</div>
+                    </div>
+                    <div id="build-slot-6">
+                        <div id="slot-6-name">WAR FACTORY</div>
+                        <div id="slot-6-cost">T - 2000</div>
+                    </div>
+                    <div id="build-slot-7">
+                        <div id="slot-7-name">REACTOR</div>
+                        <div id="slot-7-cost">Y - 1000</div>
+                    </div>
+                    <div id="build-slot-8">
+                        <div id="slot-8-name">GATTLING CANNON</div>
+                        <div id="slot-8-cost">U - 1200</div>
+                    </div>
+                </div>
+
+                <div id="queue-strip">
+                    <div id="queue-status">QUEUE EMPTY</div>
                 </div>
             </div>
-            <div id="build-row-2">
-                <div id="queue-building-button">
-                    <div id="queue-building-label">BUILD STRUCTURE</div>
-                    <div id="queue-building-detail">R | 85 ORE | PICK PAD</div>
-                </div>
-                <div id="queue-tower-button">
-                    <div id="queue-tower-label">BUILD DEFENSE TOWER</div>
-                    <div id="queue-tower-detail">T | 95 ORE | PICK PAD</div>
-                </div>
+
+            <div id="unit-panel">
+                <div id="unit-name">NO SELECTION</div>
+                <div id="unit-health">SELECT A UNIT OR STRUCTURE</div>
+                <div id="unit-stats">RMB TO ISSUE ORDERS</div>
+                <div id="unit-orders">Q W E D R T Y U | F1 HELP</div>
             </div>
-            <div id="production-mode">Q/E RECRUIT NOW | R/T PICK A BUILD PAD</div>
-            <div id="production-sites">OPEN PADS | STRUCTURE 3/3 | TOWER 4/4</div>
         </div>
 
-        <div id="tactical-panel">
-            <div id="forces">UNITS 4 | RAIDERS 0 | DMG 0 | Q 0/4</div>
-            <div id="economy">ORE 770 | VEINS 4/4 | CARRY 0</div>
+        <div id="tactical-strip">
+            <div id="forces">UNITS 1 | HOSTILES 0 | QUEUE 0/6</div>
+            <div id="economy">FUNDS 2500 | SUPPLY 4/4 | CARRY 0</div>
         </div>
 
         <div id="help-panel">
-            <div id="help-title">Command Brief</div>
-            <div id="help-row-1">Drag a box to select workers or guards.</div>
-            <div id="help-row-2">Hold Shift to add squads, or hold Ctrl to remove them.</div>
-            <div id="help-row-3">Right click a cobalt vein to start harvesting.</div>
-            <div id="help-row-4">Right click terrain to reposition selected units.</div>
-            <div id="help-row-5">Right click with no selection to move the rally point.</div>
-            <div id="help-row-6">Left click the minimap to instantly recenter the camera.</div>
-            <div id="help-row-7">Middle click anywhere to snap the camera to that world position.</div>
-            <div id="help-row-8">Recruit workers and guards with Q / E. For structures, press R / T or click the build card, then click a highlighted pad. Right click or Esc cancels placement.</div>
-            <div id="help-footer">Mine 320 ore before the HQ is destroyed. F1 hides this panel and R or Enter restarts.</div>
+            <div id="help-title">COMMAND BRIEF</div>
+            <div id="help-row-1">Drag to select supply trucks or combat units.</div>
+            <div id="help-row-2">Hold Shift to add, Ctrl to remove from selection.</div>
+            <div id="help-row-3">Right click a supply pile to begin harvesting.</div>
+            <div id="help-row-4">Right click terrain to move selected units.</div>
+            <div id="help-row-5">Right click with no selection to set rally point.</div>
+            <div id="help-row-6">Click the minimap to jump camera. Middle click to snap.</div>
+            <div id="help-row-7">Q Supply Truck | E Red Guard | W Tank Hunter | D Battlemaster</div>
+            <div id="help-row-8">R Barracks | T War Factory | Y Reactor | U Gattling Cannon. Click a pad to place structures. Right click or Esc cancels.</div>
+            <div id="help-footer">Stockpile 10000 before the Command Center falls. F1 toggles this panel. R or Enter restarts.</div>
         </div>
     </div>
 </body>

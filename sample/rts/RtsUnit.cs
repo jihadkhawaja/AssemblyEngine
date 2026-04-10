@@ -6,6 +6,8 @@ internal enum RtsUnitRole
 {
     Worker,
     Guard,
+    TankHunter,
+    Battlemaster,
     Raider
 }
 
@@ -74,30 +76,38 @@ internal sealed class RtsUnit
 
     public string Label => Role switch
     {
-        RtsUnitRole.Worker => "Worker",
-        RtsUnitRole.Guard => "Guard",
-        _ => "Raider"
+        RtsUnitRole.Worker => "Supply Truck",
+        RtsUnitRole.Guard => "Red Guard",
+        RtsUnitRole.TankHunter => "Tank Hunter",
+        RtsUnitRole.Battlemaster => "Battlemaster",
+        _ => "GLA Fighter"
     };
 
     public string Callsign => Role switch
     {
-        RtsUnitRole.Worker => $"WRK-{Id:00}",
-        RtsUnitRole.Guard => $"GRD-{Id:00}",
-        _ => $"RDR-{Id:00}"
+        RtsUnitRole.Worker => $"STK-{Id:00}",
+        RtsUnitRole.Guard => $"RDG-{Id:00}",
+        RtsUnitRole.TankHunter => $"THR-{Id:00}",
+        RtsUnitRole.Battlemaster => $"BTL-{Id:00}",
+        _ => $"GLA-{Id:00}"
     };
 
     public Color FillColor => Role switch
     {
-        RtsUnitRole.Worker => new Color(111, 210, 255),
-        RtsUnitRole.Guard => new Color(140, 255, 179),
-        _ => new Color(255, 120, 105)
+        RtsUnitRole.Worker => new Color(85, 107, 47),
+        RtsUnitRole.Guard => new Color(139, 26, 26),
+        RtsUnitRole.TankHunter => new Color(160, 82, 45),
+        RtsUnitRole.Battlemaster => new Color(58, 74, 40),
+        _ => new Color(196, 160, 96)
     };
 
     public Color AccentColor => Role switch
     {
-        RtsUnitRole.Worker => new Color(215, 244, 255),
-        RtsUnitRole.Guard => new Color(216, 255, 224),
-        _ => new Color(255, 216, 170)
+        RtsUnitRole.Worker => new Color(180, 200, 140),
+        RtsUnitRole.Guard => new Color(255, 80, 80),
+        RtsUnitRole.TankHunter => new Color(255, 180, 120),
+        RtsUnitRole.Battlemaster => new Color(160, 200, 120),
+        _ => new Color(255, 220, 170)
     };
 
     public RtsUnit(RtsUnitRole role, Vector2 position)
@@ -115,30 +125,52 @@ internal sealed class RtsUnit
         switch (role)
         {
             case RtsUnitRole.Worker:
-                Radius = 10f;
-                Speed = 98f;
-                MaxHealth = 48f;
+                Radius = 14f;
+                Speed = 88f;
+                MaxHealth = 120f;
                 AttackRange = 0f;
                 AttackDamage = 0f;
                 AttackInterval = 0f;
                 DetectionRange = 0f;
-                CarryCapacity = 40;
+                CarryCapacity = 300;
                 break;
 
             case RtsUnitRole.Guard:
-                Radius = 12f;
-                Speed = 112f;
-                MaxHealth = 90f;
-                AttackRange = 156f;
-                AttackDamage = 15f;
-                AttackInterval = 0.72f;
-                DetectionRange = 228f;
+                Radius = 8f;
+                Speed = 78f;
+                MaxHealth = 60f;
+                AttackRange = 140f;
+                AttackDamage = 12f;
+                AttackInterval = 0.65f;
+                DetectionRange = 200f;
+                CarryCapacity = 0;
+                break;
+
+            case RtsUnitRole.TankHunter:
+                Radius = 8f;
+                Speed = 72f;
+                MaxHealth = 70f;
+                AttackRange = 170f;
+                AttackDamage = 28f;
+                AttackInterval = 1.4f;
+                DetectionRange = 220f;
+                CarryCapacity = 0;
+                break;
+
+            case RtsUnitRole.Battlemaster:
+                Radius = 16f;
+                Speed = 105f;
+                MaxHealth = 280f;
+                AttackRange = 180f;
+                AttackDamage = 35f;
+                AttackInterval = 1.2f;
+                DetectionRange = 260f;
                 CarryCapacity = 0;
                 break;
 
             default:
-                Radius = 11f;
-                Speed = 92f;
+                Radius = 10f;
+                Speed = 82f;
                 MaxHealth = 76f;
                 AttackRange = 20f;
                 AttackDamage = 9f;

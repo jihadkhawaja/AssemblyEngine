@@ -179,10 +179,22 @@ public sealed partial class RtsGameScript
         if (IsKeyPressed(KeyCode.E))
             _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(RtsProductionType.Guard, null));
 
+        if (IsKeyPressed(KeyCode.W))
+            _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(RtsProductionType.TankHunter, null));
+
+        if (IsKeyPressed(KeyCode.D))
+            _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(RtsProductionType.Battlemaster, null));
+
         if (IsKeyPressed(KeyCode.R))
             BeginClientStructurePlacement(RtsProductionType.Building);
 
         if (IsKeyPressed(KeyCode.T))
+            BeginClientStructurePlacement(RtsProductionType.WarFactory);
+
+        if (IsKeyPressed(KeyCode.Y))
+            BeginClientStructurePlacement(RtsProductionType.Reactor);
+
+        if (IsKeyPressed(KeyCode.U))
             BeginClientStructurePlacement(RtsProductionType.DefenseTower);
 
         if (IsKeyPressed(KeyCode.D1))
@@ -206,13 +218,21 @@ public sealed partial class RtsGameScript
         if (!leftMouseDown || _leftMouseWasDown)
             return;
 
-        if (IsPointInsideUiElement(MousePosition, "queue-worker-button"))
+        if (IsPointInsideUiElement(MousePosition, "build-slot-1"))
             _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(RtsProductionType.Worker, null));
-        else if (IsPointInsideUiElement(MousePosition, "queue-guard-button"))
+        else if (IsPointInsideUiElement(MousePosition, "build-slot-2"))
             _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(RtsProductionType.Guard, null));
-        else if (IsPointInsideUiElement(MousePosition, "queue-building-button"))
+        else if (IsPointInsideUiElement(MousePosition, "build-slot-3"))
+            _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(RtsProductionType.TankHunter, null));
+        else if (IsPointInsideUiElement(MousePosition, "build-slot-4"))
+            _ = Engine.Multiplayer.SendToHostAsync(RtsMultiplayerChannel.Name, RtsMultiplayerMessageTypes.QueueProduction, new RtsQueueProductionCommand(RtsProductionType.Battlemaster, null));
+        else if (IsPointInsideUiElement(MousePosition, "build-slot-5"))
             BeginClientStructurePlacement(RtsProductionType.Building);
-        else if (IsPointInsideUiElement(MousePosition, "queue-tower-button"))
+        else if (IsPointInsideUiElement(MousePosition, "build-slot-6"))
+            BeginClientStructurePlacement(RtsProductionType.WarFactory);
+        else if (IsPointInsideUiElement(MousePosition, "build-slot-7"))
+            BeginClientStructurePlacement(RtsProductionType.Reactor);
+        else if (IsPointInsideUiElement(MousePosition, "build-slot-8"))
             BeginClientStructurePlacement(RtsProductionType.DefenseTower);
     }
 

@@ -12,9 +12,9 @@ public static class Program
         var audioDir = Path.Combine(AppContext.BaseDirectory, "generated-audio", "rts");
         RtsAudioAssets.EnsureAssets(audioDir);
 
-        var engine = new GameEngine(settings.Width, settings.Height, "AssemblyEngine - Frontier Foundry")
+        var engine = new GameEngine(settings.Width, settings.Height, "AssemblyEngine - Command Center")
         {
-            ClearColor = new Color(9, 14, 20),
+            ClearColor = new Color(20, 16, 10),
             UiScale = settings.UiScale,
             VSyncEnabled = settings.VSyncEnabled,
             PresentationBackend = settings.PresentationBackend
