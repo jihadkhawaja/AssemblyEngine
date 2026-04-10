@@ -118,11 +118,11 @@ internal sealed class RtsStructure
             default:
                 HalfSize = new Vector2(18f, 18f);
                 Radius = 26f;
-                MaxHealth = 200f;
-                AttackRange = 200f;
-                AttackDamage = 18f;
-                AttackInterval = 0.45f;
-                DetectionRange = 240f;
+                MaxHealth = 400f;
+                AttackRange = 280f;
+                AttackDamage = 35f;
+                AttackInterval = 0.25f;
+                DetectionRange = 320f;
                 break;
         }
 
