@@ -172,13 +172,15 @@ public sealed class GameEngine
                 Scenes.Update(dt);
                 Scripts.UpdateAll(dt);
 
-                Graphics.BeginFrame(Width, Height);
-                Graphics.Clear(ClearColor);
-                Scenes.Draw();
-                Scripts.DrawAll();
+                if (Graphics.BeginFrame(Width, Height))
+                {
+                    Graphics.Clear(ClearColor);
+                    Scenes.Draw();
+                    Scripts.DrawAll();
 
-                UI?.Render(Width, Height);
-                Graphics.EndFrame();
+                    UI?.Render(Width, Height);
+                    Graphics.EndFrame();
+                }
                 RuntimeDiagnosticsBridge.Current.ProcessFrameEnd(this);
             }
         }

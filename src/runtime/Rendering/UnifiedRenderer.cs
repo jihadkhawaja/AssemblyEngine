@@ -27,9 +27,10 @@ internal sealed class UnifiedRenderer : IDisposable
     public GraphicsBackend Backend { get; private set; } = GraphicsBackend.Software;
     public Camera3D? ActiveCamera { get; set; }
 
-    public void BeginFrame(int width, int height)
+    public bool BeginFrame(int width, int height)
     {
-        _surface.Resize(width, height);
+        if (!_surface.Resize(width, height))
+            return false;
 
         if (_preferredBackend == GraphicsBackend.Vulkan)
         {
@@ -38,6 +39,8 @@ internal sealed class UnifiedRenderer : IDisposable
             ReportVulkanFallbackIfNeeded();
             _vulkanPresenter?.EnsureSize(width, height, _vSyncEnabled);
         }
+
+        return true;
     }
 
     public void SetVSyncEnabled(bool enabled)

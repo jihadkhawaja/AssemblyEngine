@@ -19,7 +19,7 @@ public static class Graphics
         set => Renderer.ActiveCamera = value;
     }
 
-    internal static void BeginFrame(int width, int height) => Renderer.BeginFrame(width, height);
+    internal static bool BeginFrame(int width, int height) => Renderer.BeginFrame(width, height);
 
     internal static void EndFrame() => Renderer.Present();
 

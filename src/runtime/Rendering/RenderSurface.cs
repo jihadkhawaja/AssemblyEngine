@@ -11,18 +11,19 @@ internal sealed class RenderSurface
     public float[] DepthBuffer { get; private set; } = [];
     public int ByteLength => ColorBuffer.Length * sizeof(uint);
 
-    public void Resize(int width, int height)
+    public bool Resize(int width, int height)
     {
         if (width <= 0 || height <= 0)
-            throw new ArgumentOutOfRangeException(width <= 0 ? nameof(width) : nameof(height));
+            return false;
 
         if (Width == width && Height == height)
-            return;
+            return true;
 
         Width = width;
         Height = height;
         ColorBuffer = new uint[width * height];
         DepthBuffer = new float[width * height];
+        return true;
     }
 
     public void Clear(Color color)
