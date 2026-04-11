@@ -1,21 +1,13 @@
-using AssemblyEngine.Interop;
+using AssemblyEngine.Platform;
 
 namespace AssemblyEngine.Core;
 
 /// <summary>
-/// Frame timing information from the native performance counter.
+/// Frame timing information.
 /// </summary>
 public static class Time
 {
-    public static float DeltaTime
-    {
-        get
-        {
-            int bits = NativeCore.GetDeltaTimeBits();
-            return BitConverter.Int32BitsToSingle(bits);
-        }
-    }
-
-    public static int Fps => NativeCore.GetFps();
-    public static long Ticks => NativeCore.GetTicks();
+    public static float DeltaTime => EngineHost.DeltaTime;
+    public static int Fps => EngineHost.Fps;
+    public static long Ticks => EngineHost.Ticks;
 }

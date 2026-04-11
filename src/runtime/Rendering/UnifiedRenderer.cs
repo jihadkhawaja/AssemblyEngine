@@ -1,6 +1,6 @@
 using AssemblyEngine.Core;
 using AssemblyEngine.Diagnostics;
-using AssemblyEngine.Interop;
+using AssemblyEngine.Platform;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
@@ -37,22 +37,6 @@ internal sealed class UnifiedRenderer : IDisposable
             _vulkanPresenter ??= VulkanPresenter.TryCreate(_windowHandle, width, height, _vSyncEnabled);
             ReportVulkanFallbackIfNeeded();
             _vulkanPresenter?.EnsureSize(width, height, _vSyncEnabled);
-
-            if (_meshRenderer is null && !_reportedMeshRendererFallback)
-            {
-                _meshRenderer = VulkanMeshRenderer.TryCreate();
-                if (_meshRenderer is null)
-                {
-                    _reportedMeshRendererFallback = true;
-                    RuntimeDiagnosticsBridge.Current.LogWarning("engine.render",
-                        "Vulkan mesh renderer unavailable, 3D rendering will use software.");
-                    Console.Error.WriteLine("AssemblyEngine: Vulkan mesh renderer unavailable, 3D falls back to software.");
-                }
-                else
-                {
-                    RuntimeDiagnosticsBridge.Current.LogInfo("engine.render", "Vulkan mesh renderer initialized.");
-                }
-            }
         }
     }
 
@@ -129,6 +113,9 @@ internal sealed class UnifiedRenderer : IDisposable
     public void DrawMesh(Mesh mesh, Matrix4x4 transform, Color color, bool wireframe)
     {
         var camera = ActiveCamera ?? _defaultCamera;
+        if (_preferredBackend == GraphicsBackend.Vulkan)
+            EnsureMeshRenderer();
+
         if (_meshRenderer is not null)
         {
             var aspect = _surface.Height == 0 ? 1f : (float)_surface.Width / _surface.Height;
@@ -150,12 +137,12 @@ internal sealed class UnifiedRenderer : IDisposable
                 && _vulkanPresenter is not null
                 && _vulkanPresenter.Present((IntPtr)colorBuffer, _surface.Width, _surface.Height, _surface.Stride))
             {
-                Backend = _meshRenderer is not null ? GraphicsBackend.Vulkan : GraphicsBackend.Software;
+                Backend = GraphicsBackend.Vulkan;
                 _reportedSoftwarePresentFailure = false;
                 return;
             }
 
-            Backend = _meshRenderer is not null ? GraphicsBackend.Vulkan : GraphicsBackend.Software;
+            Backend = GraphicsBackend.Software;
             ReportVulkanFallbackIfNeeded();
             if (_softwarePresenter.Present((IntPtr)colorBuffer, _surface.Width, _surface.Height, _surface.Stride))
             {
@@ -205,6 +192,11 @@ internal sealed class UnifiedRenderer : IDisposable
         GC.SuppressFinalize(this);
     }
 
+    public void DrawFilledRectDirect(int x, int y, int width, int height, Color color)
+    {
+        SoftwareRasterizer2D.DrawFilledRect(_surface, x, y, width, height, color);
+    }
+
     private void FlushGpuBatch()
     {
         if (_meshRenderer is null || !_meshRenderer.HasPendingDraws)
@@ -218,7 +210,26 @@ internal sealed class UnifiedRenderer : IDisposable
         if (_windowHandle != 0)
             return;
 
-        _windowHandle = NativeCore.GetWindowHandle();
+        _windowHandle = EngineHost.WindowHandle;
+    }
+
+    private void EnsureMeshRenderer()
+    {
+        if (_meshRenderer is not null || _reportedMeshRendererFallback)
+            return;
+
+        _meshRenderer = VulkanMeshRenderer.TryCreate();
+        if (_meshRenderer is null)
+        {
+            _reportedMeshRendererFallback = true;
+            RuntimeDiagnosticsBridge.Current.LogWarning("engine.render",
+                "Vulkan mesh renderer unavailable, 3D rendering will use software.");
+            Console.Error.WriteLine("AssemblyEngine: Vulkan mesh renderer unavailable, 3D falls back to software.");
+        }
+        else
+        {
+            RuntimeDiagnosticsBridge.Current.LogInfo("engine.render", "Vulkan mesh renderer initialized.");
+        }
     }
 
     private void ReportVulkanFallbackIfNeeded()

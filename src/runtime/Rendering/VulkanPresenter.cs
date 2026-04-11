@@ -112,13 +112,13 @@ internal sealed unsafe class VulkanPresenter : IDisposable
         if (sourceSize > _stagingSize)
             return false;
 
-        global::System.Buffer.MemoryCopy((void*)sourceBuffer, (void*)_mappedStaging, _stagingSize, sourceSize);
-
         fixed (Fence* fencePtr = &_inFlightFence)
         {
             _vk.WaitForFences(_device, 1, fencePtr, true, ulong.MaxValue);
             _vk.ResetFences(_device, 1, fencePtr);
         }
+
+        global::System.Buffer.MemoryCopy((void*)sourceBuffer, (void*)_mappedStaging, _stagingSize, sourceSize);
 
         uint imageIndex = 0;
         var acquireResult = _acquireNextImage!(_device, _swapchain, ulong.MaxValue, _imageAvailableSemaphore, default, ref imageIndex);

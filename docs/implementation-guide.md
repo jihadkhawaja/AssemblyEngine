@@ -8,30 +8,28 @@ Most features should move through the engine in a straight line:
 
 ```mermaid
 flowchart LR
-    Native[Native change] --> Runtime[Managed API]
+    Platform[Platform or rendering change] --> Runtime[Managed API]
     Runtime --> Gameplay[Game usage]
     Gameplay --> Docs[Docs or sample update]
 ```
 
-That sequence keeps the engine understandable. Avoid adding a native feature without a managed entry point, and avoid adding a managed API that cannot actually be backed by the native layer.
+That sequence keeps the engine understandable. Avoid adding a platform feature without a managed entry point, and avoid adding a managed API that cannot actually be backed by the platform layer.
 
 ## How the Current Engine Is Wired
 
-### Native core responsibilities
+### Platform host responsibilities (EngineHost)
 
-- Create and own the Win32 window
-- Maintain the fallback framebuffer and present path
-- Process input state
-- Track delta time and FPS
-- Manage native memory with a simple arena allocator
-- Load and draw sprites
-- Load and play audio
+- Create and manage the window via Silk.NET
+- Process input state via Silk.NET Input
+- Track delta time and FPS via managed Stopwatch
+- Manage window modes (windowed, fullscreen, borderless)
+- Support input injection for MCP diagnostics
 
 ### Managed runtime responsibilities
 
-- Provide developer-friendly APIs over the native exports
+- Provide developer-friendly APIs over the platform host
 - Own the unified managed color/depth render surface used by both 2D and 3D draw calls
-- Present that surface through Vulkan when available, or upload it to the native framebuffer when Vulkan is unavailable
+- Present that surface through Vulkan when available, or upload it via GDI software presentation when Vulkan is unavailable
 - Coordinate scenes and scripts
 - Define entities and components
 - Parse HTML and CSS for UI overlays
@@ -45,58 +43,28 @@ The renderer is now intentionally centralized in the managed runtime.
 - `Graphics` routes 2D primitives, sprites, meshes, and cubes into one managed render surface.
 - The render surface keeps both a color buffer and a depth buffer so 3D geometry can share the same final frame as 2D gameplay and UI.
 - When requested, the runtime tries to present that surface through a Vulkan swapchain.
-- If Vulkan cannot be initialized, the runtime emits a warning and presents the same framebuffer through the managed or native software path instead.
+- If Vulkan cannot be initialized, the runtime emits a warning and presents the same framebuffer through the software GDI path instead.
 
 That keeps 2D and 3D unified at the frame level instead of creating separate renderers with different presentation behavior.
 
-## Adding a New Native Feature
+## Adding a New Engine Feature
 
-When a feature belongs in the native core, follow the same pipeline every time.
+When adding a feature to the engine, place it in the appropriate runtime area:
 
-### 1. Add the implementation in the right assembly module
+1. **Platform/rendering**: Add to `src/runtime/Platform/EngineHost.cs` or the rendering subsystem
+2. **High-level API**: Add a wrapper in the matching `Core/` or `Rendering/` area
+3. **Demonstrate**: Show usage in a sample or document it
 
-Choose the native file that matches the subsystem. For a math helper, that is usually `src/core/math.asm`. For a drawing primitive, use `src/core/renderer.asm`.
-
-Example pattern:
-
-```asm
-global ae_math_double
-
-section .text
-ae_math_double:
-    lea eax, [ecx + ecx]
-    ret
-```
-
-### 2. Export the symbol
-
-Add the new function name to `src/core/exports.def`:
-
-```text
-    ae_math_double
-```
-
-### 3. Bind it in the managed interop layer
-
-Add the P/Invoke declaration to `src/runtime/Interop/NativeCore.cs`:
+Example — adding a managed math helper:
 
 ```csharp
-[LibraryImport(DllName, EntryPoint = "ae_math_double")]
-internal static partial int MathDouble(int value);
-```
+namespace AssemblyEngine.Core;
 
-### 4. Expose it through the right managed API surface
-
-If the feature is part of math, graphics, audio, or input, add a wrapper in the matching runtime area instead of calling `NativeCore` directly from game code.
-
-```csharp
 public static class EngineMath
 {
-    public static int Double(int value) => NativeCore.MathDouble(value);
+    public static int Double(int value) => value + value;
 }
 ```
-
-### 5. Demonstrate it in a sample or document it
 
 If contributors cannot see how a new capability is supposed to be used, the feature is still incomplete.
 
@@ -282,19 +250,17 @@ If you add a new UI capability, document the supported HTML or CSS behavior beca
 | Feature type | Best home |
 | --- | --- |
 | New draw primitive or 3D helper | `src/runtime/Rendering` + `src/runtime/Core/Graphics.cs` |
-| New input query | `src/core/input.asm` + `src/runtime/Core/InputSystem.cs` |
-| New audio capability | `src/core/audio.asm` + `src/runtime/Core/Audio.cs` |
+| New input query | `src/runtime/Platform/EngineHost.cs` + `src/runtime/Core/InputSystem.cs` |
+| New audio capability | `src/runtime/Core/Audio.cs` |
 | New scene behavior | `src/runtime/Engine` or a game project |
 | New high-level gameplay rule | a `GameScript` in the game project |
 | New HUD or menu behavior | `src/runtime/UI` plus HTML/CSS assets |
 
 ## Contribution Checklist for Feature Work
 
-- Add or update the native implementation if the feature belongs in the core
-- Export the symbol when required
-- Add the managed interop binding
-- Add a managed wrapper or high-level API
+- Add the managed implementation in the correct runtime area
+- Add a high-level API wrapper if appropriate
 - Update docs and at least one usage example
-- Build the sample game on Windows x64
+- Build the sample game on Windows
 
 The fastest way to produce maintainable changes is to respect the existing layer boundaries instead of skipping around them.

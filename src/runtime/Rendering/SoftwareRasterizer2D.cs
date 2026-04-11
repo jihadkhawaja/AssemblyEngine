@@ -26,11 +26,22 @@ internal static class SoftwareRasterizer2D
         if (x1 >= x2 || y1 >= y2)
             return;
 
-        for (var row = y1; row < y2; row++)
+        var fillWidth = x2 - x1;
+        if (color.A == 255)
         {
-            var rowOffset = row * surface.Width;
-            for (var column = x1; column < x2; column++)
-                Blend(surface.ColorBuffer, rowOffset + column, color);
+            var packed = RenderSurface.PackColor(color);
+            var buffer = surface.ColorBuffer.AsSpan();
+            for (var row = y1; row < y2; row++)
+                buffer.Slice(row * surface.Width + x1, fillWidth).Fill(packed);
+        }
+        else
+        {
+            for (var row = y1; row < y2; row++)
+            {
+                var rowOffset = row * surface.Width;
+                for (var column = x1; column < x2; column++)
+                    Blend(surface.ColorBuffer, rowOffset + column, color);
+            }
         }
     }
 

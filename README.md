@@ -1,21 +1,21 @@
 # AssemblyEngine
 
-AssemblyEngine is a Windows game engine with a native core and a C# runtime for gameplay code, scenes, components, UI workflows, and a unified render surface. The current implementation targets Windows x64 and Windows ARM64, uses HTML/CSS files for HUD and overlay rendering, and can present the managed framebuffer through Vulkan when that backend is explicitly requested.
+AssemblyEngine is a Windows game engine built entirely in managed C# with Silk.NET for cross-platform windowing, input, and Vulkan rendering. The current implementation targets Windows x64 and Windows ARM64, uses HTML/CSS files for HUD and overlay rendering, and can present the managed framebuffer through Vulkan when that backend is explicitly requested.
 
 ## Why AssemblyEngine
 
-- **AI speaks Assembly in his native tongue** Let AI handle the low-level details of CPU registers, memory management, and platform APIs while you stay focused on expressive, high-level game design.
-- Explore a readable low-level engine architecture without hiding the core behind a large native framework.
-- Keep gameplay code approachable in C# while the renderer, platform layer, input, timing, audio, and memory live in NASM.
+- Fully managed C# engine with no native compilation dependencies — just .NET 10 SDK.
+- Cross-platform windowing and input through Silk.NET, with Vulkan rendering support.
+- Keep gameplay code approachable in C# with a clean, readable engine architecture.
 - Use simple HTML/CSS for in-game overlays instead of a separate browser process or a custom widget toolkit.
-- Grow from a Windows x64 prototype into a multi-platform engine over time.
+- Grow from a Windows prototype into a multi-platform engine over time.
 
 ## Current Status
 
 - Supported platforms: Windows x64, Windows ARM64
-- Native core: NASM x64 backend, NativeAOT ARM64 backend, shared Win32 window/input/audio contract with software presentation fallback
-- Managed runtime: .NET 10
-- Rendering: unified managed 2D/3D color + depth surface, opt-in Vulkan swapchain presentation, native framebuffer upload fallback
+- Engine: fully managed C# with Silk.NET windowing and input
+- Runtime: .NET 10
+- Rendering: unified managed 2D/3D color + depth surface, opt-in Vulkan swapchain presentation, software GDI fallback
 - Multiplayer: managed direct peer-to-peer and localhost sessions over the runtime multiplayer service
 - Sample games: Dash Harvest in `sample/basic`, Citadel Breach in `sample/fps`, Frontier Foundry in `sample/rts`, Lantern Letters in `sample/visual-novel`
 - UI system: runtime HTML/CSS parsing with a built-in text renderer
@@ -25,14 +25,13 @@ AssemblyEngine is a Windows game engine with a native core and a C# runtime for 
 ```mermaid
 flowchart LR
 	Game[Game project] --> Runtime[Managed runtime]
-	Runtime --> Native[Native core]
+	Runtime --> SilkNET[Silk.NET windowing and input]
 	Runtime --> UI[UI system]
-	Native --> Platform[Platform services]
-	Native --> Rendering[Rendering and assets]
-	Native --> Systems[Input, audio, timing, memory]
+	Runtime --> Vulkan[Vulkan presenter]
+	Runtime --> Software[Software GDI fallback]
 ```
 
-The game project uses the managed runtime, the runtime bridges to the native core for windowing and low-level services, and the runtime's unified renderer feeds either a Vulkan presenter or the native framebuffer fallback.
+The game project uses the managed runtime, which uses Silk.NET for cross-platform windowing and input. The runtime's unified renderer feeds either a Vulkan presenter or the software GDI fallback.
 
 ## What You Can Build Today
 
@@ -44,9 +43,9 @@ The game project uses the managed runtime, the runtime bridges to the native cor
 - Scene-based games with entities, components, and scripts
 - HTML/CSS HUD overlays updated from C# scripts
 - Direct host or join multiplayer flows from managed scripts through `GameEngine.Multiplayer`
-- Vulkan swapchain presentation when `GameEngine.PresentationBackend` is set to `GraphicsBackend.Vulkan`, with native software blitting as fallback
+- Vulkan swapchain presentation when `GameEngine.PresentationBackend` is set to `GraphicsBackend.Vulkan`, with software GDI fallback
 
-If Vulkan is explicitly requested but the runtime cannot load the required swapchain entry points from the active driver stack, AssemblyEngine logs a warning and continues on the unified software path instead of failing startup.
+If Vulkan is explicitly requested but the runtime cannot load the required swapchain entry points from the active driver stack, AssemblyEngine logs a warning and continues on the software GDI path instead of failing startup.
 
 ## Quick Start
 
@@ -56,11 +55,8 @@ If Vulkan is explicitly requested but the runtime cannot load the required swapc
 .\setup.ps1
 ```
 
-The setup script installs any missing prerequisites that the solution and samples need, including:
+The setup script validates and installs any missing prerequisites:
 - .NET 10 SDK
-- Visual Studio Build Tools with the required C++ workloads and x64 or ARM64 linker components
-- NASM for the x64 assembly backend
-- On Windows ARM64, the x64 .NET runtime used by the win-x64 compatibility build
 
 If you only want an audit, run:
 
@@ -74,16 +70,10 @@ If you only want an audit, run:
 .\setup.ps1 -CheckOnly
 ```
 
-3. Build the native core, runtime, and sample game:
+3. Build the runtime and sample game:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1
-```
-
-On Windows ARM64, `build.ps1` defaults to the native `arm64` backend. To build the compatibility x64 backend explicitly, run:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -TargetArchitecture x64
 ```
 
 To publish the visual novel sample instead of Dash Harvest, pass the sample selector:
@@ -199,7 +189,7 @@ Typical runtime MCP workflow:
 - Use `get_session_status` and `wait_for_logs` to inspect runtime state and tail logs.
 - Use `capture_screenshot` to grab the current rendered frame and `send_key` or mouse tools to drive the game.
 
-If you prefer to iterate from an IDE, building `sample/basic/SampleGame.csproj`, `sample/fps/FpsSample.csproj`, `sample/rts/RtsSample.csproj`, or `sample/visual-novel/VisualNovelSample.csproj` on Windows also triggers `shell/build_core.ps1` before the managed build. Choose the `ARM64` solution platform to build the native ARM64 backend.
+If you prefer to iterate from an IDE, build `sample/basic/SampleGame.csproj`, `sample/fps/FpsSample.csproj`, `sample/rts/RtsSample.csproj`, or `sample/visual-novel/VisualNovelSample.csproj` directly with `dotnet build`.
 
 ## Minimal Example
 
@@ -263,9 +253,7 @@ public static class Program
 
 | Path | Purpose |
 | --- | --- |
-| `src/core` | Native engine core written in NASM |
-| `src/nativearm64` | Native ARM64 backend built as a NativeAOT shared library |
-| `src/runtime` | Managed runtime, interop layer, scene system, and UI stack |
+| `src/runtime` | Managed engine runtime, scene system, rendering, and UI stack |
 | `sample/basic` | Playable 2D arcade sample built on top of the runtime |
 | `sample/fps` | Playable 3D FPS arena sample built on top of the runtime |
 | `sample/rts` | Playable top-down RTS sample with harvesting, production, and enemy raids |
@@ -287,11 +275,10 @@ public static class Program
 
 Near-term priorities:
 
-- Stabilize the Windows x64 runtime and native API surface
-- Keep the Windows ARM64 backend aligned with the x64 native contract
-- Expand the managed wrappers around the native exports
+- Stabilize the managed runtime and Silk.NET platform layer
 - Improve the asset and tooling story around sprites, audio, and UI
 - Keep the architecture readable and easy to extend
+- Expand Vulkan rendering capabilities
 
 Longer-term platform targets:
 
@@ -303,7 +290,7 @@ Longer-term platform targets:
 
 ## Contributing
 
-Contributions are welcome, especially around native features, managed wrappers, sample content, documentation, and additional platform work. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [implementation guide](docs/implementation-guide.md) so changes follow the existing layer boundaries.
+Contributions are welcome, especially around rendering features, sample content, documentation, and additional platform work. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [implementation guide](docs/implementation-guide.md) so changes follow the existing layer boundaries.
 
 ## License
 

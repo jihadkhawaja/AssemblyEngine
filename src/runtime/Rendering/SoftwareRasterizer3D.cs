@@ -10,6 +10,8 @@ internal static class SoftwareRasterizer3D
         if (mesh.Vertices.Count == 0 || mesh.Indices.Count < 3)
             return;
 
+        surface.EnsureDepthCleared();
+
         var aspectRatio = surface.Height == 0 ? 1f : (float)surface.Width / surface.Height;
         var worldViewProjection = transform * camera.CreateViewMatrix() * camera.CreateProjectionMatrix(aspectRatio);
 

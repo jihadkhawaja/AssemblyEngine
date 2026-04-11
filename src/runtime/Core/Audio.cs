@@ -1,24 +1,19 @@
-using AssemblyEngine.Interop;
 using System.Runtime.InteropServices;
 
 namespace AssemblyEngine.Core;
 
 /// <summary>
-/// High-level audio API wrapping the native assembly audio system.
+/// High-level audio API using managed WAV playback.
 /// </summary>
 public static partial class Audio
 {
-    private const int ManagedSoundIdBase = 1_000_000;
     private static readonly Dictionary<int, ManagedSoundBuffer> ManagedSounds = [];
     private static readonly Lock ManagedSoundLock = new();
+    private static int _nextId;
 
     public static int LoadSound(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
-        var nativeId = NativeCore.LoadSound(path);
-        if (nativeId >= 0)
-            return nativeId;
 
         if (!File.Exists(path))
             return -1;
@@ -29,31 +24,30 @@ public static partial class Audio
 
         lock (ManagedSoundLock)
         {
-            var managedId = ManagedSoundIdBase + ManagedSounds.Count;
-            ManagedSounds[managedId] = new ManagedSoundBuffer(data);
-            return managedId;
+            var id = _nextId++;
+            ManagedSounds[id] = new ManagedSoundBuffer(data);
+            return id;
         }
     }
 
     public static bool PlaySound(int id)
     {
-        ManagedSoundBuffer? managedSound;
+        ManagedSoundBuffer? sound;
         lock (ManagedSoundLock)
-            ManagedSounds.TryGetValue(id, out managedSound);
+            ManagedSounds.TryGetValue(id, out sound);
 
-        if (managedSound is not null)
-            return ManagedAudioFallback.Play(managedSound.Pointer);
+        if (sound is null)
+            return false;
 
-        return NativeCore.PlaySound(id) != 0;
+        return ManagedAudioPlayer.Play(sound.Pointer);
     }
 
     public static void StopAll()
     {
-        NativeCore.StopSound();
-        ManagedAudioFallback.Stop();
+        ManagedAudioPlayer.Stop();
     }
 
-    private static partial class ManagedAudioFallback
+    private static partial class ManagedAudioPlayer
     {
         private const uint SndAsync = 0x0001;
         private const uint SndNodefault = 0x0002;

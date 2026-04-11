@@ -1,5 +1,4 @@
 using AssemblyEngine.Core;
-using AssemblyEngine.Interop;
 using AssemblyEngine.Platform;
 
 namespace AssemblyEngine.Diagnostics;
@@ -94,18 +93,18 @@ internal sealed class InjectedInputController
         {
             if (_mouseX.HasValue && _mouseY.HasValue)
             {
-                NativeCore.SetMousePosition(_mouseX.Value, _mouseY.Value);
+                EngineHost.InjectMousePosition(_mouseX.Value, _mouseY.Value);
                 _mouseX = null;
                 _mouseY = null;
             }
 
             foreach (var key in _dirtyKeys)
-                NativeCore.SetKeyState(EnginePlatform.Current.ToNativeKeyCode(key), _keyStates[key] ? 1 : 0);
+                EngineHost.InjectKeyState(key, _keyStates[key]);
 
             _dirtyKeys.Clear();
 
             foreach (var button in _dirtyMouseButtons)
-                NativeCore.SetMouseButtonState(EnginePlatform.Current.ToNativeMouseButton(button), _mouseButtonStates[button] ? 1 : 0);
+                EngineHost.InjectMouseButtonState(button, _mouseButtonStates[button]);
 
             _dirtyMouseButtons.Clear();
 

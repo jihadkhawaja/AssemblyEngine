@@ -28,6 +28,15 @@ internal sealed class RenderSurface
     public void Clear(Color color)
     {
         Array.Fill(ColorBuffer, PackColor(color));
+        _depthDirty = true;
+    }
+
+    private bool _depthDirty;
+
+    public void EnsureDepthCleared()
+    {
+        if (!_depthDirty) return;
+        _depthDirty = false;
         Array.Fill(DepthBuffer, float.PositiveInfinity);
     }
 

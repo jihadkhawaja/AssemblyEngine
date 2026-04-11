@@ -72,4 +72,7 @@ public static class Graphics
 
     public static void DrawCube(Matrix4x4 transform, Color color, bool wireframe = false) =>
         Renderer.DrawMesh(Mesh.CreateCube(), transform, color, wireframe);
+
+    internal static void DrawFilledRectDirect(int x, int y, int w, int h, Color color) =>
+        Renderer.DrawFilledRectDirect(x, y, w, h, color);
 }

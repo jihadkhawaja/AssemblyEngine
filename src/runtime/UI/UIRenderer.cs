@@ -151,7 +151,7 @@ public static class UIRenderer
                 if ((bits & mask) == 0)
                     continue;
 
-                Graphics.DrawFilledRect(
+                Graphics.DrawFilledRectDirect(
                     x + column * scale,
                     y + row * scale,
                     scale,

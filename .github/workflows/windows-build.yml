@@ -71,14 +71,12 @@ jobs:
             artifact: windows-x64-sample-binaries
             asset_suffix: windows-x64-samples
             output_dir: build\sample-publish\x64
-            installNasm: true
           - name: Publish Windows ARM64 samples
             runner: windows-11-arm
             target: arm64
             artifact: windows-arm64-sample-binaries
             asset_suffix: windows-arm64-samples
             output_dir: build\sample-publish\arm64
-            installNasm: false
 
     steps:
       - name: Checkout
@@ -88,11 +86,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-
-      - name: Install NASM
-        if: ${{ matrix.installNasm }}
-        shell: pwsh
-        run: choco install nasm --yes --no-progress
 
       - name: Validate toolchain
         shell: pwsh

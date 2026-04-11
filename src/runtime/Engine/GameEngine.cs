@@ -1,6 +1,5 @@
 using AssemblyEngine.Core;
 using AssemblyEngine.Diagnostics;
-using AssemblyEngine.Interop;
 using AssemblyEngine.Networking;
 using AssemblyEngine.Platform;
 using AssemblyEngine.Scripting;
@@ -58,8 +57,6 @@ public sealed class GameEngine
         {
             _vSyncEnabled = value;
             Graphics.SetVSyncEnabled(value);
-            if (_initialized)
-                NativeCore.SetVSyncEnabled(value ? 1 : 0);
         }
     }
 
@@ -89,25 +86,8 @@ public sealed class GameEngine
         RuntimeDiagnosticsBridge.Current.Attach(this);
         RuntimeDiagnosticsBridge.Current.LogInfo("engine.initialize", $"Initializing '{Title}'.");
 
-        int result;
-        try
-        {
-            result = NativeCore.Init(Width, Height, Title);
-        }
-        catch (Exception ex) when (ex is DllNotFoundException or BadImageFormatException)
-        {
-            RuntimeDiagnosticsBridge.Current.LogError("engine.initialize", ex);
-            throw EnginePlatform.Current.CreateNativeCoreLoadException(ex);
-        }
+        EngineHost.Initialize(Width, Height, Title);
 
-        if (result == 0)
-        {
-            var exception = new InvalidOperationException("Failed to initialize native engine core.");
-            RuntimeDiagnosticsBridge.Current.LogError("engine.initialize", exception);
-            throw exception;
-        }
-
-        NativeCore.SetVSyncEnabled(VSyncEnabled ? 1 : 0);
         Graphics.SetPreferredBackend(PresentationBackend);
         Graphics.SetVSyncEnabled(VSyncEnabled);
         var desiredWindowMode = WindowMode;
@@ -115,7 +95,7 @@ public sealed class GameEngine
 
         if (WindowMode != desiredWindowMode)
         {
-            if (NativeCore.SetWindowMode((int)desiredWindowMode) == 0)
+            if (!EngineHost.SetWindowMode(desiredWindowMode))
                 throw new InvalidOperationException($"Failed to apply window mode '{desiredWindowMode}'.");
             SyncWindowState();
         }
@@ -141,7 +121,7 @@ public sealed class GameEngine
             return true;
         }
 
-        if (NativeCore.ResizeWindow(width, height) == 0)
+        if (!EngineHost.ResizeWindow(width, height))
             return false;
 
         SyncWindowState();
@@ -160,7 +140,7 @@ public sealed class GameEngine
             return true;
         }
 
-        if (NativeCore.SetWindowMode((int)windowMode) == 0)
+        if (!EngineHost.SetWindowMode(windowMode))
             return false;
 
         SyncWindowState();
@@ -182,7 +162,7 @@ public sealed class GameEngine
             Scripts.LoadAll();
             RuntimeDiagnosticsBridge.Current.LogInfo("engine.run", "Game loop started.");
 
-            while (NativeCore.PollEvents() != 0)
+            while (EngineHost.PollEvents())
             {
                 SyncWindowState();
                 RuntimeDiagnosticsBridge.Current.ProcessFrameStart(this);
@@ -225,7 +205,7 @@ public sealed class GameEngine
                 {
                     Multiplayer.StopAsync().GetAwaiter().GetResult();
                     Graphics.Shutdown();
-                    NativeCore.Shutdown();
+                    EngineHost.Shutdown();
                 }
                 catch (Exception ex)
                 {
@@ -253,15 +233,8 @@ public sealed class GameEngine
 
     private void SyncWindowState()
     {
-        Width = NativeCore.GetWindowWidth();
-        Height = NativeCore.GetWindowHeight();
-        WindowMode = FromNativeWindowMode(NativeCore.GetWindowMode());
-    }
-
-    private static WindowMode FromNativeWindowMode(int windowMode)
-    {
-        return Enum.IsDefined(typeof(WindowMode), windowMode)
-            ? (WindowMode)windowMode
-            : WindowMode.Windowed;
+        Width = EngineHost.WindowWidth;
+        Height = EngineHost.WindowHeight;
+        WindowMode = EngineHost.GetWindowMode();
     }
 }

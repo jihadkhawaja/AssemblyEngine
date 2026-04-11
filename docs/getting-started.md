@@ -8,12 +8,6 @@ This guide walks through the current Windows x64 and Windows ARM64 setup for Ass
 - Windows 11 ARM64
 - PowerShell 5.1 or later
 - .NET 10 SDK and runtime
-- NASM for x64 backend builds
-- Visual Studio 2026 or Build Tools with the Desktop development with C++ workload
-
-If you are on Windows ARM64 and also want the compatibility x64 build, install the x64 .NET runtime or SDK under `%ProgramFiles%\dotnet\x64`.
-
-AssemblyEngine currently links the native core with `link.exe`, so the MSVC toolchain is required even if you primarily work from VS Code.
 
 ## 1. Clone the Repository
 
@@ -32,12 +26,9 @@ Run the repository setup script:
 .\setup.ps1
 ```
 
-The script installs any missing prerequisites and then restores the managed solution dependencies. It covers:
+The script validates and installs any missing prerequisites:
 
 - the .NET 10 SDK
-- NASM for the x64 assembly backend
-- Visual Studio Build Tools or Visual Studio with the required C++ workloads and linker targets
-- the x64 .NET runtime on Windows ARM64 so the compatibility win-x64 sample can run under emulation
 - a `dotnet restore` pass for the solution
 
 If you only want to audit the machine state without changing it, run:
@@ -60,13 +51,7 @@ To build everything in one pass:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1
 ```
 
-That script builds the native core for the selected target architecture, then builds the managed runtime and sample game. On Windows ARM64, the default target is native `arm64`.
-
-To build the x64 backend explicitly:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -TargetArchitecture x64
-```
+That script builds the managed runtime and publishes the selected sample game.
 
 To publish the visual novel sample instead of Dash Harvest:
 
@@ -100,12 +85,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\publish_samples.ps1 
 
 Those outputs land in `build/sample-publish/<architecture>` and contain runnable sample binaries, not source or standalone engine SDK artifacts.
 
-To build the native ARM64 backend explicitly:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1 -TargetArchitecture arm64
-```
-
 The expected runnable output lands in `build/output`.
 
 ## 4. Run the Sample
@@ -132,7 +111,7 @@ Or, after using `-Sample rts`:
 .\build\output\RtsSample.exe
 ```
 
-On Windows ARM64, the default build is native `win-arm64`. If you built `-TargetArchitecture x64`, Windows runs the sample through the x64 emulation layer instead.
+On Windows ARM64, the default build targets `win-arm64`.
 
 The default sample is Dash Harvest, a small arcade loop used to exercise scenes, scripts, collision, the HTML/CSS HUD, and generated 8-bit SFX. The repository also includes Citadel Breach in `sample/fps`, a 3D FPS arena sample built from cubes, camera control, hitscan shooting, and a HUD overlay, Frontier Foundry in `sample/rts`, a top-down RTS sample with harvesting, production queues, rally points, and escalating raids, plus Lantern Letters in `sample/visual-novel`, a dialogue-driven sample with generated character sprites, parallax backgrounds, save/load, skip mode, and its own 8-bit SFX set.
 
@@ -180,7 +159,7 @@ You have two common loops:
 
 ### Full build loop
 
-Use this when you touched both assembly and managed code:
+Use this when you changed runtime or sample code:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\shell\build.ps1
@@ -212,7 +191,7 @@ Or for the RTS sample:
 dotnet build .\sample\rts\RtsSample.csproj -c Release
 ```
 
-On Windows, both sample projects invoke `shell/build_core.ps1` before the managed build, so the native DLL is rebuilt automatically. Use the `ARM64` platform in the solution or pass `-p:Platform=ARM64` on the command line to target the native ARM64 backend.
+On Windows, build sample projects directly with `dotnet build` or `dotnet publish`.
 
 ## 6. Open the Workspace
 
@@ -225,9 +204,7 @@ You can work with either of these entry points:
 
 | Path | Description |
 | --- | --- |
-| `src/core` | NASM native engine modules |
-| `src/nativearm64` | NativeAOT ARM64 backend |
-| `src/runtime` | Managed runtime, interop, scenes, scripts, and UI |
+| `src/runtime` | Managed engine runtime, rendering, scenes, scripts, and UI |
 | `sample/basic` | Sample game project |
 | `sample/fps` | 3D FPS sample project |
 | `sample/rts` | Top-down RTS sample project |
@@ -236,22 +213,6 @@ You can work with either of these entry points:
 | `docs` | Project documentation |
 
 ## Troubleshooting
-
-### `nasm` is not found
-
-Run `.\setup.ps1` again so it can install NASM through `winget`, or install NASM manually and ensure it is discoverable on `PATH`.
-
-### `link.exe` or the MSVC toolchain is not found
-
-Run `.\setup.ps1` again so it can install or modify Visual Studio Build Tools with the required C++ workloads and linker targets. The build scripts use `vswhere.exe` to locate the linker for the selected target, including `HostARM64\arm64\link.exe` for native ARM64 builds and `HostARM64\x64\link.exe` for x64 compatibility builds.
-
-### `assemblycore.dll` is missing at runtime
-
-Build through `shell/build.ps1` or `SampleGame.csproj` so the native DLL is produced and copied into the output folder.
-
-### The ARM64 sample does not start on Windows
-
-Rebuild with `-TargetArchitecture arm64` so the output includes the native ARM64 `assemblycore.dll`. If you are intentionally using the x64 compatibility build, rerun `.\setup.ps1` so it can install the x64 .NET runtime under `%ProgramFiles%\dotnet\x64`.
 
 ### The UI does not appear
 

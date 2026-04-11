@@ -542,7 +542,11 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
         if (_rtWidth == width && _rtHeight == height && _framebuffer.Handle != 0)
             return;
 
-        _vk.DeviceWaitIdle(_device);
+        if (_fence.Handle != 0)
+        {
+            var fence = _fence;
+            _vk.WaitForFences(_device, 1, &fence, true, ulong.MaxValue);
+        }
         DestroyRenderTargets();
 
         _colorImage = CreateImage(width, height, Format.B8G8R8A8Unorm,
@@ -629,10 +633,13 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
     {
         if (capacity >= needed && mapped != 0) return;
 
-        if (_device.Handle != 0)
-            _vk.DeviceWaitIdle(_device);
+        if (_device.Handle != 0 && _fence.Handle != 0)
+        {
+            var fence = _fence;
+            _vk.WaitForFences(_device, 1, &fence, true, ulong.MaxValue);
+        }
         DestroyHostBuffer(ref buffer, ref memory, ref mapped, ref capacity);
-        var size = Math.Max(needed, 65536UL);
+        var size = Math.Max(needed * 2, 65536UL);
         var ci = new BufferCreateInfo
         {
             SType = StructureType.BufferCreateInfo,

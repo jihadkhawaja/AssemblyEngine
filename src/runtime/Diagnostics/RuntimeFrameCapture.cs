@@ -1,5 +1,5 @@
 using AssemblyEngine.Core;
-using AssemblyEngine.Interop;
+using AssemblyEngine.Platform;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -14,8 +14,8 @@ internal static class RuntimeFrameCapture
 {
     public static RuntimeScreenshot CapturePng()
     {
-        int width = NativeCore.GetWindowWidth();
-        int height = NativeCore.GetWindowHeight();
+        int width = EngineHost.WindowWidth;
+        int height = EngineHost.WindowHeight;
         if (width <= 0 || height <= 0)
             throw new InvalidOperationException("The engine window is not initialized yet.");
 

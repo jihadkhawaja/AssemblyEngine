@@ -1,5 +1,5 @@
 # AssemblyEngine
-Core engine in assembly, scripting in C#, UI in HTML and CSS.
+Managed C# game engine with Silk.NET windowing/input and Vulkan rendering, scripting in C#, UI in HTML and CSS.
 
 ## Platforms
 Platforms that the engine can run on.
@@ -26,7 +26,6 @@ shell folder should contain scripts to easily build, run and setup the project.
 
 ### Prerequisites
 - .NET 10 SDK and runtime
-- NASM
 
 ## Testing
 - Write unit tests

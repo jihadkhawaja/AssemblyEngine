@@ -1,4 +1,4 @@
-using AssemblyEngine.Interop;
+using AssemblyEngine.Platform;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
@@ -68,7 +68,7 @@ internal sealed unsafe class SoftwareWindowPresenter : IDisposable
         if (_deviceContext != IntPtr.Zero)
             return;
 
-        _windowHandle = NativeCore.GetWindowHandle();
+        _windowHandle = EngineHost.WindowHandle;
         if (_windowHandle == IntPtr.Zero)
             return;
 

@@ -1,8 +1,7 @@
 #Requires -Version 5.1
 # ============================================================================
 # AssemblyEngine Build Script
-# Prerequisites: .NET 10 SDK, MSVC toolchain, NASM for x64 backend builds
-# Builds the matching native backend for x64 or ARM64.
+# Prerequisites: .NET 10 SDK
 # ============================================================================
 
 param(
@@ -37,21 +36,6 @@ function Resolve-ExecutablePath {
     }
 
     throw "Missing required tool '$Name'. $HelpText"
-}
-
-function Get-VsWherePath {
-    $paths = @(
-        'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe',
-        'C:\Program Files\Microsoft Visual Studio\Installer\vswhere.exe'
-    )
-
-    foreach ($path in $paths) {
-        if (Test-Path $path) {
-            return $path
-        }
-    }
-
-    throw 'Visual Studio installer metadata was not found. Install Visual Studio with the Desktop development with C++ workload.'
 }
 
 function Get-HostArchitecture {
@@ -104,7 +88,6 @@ Write-Host "==================================="
 Write-Host ""
 
 # --- Configuration ---
-$CoreDir    = Join-Path $PSScriptRoot "..\src\core"
 $RuntimeDir = Join-Path $PSScriptRoot "..\src\runtime"
 $McpServerDir = Join-Path $PSScriptRoot "..\src\tools\AssemblyEngine.RuntimeMcpServer"
 $BuildDir   = Join-Path $PSScriptRoot "..\build"
@@ -112,7 +95,6 @@ $OutDir     = Join-Path $PSScriptRoot "..\build\output"
 $McpOutDir  = Join-Path $OutDir "mcp"
 $HostArchitecture = Get-HostArchitecture
 $ResolvedTargetArchitecture = Resolve-TargetArchitecture -RequestedArchitecture $TargetArchitecture -HostArchitecture $HostArchitecture
-$CoreBuildScript = Join-Path $PSScriptRoot 'build_core.ps1'
 
 $DotnetExe = Resolve-ExecutablePath -Name 'dotnet' -FallbackPaths @(
     'C:\Program Files\dotnet\dotnet.exe',
@@ -154,17 +136,8 @@ $SampleAssemblyName = $SelectedSample.AssemblyName
 # --- Create build directories ---
 New-Item -ItemType Directory -Path $BuildDir, $OutDir -Force | Out-Null
 
-# --- Step 1: Build native core ---
-Write-Host ("[1/4] Building native core ({0})..." -f $ResolvedTargetArchitecture)
-& $CoreBuildScript -TargetArchitecture $ResolvedTargetArchitecture
-if ($LASTEXITCODE -ne 0) {
-    throw "Failed to build the native core for $ResolvedTargetArchitecture."
-}
-Write-Host "  Native core built successfully."
-Write-Host ""
-
-# --- Step 2: Build C# Runtime ---
-Write-Host "[2/4] Building C# runtime..."
+# --- Step 1: Build C# Runtime ---
+Write-Host "[1/3] Building C# runtime..."
 & $DotnetExe build (Join-Path $RuntimeDir "AssemblyEngine.Runtime.csproj") -c Release -o $OutDir
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to build C# runtime."
@@ -172,8 +145,8 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "  Runtime built successfully."
 Write-Host ""
 
-# --- Step 3: Build MCP Server ---
-Write-Host "[3/4] Building runtime MCP server..."
+# --- Step 2: Build MCP Server ---
+Write-Host "[2/3] Building runtime MCP server..."
 New-Item -ItemType Directory -Path $McpOutDir -Force | Out-Null
 & $DotnetExe build (Join-Path $McpServerDir "AssemblyEngine.RuntimeMcpServer.csproj") -c Release -o $McpOutDir
 if ($LASTEXITCODE -ne 0) {
@@ -182,8 +155,8 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "  Runtime MCP server built successfully."
 Write-Host ""
 
-# --- Step 4: Publish Sample Game ---
-Write-Host ("[4/4] Publishing sample '{0}'..." -f $Sample)
+# --- Step 3: Publish Sample Game ---
+Write-Host ("[3/3] Publishing sample '{0}'..." -f $Sample)
 $samplePlatform = if ($ResolvedTargetArchitecture -eq 'arm64') { 'ARM64' } else { 'x64' }
 $sampleRid = if ($ResolvedTargetArchitecture -eq 'arm64') { 'win-arm64' } else { 'win-x64' }
 $samplePublishArtifacts = @()
@@ -205,7 +178,7 @@ foreach ($artifact in $samplePublishArtifacts) {
     }
 }
 
-& $DotnetExe publish $SampleProject -c Release -o $OutDir -p:Platform=$samplePlatform -p:RuntimeIdentifier=$sampleRid -p:SkipNativeCoreBuild=true
+& $DotnetExe publish $SampleProject -c Release -o $OutDir -p:Platform=$samplePlatform -p:RuntimeIdentifier=$sampleRid
 if ($LASTEXITCODE -ne 0) {
     throw "Failed to publish sample game."
 }

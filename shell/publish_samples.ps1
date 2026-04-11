@@ -98,7 +98,6 @@ function Resolve-OutputPath {
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$buildCoreScript = Join-Path $PSScriptRoot 'build_core.ps1'
 $dotnetExe = Resolve-ExecutablePath -Name 'dotnet' -FallbackPaths @(
     'C:\Program Files\dotnet\dotnet.exe',
     'C:\Program Files\dotnet\x64\dotnet.exe'
@@ -147,27 +146,19 @@ Write-Host ("Publish mode:        {0}" -f $publishMode)
 Write-Host ("Output root:         {0}" -f $resolvedOutputRoot)
 Write-Host ''
 
-Write-Host ("[1/2] Building native core ({0})..." -f $resolvedTargetArchitecture)
-& $buildCoreScript -TargetArchitecture $resolvedTargetArchitecture
-if ($LASTEXITCODE -ne 0) {
-    throw "Failed to build the native core for $resolvedTargetArchitecture."
-}
-Write-Host '  Native core built successfully.'
-Write-Host ''
-
 if (Test-Path $resolvedOutputRoot) {
     Remove-Item $resolvedOutputRoot -Recurse -Force
 }
 
 New-Item -ItemType Directory -Path $resolvedOutputRoot -Force | Out-Null
 
-Write-Host '[2/2] Publishing sample applications...'
+Write-Host 'Publishing sample applications...'
 foreach ($sampleDefinition in $sampleDefinitions) {
     $sampleOutputDir = Join-Path $resolvedOutputRoot $sampleDefinition.Key
     New-Item -ItemType Directory -Path $sampleOutputDir -Force | Out-Null
 
     Write-Host ("  - {0}" -f $sampleDefinition.DisplayName)
-    & $dotnetExe publish $sampleDefinition.Project -c Release -o $sampleOutputDir -p:Platform=$samplePlatform -p:RuntimeIdentifier=$sampleRid -p:SkipNativeCoreBuild=true -p:SelfContained=true
+    & $dotnetExe publish $sampleDefinition.Project -c Release -o $sampleOutputDir -p:Platform=$samplePlatform -p:RuntimeIdentifier=$sampleRid -p:SelfContained=true
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to publish sample '$($sampleDefinition.Key)'."
     }

@@ -1,37 +1,26 @@
 # Architecture
 
-AssemblyEngine is split into three layers: a native core, a managed runtime, and one or more game projects built on top of the runtime.
+AssemblyEngine is a fully managed C# engine built on .NET 10 with Silk.NET for cross-platform windowing and input.
 
 ## Layered Overview
 
 ```mermaid
 flowchart TB
     Game[Game project] --> Runtime[Managed runtime]
-    Runtime --> Native[Native core]
+    Runtime --> SilkNET[Silk.NET windowing and input]
     Runtime --> UiStack[UI system]
-    Native --> Platform[Platform layer]
+    Runtime --> Vulkan[Vulkan presenter]
 ```
 
-## Native Core
+## Platform Host
 
-The native core is built into `assemblycore.dll`. It owns the window, the software framebuffer, input state, timing, audio buffers, and the arena allocator.
+The `EngineHost` static class in `src/runtime/Platform/EngineHost.cs` manages the Silk.NET window, input context, and frame timing. It replaces the former native core and provides:
 
-### Native Modules
-
-| File | Responsibility |
-| --- | --- |
-| `platform_win64.asm` | Window creation, message pump, framebuffer present, engine lifetime |
-| `src/nativearm64/Platform/Windows/*` | ARM64-native window, backbuffer, and display management on Windows |
-| `renderer.asm` | Clear, pixel, line, rectangle, and circle drawing |
-| `sprite.asm` | BMP sprite loading and drawing |
-| `input.asm` | Keyboard and mouse queries |
-| `audio.asm` | WAV loading and playback |
-| `timer.asm` | `QueryPerformanceCounter` timing and FPS |
-| `memory.asm` | Arena allocation and reset |
-| `math.asm` | Utility math exports |
-| `src/nativearm64/*` | Native ARM64 backend that preserves the same export surface with a NativeAOT implementation |
-
-The x64 assembly side uses a shared `g_engine` state structure so the platform, renderer, input, timing, and memory modules can cooperate without an extra abstraction layer. The ARM64 backend keeps the same exported API but implements it in a NativeAOT shared library so the managed runtime can stay architecture-neutral.
+- Window creation and lifecycle via `Silk.NET.Windowing`
+- Keyboard and mouse input via `Silk.NET.Input`
+- Frame timing via `System.Diagnostics.Stopwatch`
+- Window mode management (windowed, fullscreen, borderless)
+- Input injection for MCP diagnostics
 
 ## Managed Runtime
 
@@ -41,22 +30,22 @@ The managed runtime lives in `src/runtime` and acts as the developer-facing API.
 
 | Folder | Responsibility |
 | --- | --- |
-| `Interop` | P/Invoke bindings into `assemblycore.dll` |
-| `Platform` | Runtime platform boundary for OS-specific input translation, native library resolution, and native-core diagnostics |
+| `Platform` | `EngineHost` — Silk.NET window, input, and timing management |
 | `Core` | High-level drawing, input, audio, time, and primitive types |
 | `Engine` | `GameEngine`, scenes, entities, and components |
 | `Scripting` | `GameScript` base class and script registration/loading |
+| `Rendering` | Unified 2D/3D renderer, Vulkan presenter, software GDI presenter |
 | `UI` | HTML parsing, CSS parsing, layout, and rendering |
 
-The runtime deliberately keeps game code away from raw P/Invoke. The usual extension path is: native export -> interop binding -> platform translation when needed -> managed wrapper -> gameplay usage. The platform layer now also owns native library resolution so platform-specific library layout does not leak into gameplay-facing code.
+The runtime keeps game code away from platform details. The usual extension path is: add the managed implementation in the right runtime area, expose it through a high-level API, then use it from gameplay code.
 
 ## Frame Lifecycle
 
-The main frame loop is implemented in `GameEngine.Run()` and depends on `ae_poll_events()` to update input and timing before each frame.
+The main frame loop is implemented in `GameEngine.Run()` and depends on `EngineHost.PollEvents()` to update input and timing before each frame.
 
 ```mermaid
 flowchart TD
-    Start[Start engine] --> Init[Initialize native core]
+    Start[Start engine] --> Init[Initialize EngineHost and Silk.NET window]
     Init --> Load[Load scene and scripts]
     Load --> Loop[Run frame loop]
     Loop --> Update[Update game state]
@@ -95,15 +84,14 @@ Game projects interact with the engine through a small set of types:
 - `Component` provides attach, update, draw, and detach hooks
 - `GameScript` provides high-level game behavior outside the entity/component layer
 
-This split allows scene content and game rules to stay in C# even though the window, renderer, input, timing, and memory systems remain native.
+This split allows scene content and game rules to stay in C# alongside the engine's window management, rendering, input, timing, and audio systems.
 
 ## Current Architectural Boundaries
 
-- Rendering is software-based, not GPU-accelerated.
+- Rendering is software-based, not GPU-accelerated (Vulkan is used only for presentation).
 - Sprite loading is currently BMP-oriented.
-- Audio playback is currently WAV-oriented.
-- The engine currently ships two Windows-native backends: x64 NASM and ARM64 NativeAOT.
-- The runtime loads whichever `assemblycore.dll` matches the current process architecture.
-- The runtime wraps the most important native exports first and can grow as new capabilities are needed.
+- Audio playback is currently WAV-oriented via managed `winmm` P/Invoke.
+- The engine uses Silk.NET for cross-platform windowing and input (currently Windows x64 and ARM64).
+- The runtime manages all subsystems directly in managed C# code.
 
 For extension guidance, continue with [implementation-guide.md](implementation-guide.md).
