@@ -59,6 +59,9 @@ public static class Graphics
 
     public static void DrawSprite(int id, int x, int y, bool alphaBlend = true) => Renderer.DrawSprite(id, x, y, alphaBlend);
 
+    public static void DrawSprite(int id, int x, int y, int width, int height, bool alphaBlend = true) =>
+        Renderer.DrawSprite(id, x, y, width, height, alphaBlend);
+
     public static void DrawSprite(int id, Vector2 position, bool alphaBlend = true) =>
         DrawSprite(id, (int)position.X, (int)position.Y, alphaBlend);
 

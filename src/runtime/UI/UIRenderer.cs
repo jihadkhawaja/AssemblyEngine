@@ -11,6 +11,7 @@ public static class UIRenderer
     private const int GlyphWidth = 5;
     private const int GlyphHeight = 7;
     private const int GlyphAdvance = GlyphWidth + 1;
+    private static readonly Dictionary<string, int> SpriteCache = new(StringComparer.OrdinalIgnoreCase);
 
     private static readonly IReadOnlyDictionary<char, byte[]> Glyphs = new Dictionary<char, byte[]>
     {
@@ -89,6 +90,9 @@ public static class UIRenderer
             Graphics.DrawFilledRect(x + w - bw, y, bw, h, bc);
         }
 
+        if (element.Tag.Equals("img", StringComparison.OrdinalIgnoreCase))
+            DrawImage(element, x, y, w, h);
+
         // Text
         if (element.Tag == "#text" && element.Text.Length > 0)
         {
@@ -105,6 +109,24 @@ public static class UIRenderer
     private static int ScaleValue(int value, float scale)
     {
         return scale == 1f ? value : (int)MathF.Round(value * scale);
+    }
+
+    private static void DrawImage(UIElement element, int x, int y, int w, int h)
+    {
+        if (w <= 0 || h <= 0)
+            return;
+
+        if (!element.Attributes.TryGetValue("src", out var source) || string.IsNullOrWhiteSpace(source))
+            return;
+
+        if (!SpriteCache.TryGetValue(source, out var spriteId))
+        {
+            spriteId = Graphics.LoadSprite(source);
+            SpriteCache[source] = spriteId;
+        }
+
+        if (spriteId >= 0)
+            Graphics.DrawSprite(spriteId, x, y, w, h);
     }
 
     private static void DrawText(string text, int x, int y, Color color, int fontSize)

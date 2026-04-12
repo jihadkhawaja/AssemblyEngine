@@ -77,10 +77,9 @@
         <div id="top-bar">
             <div id="fps-counter">FPS 0 | Software</div>
             <div id="wave">THREAT CLEAR</div>
-        </div>
-
-        <div id="general-rank">
-            <div id="rank-stars">GENERAL</div>
+            <div id="general-rank">
+                <div id="rank-stars">GENERAL</div>
+            </div>
         </div>
 
         <div id="center-message">
@@ -88,67 +87,95 @@
             <div id="message-subtitle">Build your base and defend against GLA attacks. Stockpile 10000 to secure victory.</div>
         </div>
 
+        <div id="left-sidebar">
+            <div id="left-status-panel">
+                <div id="left-status-kicker">BATTLEFIELD UPLINK</div>
+                <div id="left-status-readout">MINIMAP FEED ONLINE</div>
+            </div>
+
+            <div id="minimap-frame">
+                <div id="minimap-header">TACTICAL MAP</div>
+                <div id="minimap-footer">LMB JUMP | MMB SNAP</div>
+            </div>
+        </div>
+
         <div id="command-bar">
-            <div id="build-panel">
+            <div id="selection-panel">
+                <div id="selection-portrait-frame">
+                    <img id="selection-portrait-image" src="cchq_gui_bg.png" alt="Command panel art" />
+                </div>
+
+                <div id="unit-name">NO SELECTION</div>
+                <div id="unit-health">SELECT A UNIT OR STRUCTURE</div>
+                <div id="unit-stats">RMB TO ISSUE ORDERS</div>
+                <div id="unit-orders">Q W E D R T Y U | F1 HELP</div>
+            </div>
+
+            <div id="command-core">
                 <div id="resource-strip">
                     <div id="funds-display">FUNDS 2500</div>
                     <div id="power-display">POWER 100%</div>
                 </div>
 
+                <div id="tactical-strip">
+                    <div id="forces-label">FIELD STATUS</div>
+                    <div id="forces">UNITS 1 | HOSTILES 0 | QUEUE 0/6</div>
+                    <div id="economy">FUNDS 2500 | SUPPLY 4/4 | CARRY 0</div>
+                </div>
+
+                <div id="queue-strip">
+                    <div id="queue-title">PRODUCTION</div>
+                    <div id="queue-status">QUEUE EMPTY</div>
+                </div>
+            </div>
+
+            <div id="build-panel">
                 <div id="build-grid-row-1">
-                    <div id="build-slot-1">
+                    <div id="build-slot-1" class="build-slot unit-slot">
+                        <img id="slot-1-icon" class="slot-icon" src="icon_truck.png" alt="Supply truck icon" />
                         <div id="slot-1-name">SUPPLY TRUCK</div>
                         <div id="slot-1-cost">Q - 600</div>
                     </div>
-                    <div id="build-slot-2">
+                    <div id="build-slot-2" class="build-slot unit-slot">
+                        <img id="slot-2-icon" class="slot-icon" src="icon_guard.png" alt="Red guard icon" />
                         <div id="slot-2-name">RED GUARD</div>
                         <div id="slot-2-cost">E - 300</div>
                     </div>
-                    <div id="build-slot-3">
+                    <div id="build-slot-3" class="build-slot unit-slot">
+                        <img id="slot-3-icon" class="slot-icon" src="icon_tankhunter.png" alt="Tank hunter icon" />
                         <div id="slot-3-name">TANK HUNTER</div>
                         <div id="slot-3-cost">W - 400</div>
                     </div>
-                    <div id="build-slot-4">
+                    <div id="build-slot-4" class="build-slot unit-slot">
+                        <img id="slot-4-icon" class="slot-icon" src="icon_battlemaster.png" alt="Battlemaster icon" />
                         <div id="slot-4-name">BATTLEMASTER</div>
                         <div id="slot-4-cost">D - 800</div>
                     </div>
                 </div>
 
                 <div id="build-grid-row-2">
-                    <div id="build-slot-5">
+                    <div id="build-slot-5" class="build-slot structure-slot">
+                        <div id="slot-5-badge" class="slot-badge">B</div>
                         <div id="slot-5-name">BARRACKS</div>
                         <div id="slot-5-cost">R - 500</div>
                     </div>
-                    <div id="build-slot-6">
+                    <div id="build-slot-6" class="build-slot structure-slot">
+                        <div id="slot-6-badge" class="slot-badge">W</div>
                         <div id="slot-6-name">WAR FACTORY</div>
                         <div id="slot-6-cost">T - 2000</div>
                     </div>
-                    <div id="build-slot-7">
+                    <div id="build-slot-7" class="build-slot structure-slot">
+                        <div id="slot-7-badge" class="slot-badge">P</div>
                         <div id="slot-7-name">REACTOR</div>
                         <div id="slot-7-cost">Y - 1000</div>
                     </div>
-                    <div id="build-slot-8">
+                    <div id="build-slot-8" class="build-slot structure-slot">
+                        <div id="slot-8-badge" class="slot-badge">D</div>
                         <div id="slot-8-name">GATTLING CANNON</div>
                         <div id="slot-8-cost">U - 1200</div>
                     </div>
                 </div>
-
-                <div id="queue-strip">
-                    <div id="queue-status">QUEUE EMPTY</div>
-                </div>
             </div>
-        </div>
-
-        <div id="unit-panel">
-            <div id="unit-name">NO SELECTION</div>
-            <div id="unit-health">SELECT A UNIT OR STRUCTURE</div>
-            <div id="unit-stats">RMB TO ISSUE ORDERS</div>
-            <div id="unit-orders">Q W E D R T Y U | F1 HELP</div>
-        </div>
-
-        <div id="tactical-strip">
-            <div id="forces">UNITS 1 | HOSTILES 0 | QUEUE 0/6</div>
-            <div id="economy">FUNDS 2500 | SUPPLY 4/4 | CARRY 0</div>
         </div>
 
         <div id="help-panel">
@@ -160,7 +187,7 @@
             <div id="help-row-5">Right click with no selection to set rally point.</div>
             <div id="help-row-6">Click the minimap to jump camera. Middle click to snap.</div>
             <div id="help-row-7">Q Supply Truck | E Red Guard | W Tank Hunter | D Battlemaster</div>
-            <div id="help-row-8">R Barracks | T War Factory | Y Reactor | U Gattling Cannon. Click a pad to place structures. Right click or Esc cancels.</div>
+            <div id="help-row-8">R Barracks | T War Factory | Y Reactor | U Gattling Cannon. Right click or Esc cancels.</div>
             <div id="help-footer">Stockpile 10000 before the Command Center falls. F1 toggles this panel. R or Enter restarts.</div>
         </div>
     </div>

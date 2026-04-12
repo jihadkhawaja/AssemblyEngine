@@ -18,15 +18,15 @@
 *.ps1 text eol=crlf
 *.sh text eol=lf
 
-# Binary assets
-*.bmp binary
-*.png binary
-*.jpg binary
-*.wav binary
-*.mp3 binary
-*.ogg binary
-*.ttf binary
-*.otf binary
+# Binary assets managed by Git LFS
+*.bmp filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.jpg filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.ogg filter=lfs diff=lfs merge=lfs -text
+*.ttf filter=lfs diff=lfs merge=lfs -text
+*.otf filter=lfs diff=lfs merge=lfs -text
 
 # Git
 *.gitignore text eol=crlf

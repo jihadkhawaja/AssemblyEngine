@@ -140,6 +140,47 @@ internal static class SoftwareRasterizer2D
         }
     }
 
+    public static void DrawSprite(RenderSurface surface, Texture2D texture, int x, int y, int width, int height, bool alphaBlend)
+    {
+        if (width <= 0 || height <= 0)
+            return;
+
+        if (width == texture.Width && height == texture.Height)
+        {
+            DrawSprite(surface, texture, x, y, alphaBlend);
+            return;
+        }
+
+        for (var row = 0; row < height; row++)
+        {
+            var destY = y + row;
+            if ((uint)destY >= (uint)surface.Height)
+                continue;
+
+            var sourceRow = row * texture.Height / height;
+            for (var column = 0; column < width; column++)
+            {
+                var destX = x + column;
+                if ((uint)destX >= (uint)surface.Width)
+                    continue;
+
+                var sourceColumn = column * texture.Width / width;
+                var sourceIndex = (sourceRow * texture.Pitch) + (sourceColumn * 4);
+                var sourceBlue = texture.Pixels[sourceIndex];
+                var sourceGreen = texture.Pixels[sourceIndex + 1];
+                var sourceRed = texture.Pixels[sourceIndex + 2];
+                var sourceAlpha = texture.Pixels[sourceIndex + 3];
+                if (sourceAlpha == 0)
+                    continue;
+
+                var destinationIndex = (destY * surface.Width) + destX;
+                surface.ColorBuffer[destinationIndex] = alphaBlend
+                    ? Blend(surface.ColorBuffer[destinationIndex], sourceBlue, sourceGreen, sourceRed, sourceAlpha)
+                    : (uint)(sourceBlue | (sourceGreen << 8) | (sourceRed << 16) | (sourceAlpha << 24));
+            }
+        }
+    }
+
     private static void PlotCircle(RenderSurface surface, int cx, int cy, int x, int y, Color color)
     {
         DrawPixel(surface, cx + x, cy + y, color);

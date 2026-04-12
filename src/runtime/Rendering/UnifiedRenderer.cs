@@ -113,6 +113,16 @@ internal sealed class UnifiedRenderer : IDisposable
         SoftwareRasterizer2D.DrawSprite(_surface, texture, x, y, alphaBlend);
     }
 
+    public void DrawSprite(int id, int x, int y, int width, int height, bool alphaBlend)
+    {
+        var texture = _textures.Get(id);
+        if (texture is null)
+            return;
+
+        FlushGpuBatch();
+        SoftwareRasterizer2D.DrawSprite(_surface, texture, x, y, width, height, alphaBlend);
+    }
+
     public void DrawMesh(Mesh mesh, Matrix4x4 transform, Color color, bool wireframe)
     {
         var camera = ActiveCamera ?? _defaultCamera;

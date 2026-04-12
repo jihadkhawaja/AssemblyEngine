@@ -39,10 +39,10 @@ public sealed class RtsHudScript : GameScript
         Engine.UI.UpdateText("slot-8-name", game.Slot8NameText);
         Engine.UI.UpdateText("slot-8-cost", game.Slot8CostText);
         Engine.UI.UpdateText("queue-status", game.QueueSummary);
-        Engine.UI.UpdateText("unit-name", game.ObjectiveText);
-        Engine.UI.UpdateText("unit-health", game.SelectedSummary);
-        Engine.UI.UpdateText("unit-stats", game.ProductionModeText);
-        Engine.UI.UpdateText("unit-orders", game.ProductionSitesSummary);
+        Engine.UI.UpdateText("unit-name", game.UnitPanelName);
+        Engine.UI.UpdateText("unit-health", game.UnitPanelHealth);
+        Engine.UI.UpdateText("unit-stats", game.UnitPanelStats);
+        Engine.UI.UpdateText("unit-orders", game.UnitPanelOrders);
         Engine.UI.UpdateText("forces", game.ForceSummary);
         Engine.UI.UpdateText("economy", game.EconomySummary);
         Engine.UI.UpdateText("message-title", game.MessageTitle);

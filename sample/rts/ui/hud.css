@@ -21,9 +21,9 @@ body {
     top: 50px;
     width: 1120px;
     height: 620px;
-    background-color: rgba(6, 13, 20, 0.96);
+    background-color: rgba(30, 36, 30, 0.96);
     border-width: 2;
-    border-color: #9BE7FF;
+    border-color: #00FF00;
 }
 
 #menu-hero-panel,
@@ -525,337 +525,466 @@ body {
     height: 100%;
 }
 
-/* --- Top notification bar --- */
 #top-bar {
     position: absolute;
     left: 0px;
     top: 0px;
     width: 100%;
-    height: 28px;
-    background-color: rgba(12, 10, 8, 0.82);
+    height: 30px;
+    background-color: rgba(12, 16, 10, 0.88);
+    border-bottom-width: 2;
+    border-bottom-color: #566149;
+    padding: 6px 14px;
     display: flex;
     flex-direction: row;
-    padding: 6px 16px;
-    gap: 24px;
-    border-width: 1;
-    border-color: #5a4a2e;
+    gap: 18px;
+}
+
+#rank-stars,
+#minimap-header,
+#minimap-footer,
+#forces-label,
+#queue-title {
+    position: absolute;
 }
 
 #fps-counter {
-    color: #8b8070;
+    color: #B4C77A;
     font-size: 12;
-    width: 160px;
-    height: 18px;
+    width: 180px;
+    height: 16px;
 }
 
 #wave {
-    color: #cc3333;
+    color: #E2F59D;
     font-size: 13;
-    width: 280px;
-    height: 18px;
+    width: 360px;
+    height: 16px;
 }
 
-/* --- General rank indicator (top right) --- */
 #general-rank {
     position: absolute;
-    right: 16px;
-    top: 6px;
-    width: 120px;
-    height: 22px;
+    right: 18px;
+    top: 5px;
+    width: 220px;
+    height: 18px;
 }
 
 #rank-stars {
-    color: #cc3333;
-    font-size: 14;
-    width: 120px;
-    height: 22px;
-}
-
-/* --- Center message overlay --- */
-#center-message {
-    position: absolute;
-    left: 280px;
-    top: 80px;
-    width: 620px;
-    height: 110px;
-    background-color: rgba(18, 14, 10, 0.94);
-    border-width: 2;
-    border-color: #8b6914;
-    padding: 14px 20px;
-}
-
-#message-title {
-    color: #cc3333;
-    font-size: 26;
-    width: 580px;
-    height: 32px;
-}
-
-#message-subtitle {
-    color: #d4c4a0;
-    font-size: 14;
-    width: 580px;
-    height: 52px;
-}
-
-/* =============================================
-   BOTTOM COMMAND BAR (C&C signature layout)
-   ============================================= */
-#command-bar {
-    position: absolute;
-    left: 192px;
-    bottom: 0px;
-    width: 100%;
-    height: 194px;
-    background-color: rgba(16, 14, 12, 0.96);
-    border-width: 2;
-    border-color: #6b5535;
-}
-
-/* --- Center: Build panel --- */
-#build-panel {
-    position: absolute;
-    left: 6px;
-    top: 6px;
-    width: 560px;
-    height: 182px;
-}
-
-/* --- Resource strip (money + power) --- */
-#resource-strip {
-    display: flex;
-    flex-direction: row;
-    gap: 16px;
-    width: 540px;
-    height: 26px;
-    padding: 2px 4px;
-}
-
-#funds-display {
-    color: #33cc33;
-    font-size: 18;
-    width: 160px;
-    height: 24px;
-}
-
-#power-display {
-    color: #cccc33;
-    font-size: 14;
-    width: 160px;
-    height: 24px;
-}
-
-/* --- Build grid rows --- */
-#build-grid-row-1,
-#build-grid-row-2 {
-    display: flex;
-    flex-direction: row;
-    gap: 4px;
-    width: 540px;
-    height: 50px;
-}
-
-/* --- Build slots (greyscale C&C icon style) --- */
-#build-slot-1,
-#build-slot-2,
-#build-slot-3,
-#build-slot-4,
-#build-slot-5,
-#build-slot-6,
-#build-slot-7,
-#build-slot-8 {
-    width: 128px;
-    height: 44px;
-    background-color: rgba(32, 28, 22, 0.94);
-    border-width: 1;
-    border-color: #5a4a2e;
-    display: flex;
-    flex-direction: column;
-    padding: 4px 6px;
-}
-
-/* Unit build slots (row 1) - military olive */
-#build-slot-1 {
-    border-color: #6b8040;
-}
-
-#build-slot-2 {
-    border-color: #cc3333;
-}
-
-#build-slot-3 {
-    border-color: #cc6633;
-}
-
-#build-slot-4 {
-    border-color: #668844;
-}
-
-/* Structure build slots (row 2) - industrial grey/gold */
-#build-slot-5 {
-    border-color: #8b7345;
-}
-
-#build-slot-6 {
-    border-color: #7a7a8a;
-}
-
-#build-slot-7 {
-    border-color: #ccaa33;
-}
-
-#build-slot-8 {
-    border-color: #8b4444;
-}
-
-/* Build slot text */
-#slot-1-name,
-#slot-2-name,
-#slot-3-name,
-#slot-4-name,
-#slot-5-name,
-#slot-6-name,
-#slot-7-name,
-#slot-8-name {
-    color: #d4c4a0;
-    font-size: 11;
-    width: 116px;
-    height: 16px;
-}
-
-#slot-1-cost,
-#slot-2-cost,
-#slot-3-cost,
-#slot-4-cost,
-#slot-5-cost,
-#slot-6-cost,
-#slot-7-cost,
-#slot-8-cost {
-    color: #33cc33;
-    font-size: 10;
-    width: 116px;
-    height: 14px;
-}
-
-/* --- Queue strip --- */
-#queue-strip {
-    width: 540px;
-    height: 22px;
-    padding: 2px 4px;
-}
-
-#queue-status {
-    color: #8b7345;
-    font-size: 12;
-    width: 530px;
+    right: 0px;
+    top: 0px;
+    color: #E7D16E;
+    font-size: 13;
+    width: 220px;
     height: 18px;
 }
 
-/* --- Right: Unit info panel --- */
-#unit-panel {
+#center-message {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
-    width: 200px;
-    height: 172px;
-    background-color: rgba(22, 18, 14, 0.94);
+    left: 308px;
+    top: 70px;
+    width: 640px;
+    height: 96px;
+    background-color: rgba(18, 22, 16, 0.96);
     border-width: 2;
-    border-color: #5a4a2e;
-    padding: 10px 12px;
+    border-color: #9FAE66;
+    padding: 12px 18px;
+}
+
+#message-title {
+    color: #E2F59D;
+    font-size: 24;
+    width: 600px;
+    height: 26px;
+}
+
+#message-subtitle {
+    color: #F4F0D3;
+    font-size: 13;
+    width: 600px;
+    height: 42px;
+}
+
+#left-sidebar {
+    position: absolute;
+    left: 0px;
+    bottom: 0px;
+    width: 192px;
+    height: 220px;
+}
+
+#left-status-panel {
+    position: absolute;
+    left: 10px;
+    top: 0px;
+    width: 172px;
+    height: 34px;
+    background-color: rgba(20, 26, 18, 0.92);
+    border-width: 1;
+    border-color: #657153;
+}
+
+#left-status-kicker,
+#left-status-readout {
+    position: absolute;
+}
+
+#left-status-kicker {
+    left: 10px;
+    top: 6px;
+    color: #E7D16E;
+    font-size: 11;
+    width: 140px;
+    height: 14px;
+}
+
+#left-status-readout {
+    left: 10px;
+    top: 18px;
+    color: #AFC189;
+    font-size: 10;
+    width: 148px;
+    height: 12px;
+}
+
+#minimap-frame {
+    position: absolute;
+    left: 8px;
+    top: 40px;
+    width: 176px;
+    height: 176px;
+    border-width: 2;
+    border-color: #7E8A62;
+}
+
+#minimap-header {
+    left: 10px;
+    top: 8px;
+    color: #E7D16E;
+    font-size: 12;
+    width: 120px;
+    height: 14px;
+}
+
+#minimap-footer {
+    left: 10px;
+    top: 154px;
+    color: #CED8AE;
+    font-size: 10;
+    width: 150px;
+    height: 12px;
+}
+
+#command-bar {
+    position: absolute;
+    left: 196px;
+    right: 0px;
+    bottom: 0px;
+    height: 220px;
+    background-color: rgba(31, 37, 25, 0.98);
+    border-top-width: 3;
+    border-top-color: #11150E;
+    border-left-width: 3;
+    border-left-color: #11150E;
+}
+
+#selection-panel,
+#command-core,
+#build-panel,
+#help-panel {
+    position: absolute;
+    background-color: rgba(18, 22, 16, 0.94);
+    border-width: 2;
+}
+
+#selection-panel {
+    left: 12px;
+    top: 12px;
+    width: 292px;
+    height: 192px;
+    border-color: #6E775D;
+}
+
+#selection-portrait-frame {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 124px;
+    height: 124px;
+    border-width: 2;
+    border-color: #88946B;
+    background-color: rgba(28, 33, 23, 0.98);
+}
+
+#selection-portrait-image {
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 118px;
+    height: 118px;
+}
+
+#unit-name,
+#unit-health,
+#unit-stats,
+#unit-orders {
+    position: absolute;
+    left: 148px;
+    width: 132px;
 }
 
 #unit-name {
-    color: #d4c4a0;
+    top: 14px;
+    color: #F2E194;
     font-size: 16;
-    width: 176px;
-    height: 24px;
+    height: 18px;
 }
 
 #unit-health {
-    color: #33cc33;
-    font-size: 13;
-    width: 176px;
-    height: 20px;
+    top: 40px;
+    color: #D4E2AF;
+    font-size: 11;
+    height: 24px;
 }
 
 #unit-stats {
-    color: #c8b898;
-    font-size: 12;
-    width: 176px;
-    height: 50px;
+    top: 76px;
+    color: #F3F1DE;
+    font-size: 11;
+    height: 34px;
 }
 
 #unit-orders {
-    color: #8b7345;
-    font-size: 10;
-    width: 176px;
-    height: 40px;
+    left: 12px;
+    top: 148px;
+    width: 268px;
+    color: #AFC189;
+    font-size: 11;
+    height: 18px;
 }
 
-/* --- Tactical strip (above command bar) --- */
-#tactical-strip {
+#command-core {
+    left: 320px;
+    top: 12px;
+    width: 274px;
+    height: 192px;
+    border-color: #687354;
+}
+
+#resource-strip,
+#tactical-strip,
+#queue-strip {
     position: absolute;
-    left: 200px;
-    bottom: 198px;
-    width: 440px;
-    height: 36px;
-    background-color: rgba(14, 12, 10, 0.86);
+    left: 12px;
+    width: 246px;
     border-width: 1;
-    border-color: #5a4a2e;
-    padding: 4px 12px;
+}
+
+#resource-strip {
+    top: 12px;
+    height: 44px;
+    background-color: rgba(31, 50, 20, 0.92);
+    border-color: #7E8A62;
+}
+
+#funds-display,
+#power-display,
+#forces,
+#economy,
+#queue-status {
+    position: absolute;
+    left: 10px;
+}
+
+#funds-display {
+    top: 8px;
+    color: #F5DA76;
+    font-size: 15;
+    width: 220px;
+    height: 16px;
+}
+
+#power-display {
+    top: 24px;
+    color: #D4E2AF;
+    font-size: 11;
+    width: 220px;
+    height: 14px;
+}
+
+#tactical-strip {
+    top: 66px;
+    height: 56px;
+    background-color: rgba(20, 24, 17, 0.96);
+    border-color: #687354;
+}
+
+#forces-label {
+    left: 10px;
+    top: 6px;
+    color: #E7D16E;
+    font-size: 10;
+    width: 120px;
+    height: 12px;
 }
 
 #forces {
-    color: #cc3333;
-    font-size: 11;
-    width: 420px;
-    height: 16px;
+    top: 22px;
+    color: #E2F59D;
+    font-size: 10;
+    width: 226px;
+    height: 12px;
 }
 
 #economy {
-    color: #33cc33;
-    font-size: 11;
-    width: 420px;
-    height: 16px;
+    top: 36px;
+    color: #CED8AE;
+    font-size: 10;
+    width: 226px;
+    height: 12px;
 }
 
-/* --- Help panel --- */
-#help-panel {
+#queue-strip {
+    top: 132px;
+    height: 44px;
+    background-color: rgba(29, 31, 16, 0.96);
+    border-color: #7E8A62;
+}
+
+#queue-title {
+    left: 10px;
+    top: 6px;
+    color: #E7D16E;
+    font-size: 10;
+    width: 96px;
+    height: 12px;
+}
+
+#queue-status {
+    top: 22px;
+    color: #F4F0D3;
+    font-size: 11;
+    width: 226px;
+    height: 14px;
+}
+
+#build-panel {
+    left: 606px;
+    top: 12px;
+    width: 450px;
+    height: 192px;
+    border-color: #7D8964;
+    background-color: rgba(23, 28, 19, 0.98);
+}
+
+#build-grid-row-1,
+#build-grid-row-2 {
     position: absolute;
-    right: 14px;
-    top: 42px;
-    width: 370px;
-    height: 264px;
-    background-color: rgba(14, 12, 10, 0.94);
+    left: 12px;
+    width: 426px;
+    height: 82px;
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+}
+
+#build-grid-row-1 {
+    top: 12px;
+}
+
+#build-grid-row-2 {
+    top: 98px;
+}
+
+.build-slot {
+    position: relative;
+    width: 99px;
+    height: 82px;
+    background-color: rgba(42, 49, 34, 0.98);
     border-width: 2;
-    border-color: #8b6914;
+    border-color: #4E5A41;
+}
+
+.unit-slot {
+    border-color: #9B8A4B;
+}
+
+.structure-slot {
+    border-color: #6A7556;
+}
+
+.slot-icon {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    width: 38px;
+    height: 38px;
+}
+
+.slot-badge {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    width: 26px;
+    height: 18px;
+    color: #F2E194;
+    font-size: 18;
+}
+
+#slot-1-name, #slot-2-name, #slot-3-name, #slot-4-name,
+#slot-5-name, #slot-6-name, #slot-7-name, #slot-8-name,
+#slot-1-cost, #slot-2-cost, #slot-3-cost, #slot-4-cost,
+#slot-5-cost, #slot-6-cost, #slot-7-cost, #slot-8-cost {
+    position: absolute;
+    left: 6px;
+}
+
+#slot-1-name, #slot-2-name, #slot-3-name, #slot-4-name,
+#slot-5-name, #slot-6-name, #slot-7-name, #slot-8-name {
+    top: 50px;
+    color: #F4F0D3;
+    font-size: 10;
+    width: 92px;
+    height: 12px;
+}
+
+#slot-1-cost, #slot-2-cost, #slot-3-cost, #slot-4-cost,
+#slot-5-cost, #slot-6-cost, #slot-7-cost, #slot-8-cost {
+    top: 64px;
+    color: #C4CF9C;
+    font-size: 10;
+    width: 92px;
+    height: 12px;
+}
+
+#help-panel {
+    right: 14px;
+    bottom: 228px;
+    width: 456px;
+    height: 168px;
+    border-color: #8B996D;
+    background-color: rgba(18, 22, 16, 0.96);
     padding: 12px 14px;
 }
 
 #help-title {
-    color: #cc3333;
-    font-size: 20;
-    width: 340px;
-    height: 28px;
+    color: #F2E194;
+    font-size: 18;
+    width: 420px;
+    height: 18px;
 }
 
-#help-row-1,
-#help-row-2,
-#help-row-3,
-#help-row-4,
-#help-row-5,
-#help-row-6,
-#help-row-7,
-#help-row-8 {
-    color: #d4c4a0;
-    font-size: 12;
-    width: 340px;
-    height: 22px;
+#help-row-1, #help-row-2, #help-row-3, #help-row-4,
+#help-row-5, #help-row-6, #help-row-7, #help-row-8 {
+    color: #F4F0D3;
+    font-size: 10;
+    width: 420px;
+    height: 14px;
 }
 
 #help-footer {
-    color: #8b7345;
-    font-size: 11;
-    width: 340px;
-    height: 28px;
+    color: #C4CF9C;
+    font-size: 10;
+    width: 420px;
+    height: 16px;
 }

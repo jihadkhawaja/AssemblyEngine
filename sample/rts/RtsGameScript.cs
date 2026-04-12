@@ -10,6 +10,8 @@ public sealed partial class RtsGameScript : GameScript
     private const float HeadquartersHalfWidth = 58f;
     private const float HeadquartersHalfHeight = 46f;
     private const float HeadquartersMaxHealth = 1000f;
+    private const float EnemyBeaconHalfWidth = 52f;
+    private const float EnemyBeaconHalfHeight = 40f;
     private const int VictoryOreGoalValue = 10000;
     private const int WorkerCost = 600;
     private const int GuardCost = 300;
@@ -222,9 +224,63 @@ public sealed partial class RtsGameScript : GameScript
 
             var remainingFunds = Math.Max(0, VictoryOreGoalValue - _oreStockpile);
             if (RaiderCount > 0)
-                return $"GLA ATTACK | {remainingFunds} TO GO";
+                return $"GLA ATTACK | BEACON {(int)MathF.Ceiling(_hqHealthP2)} | ORE {remainingFunds}";
 
-            return $"HARVEST | {remainingFunds} TO GO";
+            return $"DESTROY BEACON | {(int)MathF.Ceiling(_hqHealthP2)} HP | ORE {remainingFunds}";
+        }
+    }
+
+    public string UnitPanelName
+    {
+        get
+        {
+            var hoveredUnit = GetHoveredUnit();
+            return hoveredUnit is null
+                ? ObjectiveText
+                : $"{hoveredUnit.Label.ToUpperInvariant()} | {hoveredUnit.Callsign}";
+        }
+    }
+
+    public string UnitPanelHealth
+    {
+        get
+        {
+            var hoveredUnit = GetHoveredUnit();
+            if (hoveredUnit is null)
+                return SelectedSummary;
+
+            var teamState = hoveredUnit.IsEnemyOf(LocalTeam) ? "HOSTILE" : "ALLY";
+            return $"HP {(int)MathF.Ceiling(hoveredUnit.Health)}/{(int)MathF.Ceiling(hoveredUnit.MaxHealth)} | {teamState}";
+        }
+    }
+
+    public string UnitPanelStats
+    {
+        get
+        {
+            var hoveredUnit = GetHoveredUnit();
+            if (hoveredUnit is null)
+                return ProductionModeText;
+
+            if (hoveredUnit.Role == RtsUnitRole.Worker)
+                return $"ORE {hoveredUnit.CarryOre}/{hoveredUnit.CarryCapacity} | {DescribeWorkerDirective(hoveredUnit).ToUpperInvariant()}";
+
+            return $"ATK {(int)MathF.Ceiling(hoveredUnit.AttackDamage)} | RNG {(int)MathF.Ceiling(hoveredUnit.AttackRange)} | SPD {(int)MathF.Ceiling(hoveredUnit.Speed)}";
+        }
+    }
+
+    public string UnitPanelOrders
+    {
+        get
+        {
+            var hoveredUnit = GetHoveredUnit();
+            if (hoveredUnit is null)
+                return ProductionSitesSummary;
+
+            var directive = hoveredUnit.Role == RtsUnitRole.Worker
+                ? DescribeWorkerDirective(hoveredUnit)
+                : DescribeCombatDirective(hoveredUnit);
+            return $"{directive.ToUpperInvariant()} | {DescribeSector(hoveredUnit.Position).ToUpperInvariant()}";
         }
     }
 
@@ -1001,6 +1057,7 @@ public sealed partial class RtsGameScript : GameScript
 
             var raider = new RtsUnit(RtsUnitRole.Raider, spawn)
             {
+                Team = 1,
                 MaxHealth = 76f + ((_waveIndex - 1) * 8f),
                 AttackDamage = 9f + ((_waveIndex - 1) * 1.1f),
                 Speed = 92f + Math.Min(18f, _waveIndex * 2f),
@@ -1183,6 +1240,77 @@ public sealed partial class RtsGameScript : GameScript
                 MoveUnit(guard, target.Position, deltaTime, guard.AttackRange * 0.82f);
             }
 
+            return;
+        }
+
+        var structureTarget = FindNearestStructure(guard.Position, structure => structure.IsAlive && structure.Team != guard.Team, guard.DetectionRange);
+        if (structureTarget is not null)
+        {
+            var distance = Vector2.Distance(guard.Position, structureTarget.Position);
+            if (distance <= guard.AttackRange + structureTarget.Radius)
+            {
+                if (guard.AttackCooldown <= 0f)
+                {
+                    guard.AttackCooldown = guard.AttackInterval;
+                    structureTarget.Health = Math.Max(0f, structureTarget.Health - guard.AttackDamage);
+                    _shotEffects.Add(new ShotEffect(guard.Position, structureTarget.Position, new Color(255, 232, 132), 0.12f));
+                    if (guard.Role == RtsUnitRole.Guard) _audio.PlayGuardFire();
+                }
+            }
+            else
+            {
+                MoveUnit(guard, structureTarget.Position, deltaTime, guard.AttackRange + structureTarget.Radius - 2f);
+            }
+
+            return;
+        }
+
+        if (!IsMultiplayerMatch && guard.Team == 0)
+        {
+            var distanceToBeacon = Vector2.Distance(guard.Position, EnemyBeaconPosition);
+            if (distanceToBeacon <= EnemyBeaconHalfWidth + guard.AttackRange)
+            {
+                if (guard.AttackCooldown <= 0f)
+                {
+                    guard.AttackCooldown = guard.AttackInterval;
+                    _hqHealthP2 = Math.Max(0f, _hqHealthP2 - guard.AttackDamage);
+                    _shotEffects.Add(new ShotEffect(guard.Position, EnemyBeaconPosition, new Color(255, 232, 132), 0.12f));
+                    if (guard.Role == RtsUnitRole.Guard) _audio.PlayGuardFire();
+                }
+
+                return;
+            }
+
+            if (distanceToBeacon <= guard.DetectionRange)
+            {
+                MoveUnit(guard, EnemyBeaconPosition, deltaTime, EnemyBeaconHalfWidth + guard.AttackRange - 4f);
+                return;
+            }
+
+            UpdateMoveOrder(guard, deltaTime);
+            return;
+        }
+
+        var enemyHqPosition = guard.Team == 0 ? HeadquartersPositionP2 : HeadquartersPosition;
+        var distanceToHq = Vector2.Distance(guard.Position, enemyHqPosition);
+        if (distanceToHq <= HeadquartersHalfWidth + guard.AttackRange)
+        {
+            if (guard.AttackCooldown <= 0f)
+            {
+                guard.AttackCooldown = guard.AttackInterval;
+                if (guard.Team == 0)
+                    _hqHealthP2 = Math.Max(0f, _hqHealthP2 - guard.AttackDamage);
+                else
+                    _hqHealth = Math.Max(0f, _hqHealth - guard.AttackDamage);
+
+                _shotEffects.Add(new ShotEffect(guard.Position, enemyHqPosition, new Color(255, 232, 132), 0.12f));
+                if (guard.Role == RtsUnitRole.Guard) _audio.PlayGuardFire();
+            }
+            return;
+        }
+        else if (guard.OrderType != RtsUnitOrderType.Move && distanceToHq <= guard.DetectionRange)
+        {
+            MoveUnit(guard, enemyHqPosition, deltaTime, HeadquartersHalfWidth + guard.AttackRange - 4f);
             return;
         }
 
@@ -1459,6 +1587,15 @@ public sealed partial class RtsGameScript : GameScript
             return;
         }
 
+        if (!_victory && _hqHealthP2 <= 0f)
+        {
+            _victory = true;
+            _bannerTitle = "Enemy Beacon Destroyed";
+            _bannerSubtitle = "The GLA rally beacon is down. Press R or Enter to restart the mission.";
+            _audio.PlayVictory();
+            return;
+        }
+
         if (!_victory && _oreStockpile >= VictoryOreGoalValue)
         {
             _victory = true;
@@ -1522,11 +1659,14 @@ public sealed partial class RtsGameScript : GameScript
         else
         {
             // Enemy beacon (single player only)
-            var beaconTopLeft = WorldToScreen(EnemyBeaconPosition - new Vector2(52f, 40f));
-            Graphics.DrawFilledRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(80, 65, 40));
-            Graphics.DrawRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, 104, 80, new Color(196, 160, 96));
-            Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
-            Graphics.DrawLine((int)(beaconTopLeft.X + 96f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 70f), new Color(196, 160, 96));
+            var beaconTopLeft = WorldToScreen(EnemyBeaconPosition - new Vector2(EnemyBeaconHalfWidth, EnemyBeaconHalfHeight));
+            var beaconWidth = (int)(EnemyBeaconHalfWidth * 2f);
+            var beaconHeight = (int)(EnemyBeaconHalfHeight * 2f);
+            Graphics.DrawFilledRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, beaconWidth, beaconHeight, new Color(80, 65, 40));
+            Graphics.DrawRect((int)beaconTopLeft.X, (int)beaconTopLeft.Y, beaconWidth, beaconHeight, new Color(196, 160, 96));
+            Graphics.DrawLine((int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + beaconWidth - 8f), (int)(beaconTopLeft.Y + beaconHeight - 10f), new Color(196, 160, 96));
+            Graphics.DrawLine((int)(beaconTopLeft.X + beaconWidth - 8f), (int)(beaconTopLeft.Y + 10f), (int)(beaconTopLeft.X + 8f), (int)(beaconTopLeft.Y + beaconHeight - 10f), new Color(196, 160, 96));
+            DrawBar(EnemyBeaconPosition + new Vector2(0f, -(EnemyBeaconHalfHeight + 20f)), beaconWidth, 8, _hqHealthP2 / HeadquartersMaxHealth, new Color(255, 80, 80));
         }
 
         DrawPlacementGhost();
@@ -1865,6 +2005,28 @@ public sealed partial class RtsGameScript : GameScript
         return result;
     }
 
+    private RtsUnit? FindHoveredUnit(Vector2 worldPosition, float maxDistance)
+    {
+        var bestDistance = maxDistance;
+        RtsUnit? result = null;
+
+        foreach (var unit in _units)
+        {
+            if (!unit.IsAlive)
+                continue;
+
+            var hoverDistance = Math.Max(maxDistance, unit.Radius + 6f);
+            var distance = Vector2.Distance(unit.Position, worldPosition);
+            if (distance > hoverDistance || distance > bestDistance)
+                continue;
+
+            bestDistance = distance;
+            result = unit;
+        }
+
+        return result;
+    }
+
     private RtsUnit? FindNearestUnit(Vector2 origin, Func<RtsUnit, bool> predicate, float range)
     {
         var bestDistanceSquared = range * range;
@@ -2080,6 +2242,20 @@ public sealed partial class RtsGameScript : GameScript
     private Vector2 GetCursorWorldPosition()
     {
         return IsPointInsideMinimap(MousePosition) ? MinimapToWorld(MousePosition) : ScreenToWorld(MousePosition);
+    }
+
+    private RtsUnit? GetHoveredUnit()
+    {
+        if (!_matchRunning
+            || _selectionActive
+            || _activePlacementType is not null
+            || IsPointInsideMinimap(MousePosition)
+            || IsPointerInsideBlockingHud(MousePosition))
+        {
+            return null;
+        }
+
+        return FindHoveredUnit(ScreenToWorld(MousePosition), 20f);
     }
 
     private Vector2 GetSelectionCenter(IReadOnlyList<RtsUnit> units)

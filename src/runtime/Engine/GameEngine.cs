@@ -74,7 +74,7 @@ public sealed class GameEngine
     {
         var html = File.ReadAllText(htmlPath);
         var css = cssPath is not null ? File.ReadAllText(cssPath) : null;
-        UI = UIDocument.Parse(html, css);
+        UI = UIDocument.Parse(html, css, Path.GetDirectoryName(htmlPath));
         UI.RenderScale = UiScale;
         RuntimeDiagnosticsBridge.Current.LogInfo("engine.ui", $"Loaded UI from '{Path.GetFileName(htmlPath)}'.", cssPath is null ? htmlPath : $"{htmlPath} | {cssPath}");
     }
