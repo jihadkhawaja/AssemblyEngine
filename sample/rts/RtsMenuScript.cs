@@ -1,7 +1,7 @@
-using System.Runtime.InteropServices;
 using AssemblyEngine.Core;
 using AssemblyEngine.Networking;
 using AssemblyEngine.Scripting;
+using System.Runtime.InteropServices;
 
 namespace RtsSample;
 

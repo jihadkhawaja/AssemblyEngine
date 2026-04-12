@@ -1,11 +1,10 @@
-using AssemblyEngine.Core;
 using AssemblyEngine.Platform;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
-using EngineGraphics = AssemblyEngine.Core.Graphics;
 using DrawingRectangle = System.Drawing.Rectangle;
+using EngineGraphics = AssemblyEngine.Core.Graphics;
 
 namespace AssemblyEngine.Diagnostics;
 

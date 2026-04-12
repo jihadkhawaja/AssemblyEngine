@@ -756,7 +756,10 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
             var pc = new PushConstantData
             {
                 Mvp = draw.Mvp,
-                R = draw.R, G = draw.G, B = draw.B, A = draw.A
+                R = draw.R,
+                G = draw.G,
+                B = draw.B,
+                A = draw.A
             };
             _vk.CmdPushConstants(_commandBuffer, _pipelineLayout,
                 ShaderStageFlags.VertexBit | ShaderStageFlags.FragmentBit, 0, 80, &pc);

@@ -55,7 +55,8 @@ public record struct Vector2(float X, float Y)
     [JsonIgnore] public readonly float LengthSquared => X * X + Y * Y;
     [JsonIgnore] public readonly float Length => MathF.Sqrt(LengthSquared);
 
-    [JsonIgnore] public readonly Vector2 Normalized
+    [JsonIgnore]
+    public readonly Vector2 Normalized
     {
         get
         {
