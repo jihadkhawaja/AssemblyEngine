@@ -52,6 +52,9 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
     private readonly List<float> _vertices = [];
     private readonly List<uint> _indices = [];
 
+    /// <summary>5-second fence timeout in nanoseconds.</summary>
+    private const ulong FenceTimeoutNs = 5_000_000_000UL;
+
     public bool HasPendingDraws => _draws.Count > 0;
 
     private VulkanMeshRenderer(Vk vk) => _vk = vk;
@@ -291,7 +294,11 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
             if (_vk.AllocateCommandBuffers(_device, in allocInfo, ptr) != Result.Success)
                 return false;
 
-        var fenceCi = new FenceCreateInfo { SType = StructureType.FenceCreateInfo };
+        var fenceCi = new FenceCreateInfo
+        {
+            SType = StructureType.FenceCreateInfo,
+            Flags = FenceCreateFlags.SignaledBit
+        };
         return _vk.CreateFence(_device, in fenceCi, null, out _fence) == Result.Success;
     }
 
@@ -542,10 +549,10 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
         if (_rtWidth == width && _rtHeight == height && _framebuffer.Handle != 0)
             return;
 
-        if (_fence.Handle != 0)
+        if (_device.Handle != 0 && _fence.Handle != 0)
         {
             var fence = _fence;
-            _vk.WaitForFences(_device, 1, &fence, true, ulong.MaxValue);
+            _vk.WaitForFences(_device, 1, &fence, true, FenceTimeoutNs);
         }
         DestroyRenderTargets();
 
@@ -636,7 +643,7 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
         if (_device.Handle != 0 && _fence.Handle != 0)
         {
             var fence = _fence;
-            _vk.WaitForFences(_device, 1, &fence, true, ulong.MaxValue);
+            _vk.WaitForFences(_device, 1, &fence, true, FenceTimeoutNs);
         }
         DestroyHostBuffer(ref buffer, ref memory, ref mapped, ref capacity);
         var size = Math.Max(needed * 2, 65536UL);
@@ -789,10 +796,15 @@ internal sealed unsafe class VulkanMeshRenderer : IDisposable
             CommandBufferCount = 1,
             PCommandBuffers = &cmdBuf
         };
-        _vk.QueueSubmit(_queue, 1, in submit, _fence);
+        if (_vk.QueueSubmit(_queue, 1, in submit, _fence) != Result.Success)
+        {
+            var failFence = _fence;
+            _vk.ResetFences(_device, 1, &failFence);
+            return;
+        }
 
         var fence = _fence;
-        _vk.WaitForFences(_device, 1, &fence, true, ulong.MaxValue);
+        _vk.WaitForFences(_device, 1, &fence, true, FenceTimeoutNs);
         _vk.ResetFences(_device, 1, &fence);
     }
 

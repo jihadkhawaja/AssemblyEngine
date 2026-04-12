@@ -210,12 +210,29 @@ internal sealed class UnifiedRenderer : IDisposable
         SoftwareRasterizer2D.DrawFilledRect(_surface, x, y, width, height, color);
     }
 
+    private int _meshRendererFailureCount;
+
     private void FlushGpuBatch()
     {
         if (_meshRenderer is null || !_meshRenderer.HasPendingDraws)
             return;
 
-        _meshRenderer.Flush(_clearColor, _surface);
+        if (!_meshRenderer.Flush(_clearColor, _surface))
+        {
+            _meshRendererFailureCount++;
+            if (_meshRendererFailureCount >= 3)
+            {
+                _meshRenderer.Dispose();
+                _meshRenderer = null;
+                _reportedMeshRendererFallback = true;
+                RuntimeDiagnosticsBridge.Current.LogWarning("engine.render",
+                    "Vulkan mesh renderer failed repeatedly, falling back to software 3D.");
+            }
+        }
+        else
+        {
+            _meshRendererFailureCount = 0;
+        }
     }
 
     private void EnsureWindowBinding()
